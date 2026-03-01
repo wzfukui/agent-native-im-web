@@ -1,0 +1,113 @@
+import type {
+  APIResponse, LoginResponse, Entity, Conversation,
+  MessagesResponse, SearchResponse, Message,
+} from './types'
+
+let baseUrl = ''
+
+export function setBaseUrl(url: string) {
+  baseUrl = url.replace(/\/+$/, '')
+}
+
+function authHeaders(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
+}
+
+async function request<T>(method: string, path: string, token?: string, body?: unknown): Promise<APIResponse<T>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (token) headers.Authorization = `Bearer ${token}`
+  const res = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers,
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return res.json()
+}
+
+// Auth
+export const login = (username: string, password: string) =>
+  request<LoginResponse>('POST', '/api/v1/auth/login', undefined, { username, password })
+
+export const getMe = (token: string) =>
+  request<Entity>('GET', '/api/v1/me', token)
+
+export const refreshToken = (token: string) =>
+  request<{ token: string }>('POST', '/api/v1/auth/refresh', token)
+
+// Conversations
+export const listConversations = (token: string) =>
+  request<Conversation[]>('GET', '/api/v1/conversations', token)
+
+export const getConversation = (token: string, id: number) =>
+  request<Conversation>('GET', `/api/v1/conversations/${id}`, token)
+
+export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
+  request<Conversation>('POST', '/api/v1/conversations', token, data)
+
+// Participants
+export const addParticipant = (token: string, convId: number, entityId: number, role?: string) =>
+  request('POST', `/api/v1/conversations/${convId}/participants`, token, { entity_id: entityId, role })
+
+export const removeParticipant = (token: string, convId: number, entityId: number) =>
+  request('DELETE', `/api/v1/conversations/${convId}/participants/${entityId}`, token)
+
+export const updateSubscription = (token: string, convId: number, mode: string) =>
+  request('PUT', `/api/v1/conversations/${convId}/subscription`, token, { mode })
+
+// Messages
+export const listMessages = (token: string, convId: number, before?: number, limit = 30) => {
+  const params = new URLSearchParams({ limit: String(limit) })
+  if (before) params.set('before', String(before))
+  return request<MessagesResponse>('GET', `/api/v1/conversations/${convId}/messages?${params}`, token)
+}
+
+export const sendMessage = (token: string, msg: {
+  conversation_id: number
+  content_type?: string
+  layers: Record<string, unknown>
+  attachments?: unknown[]
+  mentions?: number[]
+  reply_to?: number
+}) => request<Message>('POST', '/api/v1/messages/send', token, msg)
+
+export const revokeMessage = (token: string, msgId: number) =>
+  request('DELETE', `/api/v1/messages/${msgId}`, token)
+
+export const searchMessages = (token: string, convId: number, query: string, limit = 20) =>
+  request<SearchResponse>('GET', `/api/v1/conversations/${convId}/search?q=${encodeURIComponent(query)}&limit=${limit}`, token)
+
+// Entities
+export const listEntities = (token: string) =>
+  request<Entity[]>('GET', '/api/v1/entities', token)
+
+export const createEntity = (token: string, name: string) =>
+  request<{ entity: Entity; bootstrap_key: string; markdown_doc: string }>('POST', '/api/v1/entities', token, { name })
+
+export const deleteEntity = (token: string, id: number) =>
+  request('DELETE', `/api/v1/entities/${id}`, token)
+
+export const approveConnection = (token: string, id: number) =>
+  request('POST', `/api/v1/entities/${id}/approve`, token)
+
+export const getEntityStatus = (token: string, id: number) =>
+  request<{ online: boolean; last_seen?: string }>('GET', `/api/v1/entities/${id}/status`, token)
+
+// Admin
+export const createUser = (token: string, username: string, password: string) =>
+  request<Entity>('POST', '/api/v1/admin/users', token, { username, password })
+
+// Files
+export async function uploadFile(token: string, file: File): Promise<APIResponse<{ url: string }>> {
+  const form = new FormData()
+  form.append('file', file)
+  const res = await fetch(`${baseUrl}/api/v1/files/upload`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: form,
+  })
+  return res.json()
+}
+
+// Updates (long polling fallback)
+export const getUpdates = (token: string, since?: string) =>
+  request<{ events: unknown[] }>('GET', `/api/v1/updates${since ? `?since=${since}` : ''}`, token)
