@@ -99,35 +99,67 @@ export function BotManager({ onClose, onStartChat }: Props) {
             </div>
           </div>
 
-          {/* Bootstrap key display */}
+          {/* Bootstrap key display with full API info */}
           {createdKey && (
             <div className="p-4 rounded-xl bg-[var(--color-success)]/8 border border-[var(--color-success)]/20 space-y-3" style={{ animation: 'slideUp 0.2s ease-out' }}>
-              <div className="flex items-center gap-2">
-                <Key className="w-4 h-4 text-[var(--color-success)]" />
-                <span className="text-sm font-medium text-[var(--color-success)]">
-                  {entityDisplayName(createdKey.entity)} created!
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-3 py-2 rounded-lg break-all">
-                  {createdKey.key}
-                </code>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Key className="w-4 h-4 text-[var(--color-success)]" />
+                  <span className="text-sm font-medium text-[var(--color-success)]">
+                    {entityDisplayName(createdKey.entity)} created!
+                  </span>
+                </div>
                 <button
-                  onClick={() => handleCopy(createdKey.key)}
-                  className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                  onClick={() => setCreatedKey(null)}
+                  className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-[var(--color-success)]" /> : <Copy className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />}
+                  Dismiss
                 </button>
               </div>
+              
+              {/* API Key */}
+              <div>
+                <p className="text-[11px] font-medium text-[var(--color-text-secondary)] mb-1">API Key (Bootstrap)</p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-3 py-2 rounded-lg break-all">
+                    {createdKey.key}
+                  </code>
+                  <button
+                    onClick={() => handleCopy(createdKey.key)}
+                    className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                  >
+                    {copied ? <Check className="w-3.5 h-3.5 text-[var(--color-success)]" /> : <Copy className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* One-click copy full config */}
+              <button
+                onClick={() => {
+                  const config = `# Bot API 配置信息
+API_URL: ${window.location.origin}/api/v1/ws
+API_KEY: ${createdKey.key}
+
+# 大模型接入指南
+MODEL_PROVIDER: dashscope
+MODEL_NAME: qwen3.5-plus
+API_BASE: https://dashscope.aliyuncs.com/compatible-mode/v1
+
+# WebSocket 连接示例
+const ws = new WebSocket('\${window.location.origin}/api/v1/ws?token=${createdKey.key}');
+ws.on('open', () => console.log('Connected!'));
+ws.on('message', (data) => console.log(JSON.parse(data)));`;
+                  handleCopy(config);
+                }}
+                className="w-full py-2 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                Copy Full API Config
+              </button>
+              
               <p className="text-[11px] text-[var(--color-text-muted)] leading-relaxed">
                 This is a one-time bootstrap key. The agent will receive a permanent key upon first connection.
               </p>
-              <button
-                onClick={() => setCreatedKey(null)}
-                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
-              >
-                Dismiss
-              </button>
             </div>
           )}
 
