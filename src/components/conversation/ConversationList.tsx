@@ -15,6 +15,7 @@ interface Props {
 
 export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation }: Props) {
   const [search, setSearch] = useState('')
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['default']))
 
   const filtered = search
     ? conversations.filter((c) =>
@@ -25,6 +26,18 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
         )
       )
     : conversations
+
+  const toggleFolder = (folder: string) => {
+    setExpandedFolders(prev => {
+      const next = new Set(prev)
+      if (next.has(folder)) next.delete(folder)
+      else next.add(folder)
+      return next
+    })
+  }
+
+  // Group conversations by folder (simplified: all in "default" for now)
+  const folders = [{ id: 'default', name: 'All Conversations', conversations: filtered }]
 
   return (
     <div className="flex flex-col h-full">
