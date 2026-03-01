@@ -1,17 +1,18 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
+import * as api from '@/lib/api'
 import { useMessagesStore } from '@/store/messages'
 import { usePresenceStore } from '@/store/presence'
 import { LoginForm } from '@/components/auth/LoginForm'
+import { RegisterForm } from '@/components/auth/RegisterForm'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ConversationList } from '@/components/conversation/ConversationList'
 import { ChatThread } from '@/components/chat/ChatThread'
 import { BotManager } from '@/components/entity/BotManager'
 import { NewConversationDialog } from '@/components/conversation/NewConversationDialog'
 import { AnimpWebSocket } from '@/lib/ws-client'
-import * as api from '@/lib/api'
-import type { WSMessage, Message } from '@/lib/types'
+import type { WSMessage, Message, Entity } from '@/lib/types'
 import { MessageSquare, Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -22,6 +23,7 @@ export default function App() {
   const { setOnline, setWsConnected } = usePresenceStore()
 
   const [loginError, setLoginError] = useState('')
+  const [showRegister, setShowRegister] = useState(false)
   const [showBotManager, setShowBotManager] = useState(false)
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
@@ -40,6 +42,12 @@ export default function App() {
     } catch {
       setLoginError('Network error — cannot reach server')
     }
+  }
+
+  // ─── Register ────────────────────────────────────────────────────
+  const handleRegister = (token: string, entity: Entity) => {
+    setShowRegister(false)
+    setAuth(token, entity)
   }
 
   // ─── Load conversations ────────────────────────────────────────
@@ -84,7 +92,6 @@ export default function App() {
           const message = msg.data as Message
           if (message) {
             addMessage(message)
-            // Update conversation list
             updateConversation(message.conversation_id, {
               last_message: message,
               updated_at: message.created_at,
@@ -139,8 +146,12 @@ export default function App() {
   const activeConv = conversations.find((c) => c.id === activeId)
 
   // ─── Not logged in ─────────────────────────────────────────────
+  if (showRegister) {
+    return <RegisterForm onRegister={handleRegister} onSwitchToLogin={() => setShowRegister(false)} />
+  }
+
   if (!token || !entity) {
-    return <LoginForm onLogin={handleLogin} error={loginError} />
+    return <LoginForm onLogin={handleLogin} error={loginError} onSwitchToRegister={() => setShowRegister(true)} />
   }
 
   // ─── Main layout ───────────────────────────────────────────────
@@ -160,6 +171,16 @@ export default function App() {
           myEntityId={entity.id}
           onSelect={setActive}
           onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+          onUpdateConversation={(id, title) => {
+            const tok = useAuthStore.getState().token
+            if (tok) {
+              api.updateConversation(tok, id, title).then((res) => {
+                if (res.ok && res.data) {
+                  updateConversation(id, { title: res.data.title })
+                }
+              })
+            }
+          }}
         />
       </div>
 

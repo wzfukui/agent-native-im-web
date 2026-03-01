@@ -2,11 +2,12 @@ import { useState } from 'react'
 import { LogIn, Loader2, Zap } from 'lucide-react'
 
 interface Props {
+  onSwitchToRegister?: () => void
   onLogin: (username: string, password: string) => Promise<void>
   error?: string
 }
 
-export function LoginForm({ onLogin, error }: Props) {
+export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -91,9 +92,18 @@ export function LoginForm({ onLogin, error }: Props) {
           </button>
         </form>
 
-        <p className="text-center text-xs text-[var(--color-text-muted)] mt-6">
-          Powered by ANIMP Protocol
-        </p>
+        <div className="mt-6 flex flex-col items-center gap-3">
+          <button
+            type="button"
+            onClick={onSwitchToRegister}
+            className="text-sm text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors cursor-pointer"
+          >
+            Don't have an account? Sign up
+          </button>
+          <p className="text-xs text-[var(--color-text-muted)]">
+            Powered by ANIMP Protocol
+          </p>
+        </div>
       </div>
     </div>
   )

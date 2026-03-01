@@ -41,14 +41,16 @@ export function Sidebar({ onManageBots }: Props) {
       </button>
 
       {/* User avatar + logout */}
-      <div className="relative group">
-        <EntityAvatar entity={entity} size="sm" showStatus />
+      <div className="flex flex-col items-center gap-2">
+        <div className="relative group">
+          <EntityAvatar entity={entity} size="sm" showStatus />
+        </div>
         <button
           onClick={logout}
-          className="absolute -top-1 -right-1 w-4.5 h-4.5 rounded-full bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+          className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-danger)]"
           title="Sign out"
         >
-          <LogOut className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />
+          <LogOut className="w-4 h-4" />
         </button>
       </div>
     </div>

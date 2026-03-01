@@ -28,6 +28,9 @@ async function request<T>(method: string, path: string, token?: string, body?: u
 export const login = (username: string, password: string) =>
   request<LoginResponse>('POST', '/api/v1/auth/login', undefined, { username, password })
 
+export const register = (username: string, password: string, email?: string, displayName?: string) =>
+  request<{ token: string; entity: Entity }>('POST', '/api/v1/auth/register', undefined, { username, password, email, display_name: displayName })
+
 export const getMe = (token: string) =>
   request<Entity>('GET', '/api/v1/me', token)
 
@@ -43,6 +46,9 @@ export const getConversation = (token: string, id: number) =>
 
 export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
   request<Conversation>('POST', '/api/v1/conversations', token, data)
+
+export const updateConversation = (token: string, id: number, title: string) =>
+  request<Conversation>('PUT', `/api/v1/conversations/${id}`, token, { title })
 
 // Participants
 export const addParticipant = (token: string, convId: number, entityId: number, role?: string) =>

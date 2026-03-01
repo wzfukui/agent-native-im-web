@@ -7,13 +7,10 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function getInitials(name: string): string {
-  return name
-    .split(/[\s-_]+/)
-    .map((w) => w[0])
-    .filter(Boolean)
-    .slice(0, 2)
-    .join('')
-    .toUpperCase()
+  // 处理中英混合名称：只取第一个字符（无论是英文还是中文）
+  const firstChar = name.trim().charAt(0)
+  if (firstChar) return firstChar.toUpperCase()
+  return ''
 }
 
 export function entityDisplayName(entity?: Entity | null): string {

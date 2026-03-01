@@ -10,9 +10,10 @@ interface Props {
   myEntityId: number
   onSelect: (id: number) => void
   onNewChat: () => void
+  onUpdateConversation?: (id: number, title: string) => void
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation }: Props) {
   const [search, setSearch] = useState('')
 
   const filtered = search
@@ -66,6 +67,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
               active={conv.id === activeId}
               myEntityId={myEntityId}
               onClick={() => onSelect(conv.id)}
+              onUpdate={onUpdateConversation}
             />
           ))
         )}
