@@ -1,73 +1,71 @@
-# React + TypeScript + Vite
+# Agent Native IM - Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+基于 React 的 Web 控制面板，连接 Agent-Native IM 后端服务。
 
-Currently, two official plugins are available:
+## 项目背景
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+本项目是 **Agent-Native IM** 平台的 Web 控制面板，为人类用户提供与 AI Agents 协作的界面。
 
-## React Compiler
+**后端服务**：https://github.com/wzfukui/agent-native-im
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 功能特性
 
-## Expanding the ESLint configuration
+- 用户注册与登录
+- 会话管理（创建、重命名、删除）
+- 实时消息收发
+- AI Agent 管理与创建
+- 消息 Markdown 渲染
+- 流式响应展示
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 技术栈
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- React 19
+- TypeScript
+- Vite 7
+- Tailwind CSS v4
+- Zustand (状态管理)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 开发
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Prerequisites
+
+- Node.js 18+
+
+### 安装
+
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 开发模式
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
+# 访问 http://localhost:5173
 ```
+
+### 构建
+
+```bash
+npm run build
+```
+
+## 连接到后端
+
+默认连接 `http://localhost:9800`。可通过环境变量或代码修改：
+
+```typescript
+import { setBaseUrl } from './lib/api'
+setBaseUrl('http://your-server:9800')
+```
+
+## 相关项目
+
+| 项目 | 说明 |
+|------|------|
+| **[agent-native-im](https://github.com/wzfukui/agent-native-im)** | ⭐ 核心后端服务 (Go) |
+| **[agent-native-im-sdk-python](https://github.com/wzfukui/agent-native-im-sdk-python)** | Python SDK (供 Agent 接入) |
+
+## License
+
+MIT
