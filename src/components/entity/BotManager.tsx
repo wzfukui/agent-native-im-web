@@ -8,8 +8,11 @@ import { entityDisplayName, cn } from '@/lib/utils'
 import {
   Bot, Plus, Trash2, Copy, Check, Key, Loader2, X,
   Shield, Wifi, WifiOff, ChevronRight, MessageSquare, Users,
-  Sparkles, FileText, Settings, ArrowLeft,
+  Sparkles, FileText, Settings, ArrowLeft, ChevronDown, ChevronUp,
+  ExternalLink,
 } from 'lucide-react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 
 interface Props {
   onClose: () => void
@@ -24,7 +27,8 @@ export function BotManager({ onClose, onStartChat }: Props) {
   const [creating, setCreating] = useState(false)
   const [newName, setNewName] = useState('')
   const [createdKey, setCreatedKey] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<string | false>(false)
+  const [docExpanded, setDocExpanded] = useState(false)
   const [selectedBot, setSelectedBot] = useState<Entity | null>(null)
   const [botConversations, setBotConversations] = useState<Conversation[]>([])
   const [loadingConvs, setLoadingConvs] = useState(false)
@@ -72,9 +76,9 @@ export function BotManager({ onClose, onStartChat }: Props) {
     if (selectedBot?.id === id) setSelectedBot(null)
   }
 
-  const handleCopy = (text: string) => {
+  const handleCopy = (text: string, label: string = 'default') => {
     navigator.clipboard.writeText(text)
-    setCopied(true)
+    setCopied(label)
     setTimeout(() => setCopied(false), 2000)
   }
 
@@ -295,10 +299,11 @@ export function BotManager({ onClose, onStartChat }: Props) {
             </div>
           </div>
 
-          {/* Bootstrap key display */}
+          {/* Created bot: connection info + onboarding doc */}
           {createdKey && (
-            <div className="p-4 rounded-xl bg-[var(--color-success)]/8 border border-[var(--color-success)]/20 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="rounded-xl bg-[var(--color-success)]/8 border border-[var(--color-success)]/20 overflow-hidden">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 pt-4 pb-2">
                 <div className="flex items-center gap-2">
                   <Key className="w-4 h-4 text-[var(--color-success)]" />
                   <span className="text-sm font-medium text-[var(--color-success)]">
@@ -306,40 +311,92 @@ export function BotManager({ onClose, onStartChat }: Props) {
                   </span>
                 </div>
                 <button
-                  onClick={() => setCreatedKey(null)}
+                  onClick={() => { setCreatedKey(null); setDocExpanded(false) }}
                   className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
                 >
                   Dismiss
                 </button>
               </div>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-3 py-2 rounded-lg break-all">
-                  {createdKey.key}
-                </code>
+
+              {/* Connection fields */}
+              <div className="px-4 space-y-2">
+                {/* API URL */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase w-14 flex-shrink-0">API</span>
+                  <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1.5 rounded-lg truncate">
+                    {window.location.origin}/api/v1
+                  </code>
+                  <button
+                    onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')}
+                    className="w-7 h-7 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                    title="Copy API URL"
+                  >
+                    {copied === 'api' ? <Check className="w-3 h-3 text-[var(--color-success)]" /> : <Copy className="w-3 h-3 text-[var(--color-text-muted)]" />}
+                  </button>
+                </div>
+                {/* Token */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase w-14 flex-shrink-0">Token</span>
+                  <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1.5 rounded-lg truncate">
+                    {createdKey.key}
+                  </code>
+                  <button
+                    onClick={() => handleCopy(createdKey.key, 'token')}
+                    className="w-7 h-7 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                    title="Copy Token"
+                  >
+                    {copied === 'token' ? <Check className="w-3 h-3 text-[var(--color-success)]" /> : <Copy className="w-3 h-3 text-[var(--color-text-muted)]" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="px-4 pt-3 pb-2 flex gap-2">
                 <button
-                  onClick={() => handleCopy(createdKey.key)}
-                  className="w-8 h-8 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                  onClick={() => handleCopy(createdKey.doc, 'doc')}
+                  className="flex-1 py-2 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  {copied ? <Check className="w-3.5 h-3.5 text-[var(--color-success)]" /> : <Copy className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />}
+                  {copied === 'doc' ? <Check className="w-3.5 h-3.5" /> : <FileText className="w-3.5 h-3.5" />}
+                  {copied === 'doc' ? 'Copied!' : '复制接入文档'}
+                </button>
+                <button
+                  onClick={() => {
+                    const envConfig = `IM_SERVER=${window.location.origin}\nBOT_TOKEN=${createdKey.key}`
+                    handleCopy(envConfig, 'env')
+                  }}
+                  className="flex-1 py-2 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors border border-[var(--color-border)]"
+                >
+                  {copied === 'env' ? <Check className="w-3.5 h-3.5 text-[var(--color-success)]" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copied === 'env' ? 'Copied!' : '复制 .env 配置'}
                 </button>
               </div>
-              <button
-                onClick={() => {
-                  const config = `# Bot API 配置信息
-API_URL: ${window.location.origin}/api/v1/ws
-API_KEY: ${createdKey.key}
 
-# 大模型接入指南
-MODEL_PROVIDER: dashscope
-MODEL_NAME: qwen3.5-plus
-API_BASE: https://dashscope.aliyuncs.com/compatible-mode/v1`
-                  handleCopy(config);
-                }}
-                className="w-full py-2 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                Copy Full API Config
-              </button>
+              {/* Collapsible doc preview */}
+              <div className="px-4 pb-2">
+                <button
+                  onClick={() => setDocExpanded(!docExpanded)}
+                  className="w-full flex items-center justify-center gap-1 py-1.5 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
+                >
+                  {docExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                  {docExpanded ? '收起文档预览' : '展开文档预览'}
+                </button>
+                {docExpanded && (
+                  <div className="mt-1 p-3 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border)] max-h-64 overflow-y-auto text-xs prose prose-invert prose-xs max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{createdKey.doc}</ReactMarkdown>
+                  </div>
+                )}
+              </div>
+
+              {/* Start chat button */}
+              <div className="px-4 pb-4">
+                <button
+                  onClick={() => { onStartChat(createdKey.entity.id); onClose() }}
+                  className="w-full py-2 rounded-lg bg-[var(--color-bot)]/15 hover:bg-[var(--color-bot)]/25 text-[var(--color-bot)] text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  开始对话
+                </button>
+              </div>
             </div>
           )}
 
