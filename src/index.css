@@ -88,3 +88,15 @@
 .md a:hover { text-decoration: underline; }
 .md strong { font-weight: 600; }
 .md hr { border: none; border-top: 1px solid var(--color-border); margin: 0.6rem 0; }
+
+/* Artifact rendering */
+.artifact-container { min-width: 280px; max-width: 100%; }
+.artifact-code .md pre { margin: 0; border: none; border-radius: 0; }
+.artifact-code .md pre code { font-size: 0.82em; }
+.artifact-mermaid svg { max-width: 100%; height: auto; }
+.artifact-mermaid .node rect,
+.artifact-mermaid .node circle,
+.artifact-mermaid .node polygon { fill: var(--color-bg-tertiary) !important; stroke: var(--color-border) !important; }
+.artifact-mermaid .edgePath .path { stroke: var(--color-text-muted) !important; }
+.artifact-mermaid .edgeLabel { background: var(--color-bg-secondary) !important; color: var(--color-text-secondary) !important; }
+.artifact-mermaid text { fill: var(--color-text-secondary) !important; }

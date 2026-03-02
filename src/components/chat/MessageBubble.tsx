@@ -4,6 +4,7 @@ import remarkGfm from 'remark-gfm'
 import { cn, entityDisplayName, formatTime, formatFileSize } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { InteractionCard } from './InteractionCard'
+import { ArtifactRenderer } from './ArtifactRenderer'
 import type { Message } from '@/lib/types'
 import {
   FileText, Download, Image as ImageIcon, Play, Pause,
@@ -115,6 +116,28 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
           </div>
         )
 
+      case 'artifact': {
+        const artifactType = (layers.data?.artifact_type as string) || 'html'
+        const source = (layers.data?.source as string) || body
+        const title = (layers.data?.title as string) || ''
+        const language = (layers.data?.language as string) || ''
+        const height = (layers.data?.height as number) || 300
+        return (
+          <div className="min-w-[280px]">
+            {layers.summary && (
+              <p className="text-sm leading-relaxed px-3.5 pt-2.5 pb-1.5">{layers.summary}</p>
+            )}
+            <ArtifactRenderer
+              artifactType={artifactType}
+              source={source}
+              title={title}
+              language={language}
+              height={height}
+            />
+          </div>
+        )
+      }
+
       case 'file':
         return (
           <div className="space-y-1.5">
@@ -198,7 +221,8 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
         <div className={cn('flex items-center gap-1', isSelf ? 'flex-row-reverse' : '')}>
           <div
             className={cn(
-              'rounded-2xl px-3.5 py-2.5 max-w-full',
+              'rounded-2xl max-w-full',
+              message.content_type === 'artifact' ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
               isSelf
                 ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
                 : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
