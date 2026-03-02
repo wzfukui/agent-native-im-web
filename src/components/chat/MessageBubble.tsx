@@ -56,7 +56,10 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
   const renderContent = () => {
     const body = (layers.data?.body as string) || layers.summary || ''
 
-    switch (message.content_type) {
+    // Bot/service messages default to markdown rendering
+    const effectiveType = (message.content_type === 'text' && isBot) ? 'markdown' : message.content_type
+
+    switch (effectiveType) {
       case 'markdown':
         return (
           <div className="md text-sm leading-relaxed">

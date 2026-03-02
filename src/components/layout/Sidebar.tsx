@@ -7,10 +7,11 @@ import * as api from '@/lib/api'
 import { Bot, LogOut, Zap, Wifi, WifiOff, X, Check, Loader2 } from 'lucide-react'
 
 interface Props {
-  onManageBots: () => void
+  botMode: boolean
+  onToggleBots: () => void
 }
 
-export function Sidebar({ onManageBots }: Props) {
+export function Sidebar({ botMode, onToggleBots }: Props) {
   const entity = useAuthStore((s) => s.entity)
   const token = useAuthStore((s) => s.token)!
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -57,8 +58,13 @@ export function Sidebar({ onManageBots }: Props) {
 
         {/* Bot manager */}
         <button
-          onClick={onManageBots}
-          className="w-10 h-10 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-bot)]"
+          onClick={onToggleBots}
+          className={cn(
+            'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
+            botMode
+              ? 'bg-[var(--color-bot)]/15 text-[var(--color-bot)]'
+              : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-bot)]'
+          )}
           title="Manage Agents"
         >
           <Bot className="w-5 h-5" />
