@@ -95,8 +95,14 @@ export const deleteEntity = (token: string, id: number) =>
 export const approveConnection = (token: string, id: number) =>
   request('POST', `/api/v1/entities/${id}/approve`, token)
 
+export const updateEntity = (token: string, id: number, data: { display_name?: string; metadata?: Record<string, unknown> }) =>
+  request<Entity>('PUT', `/api/v1/entities/${id}`, token, data)
+
 export const getEntityStatus = (token: string, id: number) =>
   request<{ online: boolean; last_seen?: string }>('GET', `/api/v1/entities/${id}/status`, token)
+
+export const updateProfile = (token: string, data: { display_name?: string; avatar_url?: string }) =>
+  request<Entity>('PUT', '/api/v1/me', token, data)
 
 // Admin
 export const createUser = (token: string, username: string, password: string) =>

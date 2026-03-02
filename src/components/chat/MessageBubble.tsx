@@ -7,21 +7,26 @@ import { InteractionCard } from './InteractionCard'
 import type { Message } from '@/lib/types'
 import {
   FileText, Download, Image as ImageIcon, Play, Pause,
-  Brain, ChevronDown, ChevronUp, Reply, CornerUpLeft, Ban,
+  Brain, ChevronDown, ChevronUp, Reply, CornerUpLeft, Ban, Trash2,
 } from 'lucide-react'
 
 interface Props {
   message: Message
   isSelf: boolean
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
+  onRevoke?: (msgId: number) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, onInteractionReply, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, onInteractionReply, onRevoke, showSender = true }: Props) {
   const [showThinking, setShowThinking] = useState(false)
   const layers = message.layers || {}
   const isRevoked = !!message.revoked_at
   const isBot = message.sender_type === 'bot' || message.sender_type === 'service'
+
+  // Can revoke within 2 minutes
+  const canRevoke = isSelf && !isRevoked && onRevoke &&
+    (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000
 
   // Revoked message
   if (isRevoked) {
@@ -179,24 +184,37 @@ export function MessageBubble({ message, isSelf, onInteractionReply, showSender 
           </div>
         )}
 
-        {/* Bubble */}
-        <div
-          className={cn(
-            'rounded-2xl px-3.5 py-2.5 max-w-full',
-            isSelf
-              ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
-              : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
-          )}
-        >
-          {renderContent()}
+        {/* Bubble + revoke */}
+        <div className={cn('flex items-center gap-1', isSelf ? 'flex-row-reverse' : '')}>
+          <div
+            className={cn(
+              'rounded-2xl px-3.5 py-2.5 max-w-full',
+              isSelf
+                ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
+                : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
+            )}
+          >
+            {renderContent()}
 
-          {/* Interaction card */}
-          {layers.interaction && onInteractionReply && (
-            <InteractionCard
-              interaction={layers.interaction}
-              messageId={message.id}
-              onReply={(choice, label) => onInteractionReply(message.id, choice, label)}
-            />
+            {/* Interaction card */}
+            {layers.interaction && onInteractionReply && (
+              <InteractionCard
+                interaction={layers.interaction}
+                messageId={message.id}
+                onReply={(choice, label) => onInteractionReply(message.id, choice, label)}
+              />
+            )}
+          </div>
+
+          {/* Revoke button */}
+          {canRevoke && (
+            <button
+              onClick={() => onRevoke!(message.id)}
+              className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer transition-all flex-shrink-0"
+              title="撤回消息"
+            >
+              <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
+            </button>
           )}
         </div>
 

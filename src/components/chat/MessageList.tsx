@@ -10,9 +10,10 @@ interface Props {
   hasMore?: boolean
   onLoadMore?: () => void
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
+  onRevoke?: (msgId: number) => void
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore, onInteractionReply }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore, onInteractionReply, onRevoke }: Props) {
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const prevLengthRef = useRef(0)
@@ -79,6 +80,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
             isSelf={msg.sender_id === myEntityId}
             showSender={shouldShowSender(msg, i)}
             onInteractionReply={onInteractionReply}
+            onRevoke={onRevoke}
           />
         ))}
       </div>

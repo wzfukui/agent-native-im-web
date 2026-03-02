@@ -141,30 +141,47 @@ export function BotManager({ onClose, onStartChat }: Props) {
                     <div className="flex items-start gap-2">
                       <Sparkles className="w-4 h-4 text-[var(--color-accent)] mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-xs font-medium text-[var(--color-text-secondary)]">Capabilities</p>
+                        <p className="text-xs font-medium text-[var(--color-text-secondary)]">Description</p>
                         <p className="text-sm text-[var(--color-text-primary)] mt-0.5">
-                          {selectedBot.metadata?.description as string || 'AI Assistant powered by large language model'}
+                          {(selectedBot.metadata as Record<string, unknown>)?.description as string || 'AI Agent'}
                         </p>
                       </div>
                     </div>
-                    
-                    <div className="flex items-start gap-2">
-                      <FileText className="w-4 h-4 text-[var(--color-bot)] mt-0.5 flex-shrink-0" />
-                      <div>
-                        <p className="text-xs font-medium text-[var(--color-text-secondary)]">Services</p>
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          <span className="px-2 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs">
-                            Text Chat
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-[var(--color-bot)]/10 text-[var(--color-bot)] text-xs">
-                            Code Generation
-                          </span>
-                          <span className="px-2 py-0.5 rounded-md bg-[var(--color-success)]/10 text-[var(--color-success)] text-xs">
-                            Problem Solving
-                          </span>
+
+                    {/* Dynamic capabilities from metadata */}
+                    {(() => {
+                      const meta = selectedBot.metadata as Record<string, unknown> | undefined
+                      const caps = (meta?.capabilities as string[]) || []
+                      return caps.length > 0 ? (
+                        <div className="flex items-start gap-2">
+                          <FileText className="w-4 h-4 text-[var(--color-bot)] mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="text-xs font-medium text-[var(--color-text-secondary)]">Capabilities</p>
+                            <div className="flex flex-wrap gap-1.5 mt-1">
+                              {caps.map((cap, i) => (
+                                <span key={i} className="px-2 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs">
+                                  {cap}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
+                      ) : null
+                    })()}
+
+                    {/* Approve button for offline bots */}
+                    {!isOnline && (
+                      <button
+                        onClick={async () => {
+                          await api.approveConnection(token, selectedBot.id)
+                          loadEntities()
+                        }}
+                        className="mt-2 w-full py-2 rounded-lg bg-[var(--color-success)]/15 hover:bg-[var(--color-success)]/25 text-[var(--color-success)] text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        审批连接（签发永久密钥）
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

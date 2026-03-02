@@ -135,6 +135,15 @@ export default function App() {
     }
   }, [token, entity?.id])
 
+  // ─── Cancel stream ────────────────────────────────────────────
+  const handleCancelStream = useCallback((streamId: string, conversationId: number) => {
+    wsRef.current?.send({
+      type: 'task.cancel',
+      data: { stream_id: streamId, conversation_id: conversationId },
+    })
+    endStream(streamId)
+  }, [])
+
   // ─── New chat from bot manager ─────────────────────────────────
   const handleStartChatFromBot = (entityId: number) => {
     setShowBotManager(false)
@@ -191,6 +200,7 @@ export default function App() {
             key={activeConv.id}
             conversation={activeConv}
             onBack={() => setActive(null)}
+            onCancelStream={handleCancelStream}
           />
         ) : (
           <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-4">

@@ -16,9 +16,10 @@ const EMPTY_MESSAGES: Message[] = []
 interface Props {
   conversation: Conversation
   onBack?: () => void
+  onCancelStream?: (streamId: string, conversationId: number) => void
 }
 
-export function ChatThread({ conversation, onBack }: Props) {
+export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const messages = useMessagesStore((s) => s.byConv[conversation.id] ?? EMPTY_MESSAGES)
@@ -27,6 +28,7 @@ export function ChatThread({ conversation, onBack }: Props) {
   const setMessages = useMessagesStore((s) => s.setMessages)
   const prependMessages = useMessagesStore((s) => s.prependMessages)
   const addMessage = useMessagesStore((s) => s.addMessage)
+  const revokeMessage = useMessagesStore((s) => s.revokeMessage)
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -105,6 +107,14 @@ export function ChatThread({ conversation, onBack }: Props) {
 
     if (res.ok && res.data) {
       addMessage(res.data)
+    }
+  }, [token, conversation.id])
+
+  // Revoke message
+  const handleRevoke = useCallback(async (msgId: number) => {
+    const res = await api.revokeMessage(token, msgId)
+    if (res.ok) {
+      revokeMessage(conversation.id, msgId)
     }
   }, [token, conversation.id])
 
@@ -188,11 +198,12 @@ export function ChatThread({ conversation, onBack }: Props) {
           hasMore={hasMore}
           onLoadMore={handleLoadMore}
           onInteractionReply={handleInteractionReply}
+          onRevoke={handleRevoke}
         />
       )}
 
       {/* Streaming overlay */}
-      <StreamingOverlay streams={convStreams} />
+      <StreamingOverlay streams={convStreams} onCancel={onCancelStream} />
 
       {/* Composer */}
       <MessageComposer

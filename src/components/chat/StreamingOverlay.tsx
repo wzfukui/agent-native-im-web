@@ -1,13 +1,14 @@
 import { cn } from '@/lib/utils'
 import type { ActiveStream } from '@/lib/types'
-import { Loader2, Brain, ChevronDown, ChevronUp } from 'lucide-react'
+import { Loader2, Brain, ChevronDown, ChevronUp, Square } from 'lucide-react'
 import { useState } from 'react'
 
 interface Props {
   streams: ActiveStream[]
+  onCancel?: (streamId: string, conversationId: number) => void
 }
 
-export function StreamingOverlay({ streams }: Props) {
+export function StreamingOverlay({ streams, onCancel }: Props) {
   const [expandedThinking, setExpandedThinking] = useState<string | null>(null)
 
   if (streams.length === 0) return null
@@ -37,6 +38,16 @@ export function StreamingOverlay({ streams }: Props) {
                 <span className="text-[10px] font-medium text-[var(--color-accent)] bg-[var(--color-accent-dim)] px-2 py-0.5 rounded-full flex-shrink-0">
                   {status.phase}
                 </span>
+              )}
+              {onCancel && (
+                <button
+                  onClick={() => onCancel(stream.stream_id, stream.conversation_id)}
+                  className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-error)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-error)]/10 px-2 py-1 rounded-md cursor-pointer transition-colors flex-shrink-0"
+                  title="停止生成"
+                >
+                  <Square className="w-2.5 h-2.5" />
+                  Stop
+                </button>
               )}
             </div>
 

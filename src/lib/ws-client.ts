@@ -80,6 +80,12 @@ export class AnimpWebSocket {
     this._connected = false
   }
 
+  send(data: unknown) {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify(data))
+    }
+  }
+
   updateToken(newToken: string) {
     this.token = newToken
   }
