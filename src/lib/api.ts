@@ -47,8 +47,8 @@ export const getConversation = (token: string, id: number) =>
 export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
   request<Conversation>('POST', '/api/v1/conversations', token, data)
 
-export const updateConversation = (token: string, id: number, title: string) =>
-  request<Conversation>('PUT', `/api/v1/conversations/${id}`, token, { title })
+export const updateConversation = (token: string, id: number, data: { title?: string; description?: string }) =>
+  request<Conversation>('PUT', `/api/v1/conversations/${id}`, token, data)
 
 // Participants
 export const addParticipant = (token: string, convId: number, entityId: number, role?: string) =>
@@ -153,6 +153,40 @@ export const registerPush = (token: string, data: { endpoint: string; key_p256dh
 
 export const unregisterPush = (token: string, endpoint: string) =>
   request('POST', '/api/v1/push/unsubscribe', token, { endpoint })
+
+// Conversation lifecycle
+export const leaveConversation = (token: string, convId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/leave`, token)
+
+export const archiveConversation = (token: string, convId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/archive`, token)
+
+export const unarchiveConversation = (token: string, convId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/unarchive`, token)
+
+// Interaction response
+export const respondToInteraction = (token: string, msgId: number, value: string) =>
+  request('POST', `/api/v1/messages/${msgId}/respond`, token, { value })
+
+// Invite links
+export const createInviteLink = (token: string, convId: number, data?: { max_uses?: number; expires_in?: number }) =>
+  request<{ id: number; code: string; conversation_id: number }>('POST', `/api/v1/conversations/${convId}/invite`, token, data)
+
+export const listInviteLinks = (token: string, convId: number) =>
+  request<{ id: number; code: string; use_count: number; max_uses: number; expires_at?: string }[]>('GET', `/api/v1/conversations/${convId}/invites`, token)
+
+export const getInviteInfo = (token: string, code: string) =>
+  request<{ invite: unknown; conversation: unknown }>('GET', `/api/v1/invite/${code}`, token)
+
+export const joinViaInvite = (token: string, code: string) =>
+  request('POST', `/api/v1/invite/${code}/join`, token)
+
+export const deleteInviteLink = (token: string, id: number) =>
+  request('DELETE', `/api/v1/invites/${id}`, token)
+
+// Message edit
+export const editMessage = (token: string, msgId: number, text: string) =>
+  request<Message>('PUT', `/api/v1/messages/${msgId}`, token, { text })
 
 // Updates (long polling fallback)
 export const getUpdates = (token: string, since?: string) =>

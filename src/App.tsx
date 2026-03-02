@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
@@ -9,6 +9,7 @@ import { RegisterForm } from '@/components/auth/RegisterForm'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ConversationList } from '@/components/conversation/ConversationList'
 import { ChatThread } from '@/components/chat/ChatThread'
+import { ConversationSettingsPanel } from '@/components/conversation/ConversationSettingsPanel'
 import { BotList } from '@/components/entity/BotList'
 import { BotDetail } from '@/components/entity/BotDetail'
 import { NewConversationDialog } from '@/components/conversation/NewConversationDialog'
@@ -18,10 +19,11 @@ import { registerPushNotifications } from '@/lib/push'
 import type { WSMessage, Message, Entity } from '@/lib/types'
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { cacheConversations, getCachedConversations } from '@/lib/cache'
 
 export default function App() {
   const { token, entity, setAuth, logout } = useAuthStore()
-  const { conversations, activeId, setConversations, setActive, addConversation, updateConversation } = useConversationsStore()
+  const { conversations, activeId, setConversations, setActive, addConversation, updateConversation, removeConversation, mutedIds } = useConversationsStore()
   const { addMessage, revokeMessage, startStream, updateStream, endStream } = useMessagesStore()
   const { setOnline, setWsConnected } = usePresenceStore()
 
@@ -34,6 +36,8 @@ export default function App() {
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
   const wsRef = useRef<AnimpWebSocket | null>(null)
   const [botEntities, setBotEntities] = useState<Entity[]>([])
+  const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number }>>>(new Map())
+  const [showSettings, setShowSettings] = useState(false)
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -67,6 +71,14 @@ export default function App() {
     setAuth(token, entity)
   }
 
+  // ─── Load cached conversations on start ─────────────────────
+  useEffect(() => {
+    if (!token) return
+    getCachedConversations().then((cached) => {
+      if (cached.length > 0) setConversations(cached)
+    })
+  }, [token])
+
   // ─── Load conversations ────────────────────────────────────────
   const loadConversations = useCallback(async () => {
     if (!token) return
@@ -74,6 +86,7 @@ export default function App() {
     if (res.ok && res.data) {
       const convs = Array.isArray(res.data) ? res.data : []
       setConversations(convs)
+      cacheConversations(convs)
 
       // Load initial presence for all participants
       const entityIds = new Set<number>()
@@ -107,6 +120,18 @@ export default function App() {
     if (!token) { setIsAdmin(false); return }
     api.adminGetStats(token).then((res) => setIsAdmin(res.ok === true))
   }, [token])
+
+  // ─── Title badge for unread count ────────────────────────────
+  const totalUnread = useMemo(() => {
+    return conversations.reduce((sum, c) => {
+      if (mutedIds.has(c.id)) return sum
+      return sum + (c.unread_count || 0)
+    }, 0)
+  }, [conversations, mutedIds])
+
+  useEffect(() => {
+    document.title = totalUnread > 0 ? `(${totalUnread}) Agent-Native IM` : 'Agent-Native IM'
+  }, [totalUnread])
 
   // ─── WebSocket connection ──────────────────────────────────────
   useEffect(() => {
@@ -170,6 +195,62 @@ export default function App() {
           break
         }
 
+        case 'conversation.updated': {
+          const convData = msg.data as {
+            conversation_id?: number
+            title?: string
+            description?: string
+            action?: string
+            entity_id?: number
+          }
+          if (convData?.conversation_id) {
+            // If I was removed, remove from list
+            if (
+              (convData.action === 'member_removed' || convData.action === 'member_left') &&
+              convData.entity_id === entity?.id
+            ) {
+              const convs = useConversationsStore.getState().conversations.filter(
+                (c) => c.id !== convData.conversation_id
+              )
+              setConversations(convs)
+              if (useConversationsStore.getState().activeId === convData.conversation_id) {
+                setActive(null)
+              }
+            } else {
+              // Refresh conversation data
+              if (token) {
+                api.getConversation(token, convData.conversation_id).then((res) => {
+                  if (res.ok && res.data) {
+                    updateConversation(convData.conversation_id!, {
+                      title: res.data.title,
+                      description: res.data.description,
+                      participants: res.data.participants,
+                    })
+                  }
+                })
+              }
+            }
+          }
+          break
+        }
+
+        case 'typing': {
+          const typData = msg.data as { conversation_id?: number; entity_id?: number; entity_name?: string }
+          if (typData?.conversation_id && typData?.entity_id && typData.entity_id !== entity?.id) {
+            setTypingMap((prev) => {
+              const next = new Map(prev)
+              const convTyping = new Map(next.get(typData.conversation_id!) || [])
+              convTyping.set(typData.entity_id!, {
+                name: typData.entity_name || `User ${typData.entity_id}`,
+                expiresAt: Date.now() + 4000,
+              })
+              next.set(typData.conversation_id!, convTyping)
+              return next
+            })
+          }
+          break
+        }
+
         case 'stream_start':
           if (msg.stream_id && msg.conversation_id && msg.sender_id) {
             startStream(msg.stream_id, msg.conversation_id, msg.sender_id, msg.layers || {})
@@ -215,6 +296,14 @@ export default function App() {
     }
   }, [token, entity?.id])
 
+  // ─── Typing indicator ─────────────────────────────────────────
+  const handleTyping = useCallback((conversationId: number) => {
+    wsRef.current?.send({
+      type: 'typing',
+      data: { conversation_id: conversationId },
+    })
+  }, [])
+
   // ─── Cancel stream ────────────────────────────────────────────
   const handleCancelStream = useCallback((streamId: string, conversationId: number) => {
     wsRef.current?.send({
@@ -244,6 +333,24 @@ export default function App() {
     loadBotEntities()
   }
 
+  // ─── Leave / Archive conversation ────────────────────────────
+  const handleLeaveConversation = useCallback(async (convId: number) => {
+    if (!token) return
+    if (!confirm('Are you sure you want to leave this conversation?')) return
+    const res = await api.leaveConversation(token, convId)
+    if (res.ok) {
+      removeConversation(convId)
+    }
+  }, [token])
+
+  const handleArchiveConversation = useCallback(async (convId: number) => {
+    if (!token) return
+    const res = await api.archiveConversation(token, convId)
+    if (res.ok) {
+      removeConversation(convId)
+    }
+  }, [token])
+
   // ─── Active conversation ───────────────────────────────────────
   const activeConv = conversations.find((c) => c.id === activeId)
 
@@ -269,6 +376,7 @@ export default function App() {
         isAdmin={isAdmin}
         onToggleBots={() => setViewMode(viewMode === 'bots' ? 'chat' : 'bots')}
         onToggleAdmin={() => setViewMode(viewMode === 'admin' ? 'chat' : 'admin')}
+        onToggleChat={() => setViewMode('chat')}
       />
 
       {viewMode === 'admin' ? (
@@ -294,13 +402,15 @@ export default function App() {
                 onUpdateConversation={(id, title) => {
                   const tok = useAuthStore.getState().token
                   if (tok) {
-                    api.updateConversation(tok, id, title).then((res) => {
+                    api.updateConversation(tok, id, { title }).then((res) => {
                       if (res.ok && res.data) {
                         updateConversation(id, { title: res.data.title })
                       }
                     })
                   }
                 }}
+                onLeave={handleLeaveConversation}
+                onArchive={handleArchiveConversation}
               />
             ) : (
               <BotList
@@ -312,17 +422,31 @@ export default function App() {
           </div>
 
           {/* Right panel: ChatThread or BotDetail */}
-          <div className="flex-1 min-w-0">
+          <div className="flex-1 min-w-0 flex">
             {viewMode === 'chat' ? (
               activeConv ? (
-                <ChatThread
-                  key={activeConv.id}
-                  conversation={activeConv}
-                  onBack={() => setActive(null)}
-                  onCancelStream={handleCancelStream}
-                />
+                <>
+                  <div className="flex-1 min-w-0">
+                    <ChatThread
+                      key={activeConv.id}
+                      conversation={activeConv}
+                      onBack={() => setActive(null)}
+                      onCancelStream={handleCancelStream}
+                      onTyping={handleTyping}
+                      typingEntities={typingMap.get(activeConv.id)}
+                      onToggleSettings={() => setShowSettings(!showSettings)}
+                    />
+                  </div>
+                  {showSettings && (
+                    <ConversationSettingsPanel
+                      conversation={activeConv}
+                      onClose={() => setShowSettings(false)}
+                      onLeave={() => removeConversation(activeConv.id)}
+                    />
+                  )}
+                </>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-4">
+                <div className="flex-1 h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-4">
                   <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-bot)]/10 flex items-center justify-center">
                     <Zap className="w-10 h-10 text-[var(--color-accent)] opacity-40" />
                   </div>
@@ -333,13 +457,15 @@ export default function App() {
                 </div>
               )
             ) : (
-              <BotDetail
-                bot={selectedBot}
-                onBack={() => setSelectedBotId(null)}
-                onOpenConversation={handleOpenConversation}
-                onDelete={handleDeleteBot}
-                onStartChat={handleStartChatFromBot}
-              />
+              <div className="flex-1 min-w-0">
+                <BotDetail
+                  bot={selectedBot}
+                  onBack={() => setSelectedBotId(null)}
+                  onOpenConversation={handleOpenConversation}
+                  onDelete={handleDeleteBot}
+                  onStartChat={handleStartChatFromBot}
+                />
+              </div>
             )}
           </div>
         </>

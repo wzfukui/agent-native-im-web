@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Search, Plus, MessageSquare } from 'lucide-react'
 import { ConversationItem } from './ConversationItem'
 import type { Conversation } from '@/lib/types'
-import { cn } from '@/lib/utils'
 
 interface Props {
   conversations: Conversation[]
@@ -11,11 +11,13 @@ interface Props {
   onSelect: (id: number) => void
   onNewChat: () => void
   onUpdateConversation?: (id: number, title: string) => void
+  onLeave?: (id: number) => void
+  onArchive?: (id: number) => void
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation, onLeave, onArchive }: Props) {
+  const { t } = useTranslation()
   const [search, setSearch] = useState('')
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set(['default']))
 
   const filtered = search
     ? conversations.filter((c) =>
@@ -27,23 +29,11 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
       )
     : conversations
 
-  const toggleFolder = (folder: string) => {
-    setExpandedFolders(prev => {
-      const next = new Set(prev)
-      if (next.has(folder)) next.delete(folder)
-      else next.add(folder)
-      return next
-    })
-  }
-
-  // Group conversations by folder (simplified: all in "default" for now)
-  const folders = [{ id: 'default', name: 'All Conversations', conversations: filtered }]
-
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Messages</h2>
+        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t('conversation.messages')}</h2>
         <button
           onClick={onNewChat}
           className="w-8 h-8 rounded-lg bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 flex items-center justify-center transition-colors cursor-pointer"
@@ -59,7 +49,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search conversations..."
+            placeholder={t('conversation.search')}
             className="w-full h-8 pl-8.5 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
           />
         </div>
@@ -70,7 +60,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-[var(--color-text-muted)]">
             <MessageSquare className="w-8 h-8 mb-2 opacity-40" />
-            <p className="text-xs">{search ? 'No matches' : 'No conversations yet'}</p>
+            <p className="text-xs">{search ? t('conversation.noMatches') : t('conversation.noConversations')}</p>
           </div>
         ) : (
           filtered.map((conv) => (
@@ -81,6 +71,8 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
               myEntityId={myEntityId}
               onClick={() => onSelect(conv.id)}
               onUpdate={onUpdateConversation}
+              onLeave={onLeave}
+              onArchive={onArchive}
             />
           ))
         )}

@@ -42,6 +42,74 @@
   input, textarea, button { font-family: inherit; }
 }
 
+/* Theme: midnight (default is dark) */
+[data-theme="midnight"] {
+  --color-bg-primary: #080818;
+  --color-bg-secondary: #0e0e20;
+  --color-bg-tertiary: #14142a;
+  --color-bg-hover: #1a1a35;
+  --color-bg-active: #222248;
+  --color-bg-input: #0c0c1a;
+  --color-border: #202040;
+  --color-border-subtle: #18182e;
+  --color-text-primary: #e8e8f4;
+  --color-text-secondary: #9090b0;
+  --color-text-muted: #585878;
+  --color-accent: #7c3aed;
+  --color-accent-hover: #a78bfa;
+  --color-accent-dim: rgba(124, 58, 237, 0.10);
+  --color-bubble-self: #1a1a45;
+  --color-bubble-other: #14142a;
+}
+
+/* Theme: light */
+[data-theme="light"] {
+  --color-bg-primary: #f8f9fa;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f0f1f3;
+  --color-bg-hover: #e8e9ec;
+  --color-bg-active: #dde0e6;
+  --color-bg-input: #ffffff;
+  --color-border: #d4d6dc;
+  --color-border-subtle: #e2e4e8;
+  --color-text-primary: #1a1a2e;
+  --color-text-secondary: #555570;
+  --color-text-muted: #9090a0;
+  --color-accent: #4f46e5;
+  --color-accent-hover: #6366f1;
+  --color-accent-dim: rgba(79, 70, 229, 0.08);
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-error: #dc2626;
+  --color-bot: #7c3aed;
+  --color-user: #2563eb;
+  --color-bubble-self: #e0e7ff;
+  --color-bubble-other: #ffffff;
+}
+[data-theme="light"] .md pre { background: #f0f1f3; }
+[data-theme="light"] .md code { background: rgba(79, 70, 229, 0.08); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #c4c6cc; }
+
+/* Theme: green */
+[data-theme="green"] {
+  --color-bg-primary: #0a110c;
+  --color-bg-secondary: #0f1812;
+  --color-bg-tertiary: #151f18;
+  --color-bg-hover: #1b281e;
+  --color-bg-active: #223428;
+  --color-bg-input: #0c140e;
+  --color-border: #1e3022;
+  --color-border-subtle: #172618;
+  --color-text-primary: #e2f0e6;
+  --color-text-secondary: #88a890;
+  --color-text-muted: #567060;
+  --color-accent: #22c55e;
+  --color-accent-hover: #4ade80;
+  --color-accent-dim: rgba(34, 197, 94, 0.10);
+  --color-bubble-self: #162e1c;
+  --color-bubble-other: #121e14;
+}
+
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slide-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }

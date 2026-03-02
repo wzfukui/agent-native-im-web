@@ -1,0 +1,105 @@
+{
+  "app": {
+    "title": "Agent-Native IM",
+    "selectConversation": "选择一个会话或创建新会话"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册账号",
+    "username": "用户名",
+    "password": "密码",
+    "email": "邮箱",
+    "displayName": "显示名称",
+    "loginError": "登录失败",
+    "networkError": "网络错误 — 无法连接服务器",
+    "noAccount": "没有账号？",
+    "haveAccount": "已有账号？",
+    "signUp": "注册",
+    "signIn": "登录"
+  },
+  "sidebar": {
+    "messages": "消息",
+    "agents": "Agent 管理",
+    "admin": "管理面板",
+    "signOut": "退出登录"
+  },
+  "conversation": {
+    "messages": "消息",
+    "newChat": "新会话",
+    "search": "搜索会话...",
+    "noConversations": "暂无会话",
+    "noMatches": "无匹配结果",
+    "participants": "{{count}} 位参与者",
+    "online": "在线",
+    "offline": "离线",
+    "searchMessages": "搜索消息...",
+    "noResults": "未找到结果",
+    "resultsFound": "找到 {{count}} 条结果",
+    "typeMessage": "输入消息...",
+    "observer": "你是此会话的观察者"
+  },
+  "settings": {
+    "title": "设置",
+    "name": "名称",
+    "description": "描述",
+    "noDescription": "暂无描述",
+    "notifications": "通知",
+    "mute": "静音",
+    "mode": "模式",
+    "members": "成员",
+    "mentionOnly": "仅 @提及",
+    "allMessages": "所有消息",
+    "mentionContext": "@提及 + 上下文",
+    "digest": "摘要",
+    "archive": "归档会话",
+    "leave": "离开会话",
+    "leaveConfirm": "确定要离开此会话吗？",
+    "editProfile": "编辑资料",
+    "save": "保存",
+    "cancel": "取消",
+    "theme": "主题",
+    "language": "语言",
+    "themeDark": "暗色",
+    "themeMidnight": "午夜",
+    "themeLight": "亮色",
+    "themeGreen": "绿色"
+  },
+  "message": {
+    "revoked": "{{name}} 撤回了一条消息",
+    "isTyping": "{{name}} 正在输入...",
+    "areTyping": "{{names}} 正在输入...",
+    "voiceMessage": "语音消息 ({{duration}}s)"
+  },
+  "admin": {
+    "dashboard": "仪表盘",
+    "users": "用户",
+    "conversations": "会话",
+    "back": "返回",
+    "totalUsers": "总用户数",
+    "totalConversations": "总会话数",
+    "onlineNow": "当前在线",
+    "messagesTotal": "消息总量"
+  },
+  "bot": {
+    "agents": "Agent",
+    "createAgent": "创建 Agent",
+    "noAgents": "暂无 Agent",
+    "startChat": "开始聊天",
+    "delete": "删除",
+    "bootstrapKey": "引导密钥"
+  },
+  "common": {
+    "you": "(你)",
+    "loading": "加载中...",
+    "error": "错误",
+    "confirm": "确认",
+    "cancel": "取消",
+    "save": "保存",
+    "delete": "删除",
+    "edit": "编辑",
+    "close": "关闭",
+    "addMember": "添加成员",
+    "removeMember": "移除成员",
+    "unmute": "取消静音"
+  }
+}

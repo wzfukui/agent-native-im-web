@@ -9,12 +9,14 @@ interface Props {
   onSend: (text: string, attachments?: File[], mentions?: number[]) => void
   onAudioSend?: (blob: Blob, duration: number) => void
   onFileUpload?: (file: File) => Promise<string | null>
+  onTyping?: () => void
   disabled?: boolean
   placeholder?: string
   participants?: Participant[]
+  isObserver?: boolean
 }
 
-export function MessageComposer({ onSend, onAudioSend, onFileUpload, disabled, placeholder, participants }: Props) {
+export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver }: Props) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -48,6 +50,17 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, disabled, p
   useEffect(() => {
     setMentionIndex(0)
   }, [mentionCandidates.length])
+
+  // Typing indicator (throttle 3s)
+  const lastTypingRef = useRef(0)
+  const emitTyping = useCallback(() => {
+    if (!onTyping) return
+    const now = Date.now()
+    if (now - lastTypingRef.current > 3000) {
+      lastTypingRef.current = now
+      onTyping()
+    }
+  }, [onTyping])
 
   const insertMention = useCallback((participant: Participant) => {
     if (!participant.entity || mentionStart < 0) return
@@ -144,6 +157,7 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, disabled, p
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
     const value = ta.value
     setText(value)
+    emitTyping()
 
     // Detect @mention trigger
     const cursor = ta.selectionStart
@@ -157,6 +171,16 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, disabled, p
       setMentionQuery(null)
       setMentionStart(-1)
     }
+  }
+
+  if (isObserver) {
+    return (
+      <div className="px-4 pb-4 pt-2">
+        <div className="rounded-xl bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] px-4 py-3 text-center text-sm text-[var(--color-text-muted)]">
+          You are an observer in this conversation
+        </div>
+      </div>
+    )
   }
 
   return (

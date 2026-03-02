@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { MessageList } from './MessageList'
 import { MessageComposer } from './MessageComposer'
 import { StreamingOverlay } from './StreamingOverlay'
@@ -11,7 +11,7 @@ import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Search, Users, ArrowLeft, Loader2, X } from 'lucide-react'
+import { Search, Users, ArrowLeft, Loader2, X, Settings } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
 
@@ -19,9 +19,12 @@ interface Props {
   conversation: Conversation
   onBack?: () => void
   onCancelStream?: (streamId: string, conversationId: number) => void
+  onTyping?: (conversationId: number) => void
+  typingEntities?: Map<number, { name: string; expiresAt: number }>
+  onToggleSettings?: () => void
 }
 
-export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
+export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings }: Props) {
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const messages = useMessagesStore((s) => s.byConv[conversation.id] ?? EMPTY_MESSAGES)
@@ -44,6 +47,23 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
   const otherParticipant = conversation.participants?.find((p) => p.entity_id !== myEntity.id)?.entity
   const isGroup = conversation.conv_type === 'group' || conversation.conv_type === 'channel'
   const isOtherOnline = otherParticipant ? online.has(otherParticipant.id) : false
+
+  // Check if current user is observer
+  const myParticipant = conversation.participants?.find((p) => p.entity_id === myEntity.id)
+  const isObserver = myParticipant?.role === 'observer'
+
+  // Typing indicator text
+  const typingText = useMemo(() => {
+    if (!typingEntities || typingEntities.size === 0) return ''
+    const now = Date.now()
+    const names: string[] = []
+    typingEntities.forEach((v, eid) => {
+      if (eid !== myEntity.id && v.expiresAt > now) names.push(v.name)
+    })
+    if (names.length === 0) return ''
+    if (names.length === 1) return `${names[0]} is typing...`
+    return `${names.slice(0, 2).join(', ')} are typing...`
+  }, [typingEntities, myEntity.id])
 
   // Active streams for this conversation
   const convStreams = useMemo<ActiveStream[]>(
@@ -246,6 +266,15 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
         >
           <Search className="w-4 h-4" />
         </button>
+
+        {onToggleSettings && (
+          <button
+            onClick={onToggleSettings}
+            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        )}
       </div>
 
       {/* Search bar */}
@@ -305,12 +334,21 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
         />
       )}
 
+      {/* Typing indicator */}
+      {typingText && (
+        <div className="px-4 py-1 text-[11px] text-[var(--color-text-muted)] italic">
+          {typingText}
+        </div>
+      )}
+
       {/* Composer */}
       <MessageComposer
         onSend={handleSend}
         onAudioSend={handleAudioSend}
+        onTyping={onTyping ? () => onTyping(conversation.id) : undefined}
         placeholder={`Message ${conversation.title || entityDisplayName(otherParticipant)}...`}
         participants={conversation.participants}
+        isObserver={isObserver}
       />
     </div>
   )

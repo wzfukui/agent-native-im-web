@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
+import { useConversationsStore } from '@/store/conversations'
+import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import * as api from '@/lib/api'
-import { Bot, LogOut, Zap, Wifi, WifiOff, X, Check, Loader2, Shield } from 'lucide-react'
+import { Bot, LogOut, Zap, Wifi, WifiOff, X, Check, Loader2, Shield, MessageSquare, Palette, Globe } from 'lucide-react'
 
 interface Props {
   botMode: boolean
@@ -12,14 +15,19 @@ interface Props {
   isAdmin?: boolean
   onToggleBots: () => void
   onToggleAdmin?: () => void
+  onToggleChat?: () => void
 }
 
-export function Sidebar({ botMode, adminMode, isAdmin, onToggleBots, onToggleAdmin }: Props) {
+export function Sidebar({ botMode, adminMode, isAdmin, onToggleBots, onToggleAdmin, onToggleChat }: Props) {
+  const { t, i18n } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
   const token = useAuthStore((s) => s.token)!
   const setAuth = useAuthStore((s) => s.setAuth)
   const logout = useAuthStore((s) => s.logout)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
+  const conversations = useConversationsStore((s) => s.conversations)
+  const mutedIds = useConversationsStore((s) => s.mutedIds)
+  const { theme, locale, setTheme, setLocale } = useSettingsStore()
   const [showProfile, setShowProfile] = useState(false)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
@@ -55,6 +63,32 @@ export function Sidebar({ botMode, adminMode, isAdmin, onToggleBots, onToggleAdm
         )}>
           {wsConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
         </div>
+
+        {/* Chat with unread badge */}
+        <button
+          onClick={onToggleChat}
+          className={cn(
+            'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
+            !botMode && !adminMode
+              ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+              : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
+          )}
+          title="Messages"
+        >
+          <MessageSquare className="w-5 h-5" />
+          {(() => {
+            const totalUnread = conversations.reduce((sum, c) => {
+              if (mutedIds.has(c.id)) return sum
+              return sum + (c.unread_count || 0)
+            }, 0)
+            if (totalUnread <= 0) return null
+            return (
+              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
+                {totalUnread > 99 ? '99+' : totalUnread}
+              </span>
+            )
+          })()}
+        </button>
 
         {/* Spacer */}
         <div className="flex-1" />
@@ -142,13 +176,59 @@ export function Sidebar({ botMode, adminMode, isAdmin, onToggleBots, onToggleAdm
               <p className="text-sm text-[var(--color-text-muted)] px-1">@{entity?.name}</p>
             </div>
 
+            {/* Theme */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                <Palette className="w-3 h-3" /> {t('settings.theme')}
+              </label>
+              <div className="flex gap-1.5">
+                {(['dark', 'midnight', 'light', 'green'] as Theme[]).map((th) => (
+                  <button
+                    key={th}
+                    onClick={() => setTheme(th)}
+                    className={cn(
+                      'flex-1 h-8 rounded-lg text-[10px] font-medium transition-colors cursor-pointer border',
+                      theme === th
+                        ? 'bg-[var(--color-accent)]/15 border-[var(--color-accent)] text-[var(--color-accent)]'
+                        : 'bg-[var(--color-bg-input)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-text-muted)]',
+                    )}
+                  >
+                    {t(`settings.theme${th.charAt(0).toUpperCase() + th.slice(1)}`)}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Language */}
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider flex items-center gap-1.5">
+                <Globe className="w-3 h-3" /> {t('settings.language')}
+              </label>
+              <div className="flex gap-1.5">
+                {([{ id: 'en', label: 'English' }, { id: 'zh-CN', label: '中文' }] as const).map(({ id, label }) => (
+                  <button
+                    key={id}
+                    onClick={() => { setLocale(id as Locale); i18n.changeLanguage(id) }}
+                    className={cn(
+                      'flex-1 h-8 rounded-lg text-xs font-medium transition-colors cursor-pointer border',
+                      locale === id
+                        ? 'bg-[var(--color-accent)]/15 border-[var(--color-accent)] text-[var(--color-accent)]'
+                        : 'bg-[var(--color-bg-input)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:border-[var(--color-text-muted)]',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               onClick={handleSaveProfile}
               disabled={saving || !editName.trim()}
               className="w-full h-9 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 text-white text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
               {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-              Save
+              {t('common.save')}
             </button>
           </div>
         </div>

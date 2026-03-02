@@ -17,7 +17,7 @@ export interface Entity {
 
 // ─── Conversation ────────────────────────────────────────────────
 export type ConvType = 'direct' | 'group' | 'channel'
-export type ParticipantRole = 'owner' | 'admin' | 'member'
+export type ParticipantRole = 'owner' | 'admin' | 'member' | 'observer'
 export type SubscriptionMode = 'mention_only' | 'subscribe_all' | 'mention_with_context' | 'subscribe_digest'
 
 export interface Participant {
@@ -35,6 +35,7 @@ export interface Conversation {
   id: number
   conv_type: ConvType
   title: string
+  description: string
   metadata: Record<string, unknown>
   created_at: string
   updated_at: string
@@ -102,12 +103,17 @@ export interface Message {
 export type WSEventType =
   | 'message.new'
   | 'message.revoked'
+  | 'message.updated'
+  | 'message.interaction_response'
+  | 'conversation.updated'
   | 'stream_start'
   | 'stream_delta'
   | 'stream_end'
   | 'connection.approved'
   | 'entity.online'
   | 'entity.offline'
+  | 'entity.status_update'
+  | 'typing'
   | 'pong'
 
 export interface WSMessage {

@@ -1,0 +1,105 @@
+{
+  "app": {
+    "title": "Agent-Native IM",
+    "selectConversation": "Select a conversation or start a new one"
+  },
+  "auth": {
+    "login": "Sign In",
+    "register": "Create Account",
+    "username": "Username",
+    "password": "Password",
+    "email": "Email",
+    "displayName": "Display Name",
+    "loginError": "Login failed",
+    "networkError": "Network error — cannot reach server",
+    "noAccount": "Don't have an account?",
+    "haveAccount": "Already have an account?",
+    "signUp": "Sign up",
+    "signIn": "Sign in"
+  },
+  "sidebar": {
+    "messages": "Messages",
+    "agents": "Manage Agents",
+    "admin": "Admin Panel",
+    "signOut": "Sign out"
+  },
+  "conversation": {
+    "messages": "Messages",
+    "newChat": "New Chat",
+    "search": "Search conversations...",
+    "noConversations": "No conversations yet",
+    "noMatches": "No matches",
+    "participants": "{{count}} participants",
+    "online": "Online",
+    "offline": "Offline",
+    "searchMessages": "Search messages...",
+    "noResults": "No results found",
+    "resultsFound": "{{count}} result(s) found",
+    "typeMessage": "Type a message...",
+    "observer": "You are an observer in this conversation"
+  },
+  "settings": {
+    "title": "Settings",
+    "name": "Name",
+    "description": "Description",
+    "noDescription": "No description",
+    "notifications": "Notifications",
+    "mute": "Mute",
+    "mode": "Mode",
+    "members": "Members",
+    "mentionOnly": "@mentioned only",
+    "allMessages": "All messages",
+    "mentionContext": "@mentioned + context",
+    "digest": "Digest",
+    "archive": "Archive conversation",
+    "leave": "Leave conversation",
+    "leaveConfirm": "Are you sure you want to leave this conversation?",
+    "editProfile": "Edit Profile",
+    "save": "Save",
+    "cancel": "Cancel",
+    "theme": "Theme",
+    "language": "Language",
+    "themeDark": "Dark",
+    "themeMidnight": "Midnight",
+    "themeLight": "Light",
+    "themeGreen": "Green"
+  },
+  "message": {
+    "revoked": "{{name}} revoked a message",
+    "isTyping": "{{name}} is typing...",
+    "areTyping": "{{names}} are typing...",
+    "voiceMessage": "Voice message ({{duration}}s)"
+  },
+  "admin": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "conversations": "Conversations",
+    "back": "Back",
+    "totalUsers": "Total Users",
+    "totalConversations": "Total Conversations",
+    "onlineNow": "Online Now",
+    "messagesTotal": "Messages Total"
+  },
+  "bot": {
+    "agents": "Agents",
+    "createAgent": "Create Agent",
+    "noAgents": "No agents yet",
+    "startChat": "Start Chat",
+    "delete": "Delete",
+    "bootstrapKey": "Bootstrap Key"
+  },
+  "common": {
+    "you": "(you)",
+    "loading": "Loading...",
+    "error": "Error",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "addMember": "Add Member",
+    "removeMember": "Remove member",
+    "unmute": "Unmute"
+  }
+}
