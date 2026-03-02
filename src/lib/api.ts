@@ -186,7 +186,7 @@ export const deleteInviteLink = (token: string, id: number) =>
 
 // Message edit
 export const editMessage = (token: string, msgId: number, text: string) =>
-  request<Message>('PUT', `/api/v1/messages/${msgId}`, token, { text })
+  request<Message>('PUT', `/api/v1/messages/${msgId}`, token, { layers: { summary: text } })
 
 // Updates (long polling fallback)
 export const getUpdates = (token: string, since?: string) =>
