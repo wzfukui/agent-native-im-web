@@ -18,7 +18,7 @@ export interface Entity {
 // ─── Conversation ────────────────────────────────────────────────
 export type ConvType = 'direct' | 'group' | 'channel'
 export type ParticipantRole = 'owner' | 'admin' | 'member'
-export type SubscriptionMode = 'mention_only' | 'subscribe_all'
+export type SubscriptionMode = 'mention_only' | 'subscribe_all' | 'mention_with_context' | 'subscribe_digest'
 
 export interface Participant {
   id: number
@@ -26,6 +26,7 @@ export interface Participant {
   entity_id: number
   role: ParticipantRole
   subscription_mode: SubscriptionMode
+  context_window?: number
   joined_at: string
   entity?: Entity
 }
@@ -141,6 +142,15 @@ export interface MessagesResponse {
 export interface SearchResponse {
   messages: Message[]
   query: string
+}
+
+// ─── Admin ──────────────────────────────────────────────────────
+export interface AdminStats {
+  user_count: number
+  bot_count: number
+  conversation_count: number
+  message_count: number
+  ws_connections: number
 }
 
 // ─── Active Stream (transient, in-memory only) ──────────────────

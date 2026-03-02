@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn, entityDisplayName, formatTime, formatFileSize } from '@/lib/utils'
@@ -10,6 +10,75 @@ import {
   FileText, Download, Image as ImageIcon, Play, Pause,
   Brain, ChevronDown, ChevronUp, Reply, CornerUpLeft, Ban, Trash2,
 } from 'lucide-react'
+
+function AudioPlayer({ url, duration: totalDuration }: { url?: string; duration?: number }) {
+  const audioRef = useRef<HTMLAudioElement>(null)
+  const [playing, setPlaying] = useState(false)
+  const [progress, setProgress] = useState(0)
+
+  const toggle = () => {
+    const audio = audioRef.current
+    if (!audio || !url) return
+    if (playing) {
+      audio.pause()
+    } else {
+      audio.play()
+    }
+  }
+
+  const dur = totalDuration || 0
+  const barHeights = Array.from({ length: 24 }, (_, i) =>
+    12 + Math.sin(i * 0.7) * 10 + ((i * 7 + 3) % 6)
+  )
+
+  return (
+    <div className="flex items-center gap-3 min-w-[180px]">
+      {url && (
+        <audio
+          ref={audioRef}
+          src={url}
+          preload="metadata"
+          onPlay={() => setPlaying(true)}
+          onPause={() => setPlaying(false)}
+          onEnded={() => { setPlaying(false); setProgress(0) }}
+          onTimeUpdate={() => {
+            const a = audioRef.current
+            if (a && a.duration) setProgress(a.currentTime / a.duration)
+          }}
+        />
+      )}
+      <button
+        onClick={toggle}
+        className="w-8 h-8 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-[var(--color-accent)]/20 transition-colors"
+      >
+        {playing
+          ? <Pause className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+          : <Play className="w-3.5 h-3.5 text-[var(--color-accent)] ml-0.5" />
+        }
+      </button>
+      <div className="flex-1 h-6 flex items-center gap-px">
+        {barHeights.map((h, i) => {
+          const filled = progress > i / barHeights.length
+          return (
+            <div
+              key={i}
+              className={cn(
+                'flex-1 rounded-full transition-colors',
+                filled ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-accent)]/30',
+              )}
+              style={{ height: `${h}px` }}
+            />
+          )
+        })}
+      </div>
+      {dur > 0 && (
+        <span className="text-[10px] text-[var(--color-text-muted)] flex-shrink-0">
+          {Math.floor(dur / 60)}:{String(dur % 60).padStart(2, '0')}
+        </span>
+      )}
+    </div>
+  )
+}
 
 interface Props {
   message: Message
@@ -94,27 +163,7 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
         )
 
       case 'audio':
-        return (
-          <div className="flex items-center gap-3 min-w-[180px]">
-            <button className="w-8 h-8 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center flex-shrink-0 cursor-pointer hover:bg-[var(--color-accent)]/20 transition-colors">
-              <Play className="w-3.5 h-3.5 text-[var(--color-accent)] ml-0.5" />
-            </button>
-            <div className="flex-1 h-6 flex items-center gap-px">
-              {Array.from({ length: 24 }, (_, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-full bg-[var(--color-accent)]/40"
-                  style={{ height: `${12 + Math.sin(i * 0.7) * 10 + Math.random() * 6}px` }}
-                />
-              ))}
-            </div>
-            {message.attachments?.[0]?.duration && (
-              <span className="text-[10px] text-[var(--color-text-muted)] flex-shrink-0">
-                {Math.floor(message.attachments[0].duration / 60)}:{String(message.attachments[0].duration % 60).padStart(2, '0')}
-              </span>
-            )}
-          </div>
-        )
+        return <AudioPlayer url={message.attachments?.[0]?.url} duration={message.attachments?.[0]?.duration} />
 
       case 'artifact': {
         const artifactType = (layers.data?.artifact_type as string) || 'html'

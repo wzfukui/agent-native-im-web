@@ -152,6 +152,30 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
     }
   }, [token, conversation.id])
 
+  // Send audio message
+  const handleAudioSend = useCallback(async (blob: Blob, duration: number) => {
+    const file = new File([blob], `voice_${Date.now()}.webm`, { type: blob.type })
+    const uploadRes = await api.uploadFile(token, file)
+    if (!uploadRes.ok || !uploadRes.data) return
+
+    const res = await api.sendMessage(token, {
+      conversation_id: conversation.id,
+      content_type: 'audio',
+      layers: {
+        summary: `Voice message (${duration}s)`,
+      },
+      attachments: [{
+        type: 'audio',
+        url: uploadRes.data.url,
+        filename: file.name,
+        mime_type: blob.type,
+        size: blob.size,
+        duration,
+      }],
+    })
+    if (res.ok && res.data) addMessage(res.data)
+  }, [token, conversation.id])
+
   // Interaction reply
   const handleInteractionReply = useCallback(async (msgId: number, choice: string, label: string) => {
     const res = await api.sendMessage(token, {
@@ -284,6 +308,7 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
       {/* Composer */}
       <MessageComposer
         onSend={handleSend}
+        onAudioSend={handleAudioSend}
         placeholder={`Message ${conversation.title || entityDisplayName(otherParticipant)}...`}
         participants={conversation.participants}
       />

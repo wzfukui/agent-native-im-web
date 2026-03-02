@@ -1,22 +1,25 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { Send, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react'
+import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic } from 'lucide-react'
 import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { useAudioRecorder } from '@/lib/use-audio-recorder'
 import type { Participant } from '@/lib/types'
 
 interface Props {
   onSend: (text: string, attachments?: File[], mentions?: number[]) => void
+  onAudioSend?: (blob: Blob, duration: number) => void
   onFileUpload?: (file: File) => Promise<string | null>
   disabled?: boolean
   placeholder?: string
   participants?: Participant[]
 }
 
-export function MessageComposer({ onSend, onFileUpload, disabled, placeholder, participants }: Props) {
+export function MessageComposer({ onSend, onAudioSend, onFileUpload, disabled, placeholder, participants }: Props) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [mentionIds, setMentionIds] = useState<number[]>([])
+  const { state: recState, duration: recDuration, start: recStart, stop: recStop, cancel: recCancel } = useAudioRecorder()
 
   // @mention autocomplete state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
@@ -109,6 +112,21 @@ export function MessageComposer({ onSend, onFileUpload, disabled, placeholder, p
       handleSubmit()
     }
   }
+
+  const handleRecordStart = useCallback(async () => {
+    try {
+      await recStart()
+    } catch {
+      // Mic permission denied or not available
+    }
+  }, [recStart])
+
+  const handleRecordSend = useCallback(async () => {
+    const { blob, duration } = await recStop()
+    if (blob.size > 0 && onAudioSend) {
+      onAudioSend(blob, duration)
+    }
+  }, [recStop, onAudioSend])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || [])
@@ -224,46 +242,98 @@ export function MessageComposer({ onSend, onFileUpload, disabled, placeholder, p
 
       {/* Input area */}
       <div className="flex items-end gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl px-3 py-2 focus-within:border-[var(--color-accent)]/50 transition-colors">
-        {/* Attach button */}
-        <button
-          onClick={() => fileInputRef.current?.click()}
-          className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
-        >
-          <Paperclip className="w-4 h-4" />
-        </button>
-        <input
-          ref={fileInputRef}
-          type="file"
-          multiple
-          onChange={handleFileSelect}
-          className="hidden"
-        />
+        {recState === 'recording' ? (
+          /* Recording UI */
+          <>
+            <div className="flex items-center gap-3 flex-1 py-1">
+              <div className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse flex-shrink-0" />
+              <span className="text-sm text-[var(--color-text-primary)] font-mono tabular-nums">
+                {Math.floor(recDuration / 60)}:{String(recDuration % 60).padStart(2, '0')}
+              </span>
+              <div className="flex-1 h-5 flex items-center gap-0.5">
+                {Array.from({ length: 20 }, (_, i) => (
+                  <div
+                    key={i}
+                    className="flex-1 rounded-full bg-red-400/60"
+                    style={{
+                      height: `${6 + Math.sin((Date.now() / 200 + i) * 0.8) * 8}px`,
+                      transition: 'height 0.15s',
+                    }}
+                  />
+                ))}
+              </div>
+            </div>
+            <button
+              onClick={recCancel}
+              className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-error)]"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <button
+              onClick={handleRecordSend}
+              className="w-8 h-8 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center flex-shrink-0 cursor-pointer transition-all shadow-sm shadow-[var(--color-accent)]/25"
+            >
+              <Send className="w-4 h-4" />
+            </button>
+          </>
+        ) : (
+          /* Normal input UI */
+          <>
+            {/* Attach button */}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+            >
+              <Paperclip className="w-4 h-4" />
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              onChange={handleFileSelect}
+              className="hidden"
+            />
 
-        {/* Textarea */}
-        <textarea
-          ref={textareaRef}
-          value={text}
-          onChange={autoResize}
-          onKeyDown={handleKeyDown}
-          placeholder={placeholder || 'Type a message...'}
-          disabled={disabled}
-          rows={1}
-          className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[120px] py-1"
-        />
+            {/* Textarea */}
+            <textarea
+              ref={textareaRef}
+              value={text}
+              onChange={autoResize}
+              onKeyDown={handleKeyDown}
+              placeholder={placeholder || 'Type a message...'}
+              disabled={disabled}
+              rows={1}
+              className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[120px] py-1"
+            />
 
-        {/* Send button */}
-        <button
-          onClick={handleSubmit}
-          disabled={disabled || (!text.trim() && files.length === 0)}
-          className={cn(
-            'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all cursor-pointer',
-            text.trim() || files.length > 0
-              ? 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white shadow-sm shadow-[var(--color-accent)]/25'
-              : 'text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]',
-          )}
-        >
-          <Send className="w-4 h-4" />
-        </button>
+            {/* Send or Mic button */}
+            {text.trim() || files.length > 0 ? (
+              <button
+                onClick={handleSubmit}
+                disabled={disabled}
+                className="w-8 h-8 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center flex-shrink-0 transition-all cursor-pointer shadow-sm shadow-[var(--color-accent)]/25"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            ) : onAudioSend ? (
+              <button
+                onClick={handleRecordStart}
+                disabled={disabled}
+                className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+              >
+                <Mic className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all"
+              >
+                <Send className="w-4 h-4" />
+              </button>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

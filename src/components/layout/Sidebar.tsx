@@ -4,14 +4,17 @@ import { usePresenceStore } from '@/store/presence'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import * as api from '@/lib/api'
-import { Bot, LogOut, Zap, Wifi, WifiOff, X, Check, Loader2 } from 'lucide-react'
+import { Bot, LogOut, Zap, Wifi, WifiOff, X, Check, Loader2, Shield } from 'lucide-react'
 
 interface Props {
   botMode: boolean
+  adminMode?: boolean
+  isAdmin?: boolean
   onToggleBots: () => void
+  onToggleAdmin?: () => void
 }
 
-export function Sidebar({ botMode, onToggleBots }: Props) {
+export function Sidebar({ botMode, adminMode, isAdmin, onToggleBots, onToggleAdmin }: Props) {
   const entity = useAuthStore((s) => s.entity)
   const token = useAuthStore((s) => s.token)!
   const setAuth = useAuthStore((s) => s.setAuth)
@@ -69,6 +72,22 @@ export function Sidebar({ botMode, onToggleBots }: Props) {
         >
           <Bot className="w-5 h-5" />
         </button>
+
+        {/* Admin panel */}
+        {isAdmin && (
+          <button
+            onClick={onToggleAdmin}
+            className={cn(
+              'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
+              adminMode
+                ? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]'
+                : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)]'
+            )}
+            title="Admin Panel"
+          >
+            <Shield className="w-5 h-5" />
+          </button>
+        )}
 
         {/* User avatar + logout */}
         <div className="flex flex-col items-center gap-2">

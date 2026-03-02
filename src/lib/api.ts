@@ -1,6 +1,6 @@
 import type {
   APIResponse, LoginResponse, Entity, Conversation,
-  MessagesResponse, SearchResponse, Message,
+  MessagesResponse, SearchResponse, Message, AdminStats,
 } from './types'
 
 let baseUrl = ''
@@ -57,8 +57,11 @@ export const addParticipant = (token: string, convId: number, entityId: number, 
 export const removeParticipant = (token: string, convId: number, entityId: number) =>
   request('DELETE', `/api/v1/conversations/${convId}/participants/${entityId}`, token)
 
-export const updateSubscription = (token: string, convId: number, mode: string) =>
-  request('PUT', `/api/v1/conversations/${convId}/subscription`, token, { mode })
+export const updateSubscription = (token: string, convId: number, mode: string, contextWindow?: number) =>
+  request('PUT', `/api/v1/conversations/${convId}/subscription`, token, {
+    mode,
+    ...(contextWindow !== undefined && { context_window: contextWindow }),
+  })
 
 export const markAsRead = (token: string, convId: number, messageId: number) =>
   request('POST', `/api/v1/conversations/${convId}/read`, token, { message_id: messageId })
@@ -114,6 +117,21 @@ export const updateProfile = (token: string, data: { display_name?: string; avat
 export const createUser = (token: string, username: string, password: string) =>
   request<Entity>('POST', '/api/v1/admin/users', token, { username, password })
 
+export const adminListUsers = (token: string, limit = 50, offset = 0) =>
+  request<{ entities: (Entity & { online: boolean })[]; total: number }>('GET', `/api/v1/admin/users?limit=${limit}&offset=${offset}`, token)
+
+export const adminUpdateUser = (token: string, id: number, data: { display_name?: string; status?: string }) =>
+  request<Entity>('PUT', `/api/v1/admin/users/${id}`, token, data)
+
+export const adminDeleteUser = (token: string, id: number) =>
+  request('DELETE', `/api/v1/admin/users/${id}`, token)
+
+export const adminGetStats = (token: string) =>
+  request<AdminStats>('GET', '/api/v1/admin/stats', token)
+
+export const adminListConversations = (token: string, limit = 50, offset = 0) =>
+  request<{ conversations: Conversation[]; total: number }>('GET', `/api/v1/admin/conversations?limit=${limit}&offset=${offset}`, token)
+
 // Files
 export async function uploadFile(token: string, file: File): Promise<APIResponse<{ url: string }>> {
   const form = new FormData()
@@ -125,6 +143,16 @@ export async function uploadFile(token: string, file: File): Promise<APIResponse
   })
   return res.json()
 }
+
+// Push notifications
+export const getVapidKey = () =>
+  request<{ public_key: string }>('GET', '/api/v1/push/vapid-key')
+
+export const registerPush = (token: string, data: { endpoint: string; key_p256dh: string; key_auth: string }) =>
+  request('POST', '/api/v1/push/subscribe', token, data)
+
+export const unregisterPush = (token: string, endpoint: string) =>
+  request('POST', '/api/v1/push/unsubscribe', token, { endpoint })
 
 // Updates (long polling fallback)
 export const getUpdates = (token: string, since?: string) =>

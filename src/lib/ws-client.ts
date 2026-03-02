@@ -32,9 +32,22 @@ export class AnimpWebSocket {
   private handleOnline = () => this.onNetworkOnline()
   private handleOffline = () => this.onNetworkOffline()
 
+  private deviceId: string
+
   constructor(url: string, token: string) {
     this.url = url
     this.token = token
+    this.deviceId = this.getOrCreateDeviceId()
+  }
+
+  private getOrCreateDeviceId(): string {
+    const key = 'aim_device_id'
+    let id = localStorage.getItem(key)
+    if (!id) {
+      id = crypto.randomUUID()
+      localStorage.setItem(key, id)
+    }
+    return id
   }
 
   get connected() { return this._connected }
@@ -62,7 +75,8 @@ export class AnimpWebSocket {
     }
     this.stopPing()
 
-    const wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}`
+    const deviceInfo = (navigator.userAgent || '').substring(0, 100)
+    const wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}&device_id=${encodeURIComponent(this.deviceId)}&device_info=${encodeURIComponent(deviceInfo)}`
     this.ws = new WebSocket(wsUrl)
 
     this.ws.onopen = () => {

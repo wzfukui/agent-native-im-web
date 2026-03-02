@@ -12,7 +12,9 @@ import { ChatThread } from '@/components/chat/ChatThread'
 import { BotList } from '@/components/entity/BotList'
 import { BotDetail } from '@/components/entity/BotDetail'
 import { NewConversationDialog } from '@/components/conversation/NewConversationDialog'
+import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AnimpWebSocket } from '@/lib/ws-client'
+import { registerPushNotifications } from '@/lib/push'
 import type { WSMessage, Message, Entity } from '@/lib/types'
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -25,7 +27,8 @@ export default function App() {
 
   const [loginError, setLoginError] = useState('')
   const [showRegister, setShowRegister] = useState(false)
-  const [viewMode, setViewMode] = useState<'chat' | 'bots'>('chat')
+  const [viewMode, setViewMode] = useState<'chat' | 'bots' | 'admin'>('chat')
+  const [isAdmin, setIsAdmin] = useState(false)
   const [selectedBotId, setSelectedBotId] = useState<number | null>(null)
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
@@ -92,6 +95,17 @@ export default function App() {
 
   useEffect(() => {
     if (token) loadConversations()
+  }, [token])
+
+  // ─── Push notifications ─────────────────────────────────────
+  useEffect(() => {
+    if (token) registerPushNotifications(token)
+  }, [token])
+
+  // ─── Admin detection ───────────────────────────────────────
+  useEffect(() => {
+    if (!token) { setIsAdmin(false); return }
+    api.adminGetStats(token).then((res) => setIsAdmin(res.ok === true))
   }, [token])
 
   // ─── WebSocket connection ──────────────────────────────────────
@@ -251,74 +265,85 @@ export default function App() {
       {/* Icon sidebar */}
       <Sidebar
         botMode={viewMode === 'bots'}
+        adminMode={viewMode === 'admin'}
+        isAdmin={isAdmin}
         onToggleBots={() => setViewMode(viewMode === 'bots' ? 'chat' : 'bots')}
+        onToggleAdmin={() => setViewMode(viewMode === 'admin' ? 'chat' : 'admin')}
       />
 
-      {/* Left panel: ConversationList or BotList */}
-      <div className={cn(
-        'w-72 border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0',
-        viewMode === 'chat'
-          ? (activeId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col')
-          : (selectedBotId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'),
-      )}>
-        {viewMode === 'chat' ? (
-          <ConversationList
-            conversations={conversations}
-            activeId={activeId}
-            myEntityId={entity.id}
-            onSelect={setActive}
-            onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
-            onUpdateConversation={(id, title) => {
-              const tok = useAuthStore.getState().token
-              if (tok) {
-                api.updateConversation(tok, id, title).then((res) => {
-                  if (res.ok && res.data) {
-                    updateConversation(id, { title: res.data.title })
+      {viewMode === 'admin' ? (
+        <div className="flex-1 min-w-0">
+          <AdminPanel onBack={() => setViewMode('chat')} />
+        </div>
+      ) : (
+        <>
+          {/* Left panel: ConversationList or BotList */}
+          <div className={cn(
+            'w-72 border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0',
+            viewMode === 'chat'
+              ? (activeId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col')
+              : (selectedBotId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'),
+          )}>
+            {viewMode === 'chat' ? (
+              <ConversationList
+                conversations={conversations}
+                activeId={activeId}
+                myEntityId={entity.id}
+                onSelect={setActive}
+                onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+                onUpdateConversation={(id, title) => {
+                  const tok = useAuthStore.getState().token
+                  if (tok) {
+                    api.updateConversation(tok, id, title).then((res) => {
+                      if (res.ok && res.data) {
+                        updateConversation(id, { title: res.data.title })
+                      }
+                    })
                   }
-                })
-              }
-            }}
-          />
-        ) : (
-          <BotList
-            selectedId={selectedBotId}
-            onSelect={(id) => { setSelectedBotId(id); loadBotEntities() }}
-            onStartChat={handleStartChatFromBot}
-          />
-        )}
-      </div>
+                }}
+              />
+            ) : (
+              <BotList
+                selectedId={selectedBotId}
+                onSelect={(id) => { setSelectedBotId(id); loadBotEntities() }}
+                onStartChat={handleStartChatFromBot}
+              />
+            )}
+          </div>
 
-      {/* Right panel: ChatThread or BotDetail */}
-      <div className="flex-1 min-w-0">
-        {viewMode === 'chat' ? (
-          activeConv ? (
-            <ChatThread
-              key={activeConv.id}
-              conversation={activeConv}
-              onBack={() => setActive(null)}
-              onCancelStream={handleCancelStream}
-            />
-          ) : (
-            <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-4">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-bot)]/10 flex items-center justify-center">
-                <Zap className="w-10 h-10 text-[var(--color-accent)] opacity-40" />
-              </div>
-              <div className="text-center">
-                <p className="text-base font-medium text-[var(--color-text-secondary)]">Agent-Native IM</p>
-                <p className="text-xs mt-1">Select a conversation or start a new one</p>
-              </div>
-            </div>
-          )
-        ) : (
-          <BotDetail
-            bot={selectedBot}
-            onBack={() => setSelectedBotId(null)}
-            onOpenConversation={handleOpenConversation}
-            onDelete={handleDeleteBot}
-            onStartChat={handleStartChatFromBot}
-          />
-        )}
-      </div>
+          {/* Right panel: ChatThread or BotDetail */}
+          <div className="flex-1 min-w-0">
+            {viewMode === 'chat' ? (
+              activeConv ? (
+                <ChatThread
+                  key={activeConv.id}
+                  conversation={activeConv}
+                  onBack={() => setActive(null)}
+                  onCancelStream={handleCancelStream}
+                />
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-4">
+                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-bot)]/10 flex items-center justify-center">
+                    <Zap className="w-10 h-10 text-[var(--color-accent)] opacity-40" />
+                  </div>
+                  <div className="text-center">
+                    <p className="text-base font-medium text-[var(--color-text-secondary)]">Agent-Native IM</p>
+                    <p className="text-xs mt-1">Select a conversation or start a new one</p>
+                  </div>
+                </div>
+              )
+            ) : (
+              <BotDetail
+                bot={selectedBot}
+                onBack={() => setSelectedBotId(null)}
+                onOpenConversation={handleOpenConversation}
+                onDelete={handleDeleteBot}
+                onStartChat={handleStartChatFromBot}
+              />
+            )}
+          </div>
+        </>
+      )}
 
       {/* Modals */}
       {showNewChat && (

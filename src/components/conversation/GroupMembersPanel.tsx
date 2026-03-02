@@ -50,10 +50,9 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
     onUpdate?.()
   }
 
-  const handleToggleSubscription = async () => {
+  const handleSubscriptionChange = async (mode: string) => {
     if (!myParticipant) return
-    const newMode = myParticipant.subscription_mode === 'subscribe_all' ? 'mention_only' : 'subscribe_all'
-    await api.updateSubscription(token, conversation.id, newMode)
+    await api.updateSubscription(token, conversation.id, mode)
     onUpdate?.()
   }
 
@@ -94,21 +93,26 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
           </button>
         </div>
 
-        {/* My subscription toggle */}
+        {/* My subscription mode */}
         {myParticipant && (
-          <div className="px-5 py-3 border-b border-[var(--color-border)] flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
-              {myParticipant.subscription_mode === 'subscribe_all'
-                ? <><Bell className="w-3.5 h-3.5" /> Receiving all messages</>
-                : <><BellOff className="w-3.5 h-3.5" /> Only when @mentioned</>
+          <div className="px-5 py-3 border-b border-[var(--color-border)] flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)] flex-shrink-0">
+              {myParticipant.subscription_mode === 'subscribe_all' || myParticipant.subscription_mode === 'mention_with_context'
+                ? <Bell className="w-3.5 h-3.5" />
+                : <BellOff className="w-3.5 h-3.5" />
               }
+              <span>Notifications</span>
             </div>
-            <button
-              onClick={handleToggleSubscription}
-              className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-hover)] hover:bg-[var(--color-accent)]/10 text-[var(--color-text-muted)] hover:text-[var(--color-accent)] cursor-pointer transition-colors"
+            <select
+              value={myParticipant.subscription_mode}
+              onChange={(e) => handleSubscriptionChange(e.target.value)}
+              className="text-[11px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none focus:border-[var(--color-accent)]/50"
             >
-              Toggle
-            </button>
+              <option value="mention_only">Only @mentioned</option>
+              <option value="subscribe_all">All messages</option>
+              <option value="mention_with_context">@mentioned + context</option>
+              <option value="subscribe_digest">Digest (poll)</option>
+            </select>
           </div>
         )}
 
