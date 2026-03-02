@@ -126,6 +126,22 @@ export default function App() {
       }
     })
 
+    // On reconnect, refresh messages for all loaded conversations
+    ws.onReconnect(() => {
+      const loaded = Object.keys(useMessagesStore.getState().byConv).map(Number)
+      for (const convId of loaded) {
+        api.listMessages(token, convId).then((res) => {
+          if (res.ok && res.data) {
+            for (const msg of res.data.messages) {
+              addMessage(msg)
+            }
+          }
+        })
+      }
+      // Also refresh conversation list
+      loadConversations()
+    })
+
     ws.connect()
 
     return () => {

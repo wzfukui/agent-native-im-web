@@ -5,13 +5,13 @@ import { Bot, User } from 'lucide-react'
 
 interface Props {
   entity?: Entity | null
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'xs' | 'sm' | 'md' | 'lg'
   showStatus?: boolean
   className?: string
 }
 
-const sizeMap = { sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-14 h-14 text-lg' }
-const dotSize = { sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-3.5' }
+const sizeMap = { xs: 'w-6 h-6 text-[10px]', sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-14 h-14 text-lg' }
+const dotSize = { xs: 'w-2 h-2', sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-3.5' }
 
 export function EntityAvatar({ entity, size = 'md', showStatus = false, className }: Props) {
   const online = usePresenceStore((s) => entity ? s.online.has(entity.id) : false)

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback, useMemo } from 'react'
 import { MessageList } from './MessageList'
 import { MessageComposer } from './MessageComposer'
 import { StreamingOverlay } from './StreamingOverlay'
+import { GroupMembersPanel } from '@/components/conversation/GroupMembersPanel'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAuthStore } from '@/store/auth'
 import { useMessagesStore } from '@/store/messages'
@@ -9,7 +10,7 @@ import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Search, Settings, Users, ArrowLeft, Loader2 } from 'lucide-react'
+import { Search, Users, ArrowLeft, Loader2 } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
 
@@ -32,6 +33,7 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showMembers, setShowMembers] = useState(false)
   const online = usePresenceStore((s) => s.online)
 
   // Determine other participant for direct chats
@@ -74,7 +76,7 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
   }, [loading, hasMore, messages, token, conversation.id])
 
   // Send message
-  const handleSend = useCallback(async (text: string, files?: File[]) => {
+  const handleSend = useCallback(async (text: string, files?: File[], mentions?: number[]) => {
     let attachments: { type: string; url: string; filename: string; mime_type: string; size: number }[] = []
 
     // Upload files first
@@ -103,6 +105,7 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
         data: { body: text },
       },
       attachments: attachments.length > 0 ? attachments : undefined,
+      mentions,
     })
 
     if (res.ok && res.data) {
@@ -156,7 +159,14 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
           </h3>
           <p className="text-[11px] text-[var(--color-text-muted)]">
             {isGroup
-              ? `${conversation.participants?.length || 0} participants`
+              ? (
+                  <button
+                    onClick={() => setShowMembers(true)}
+                    className="hover:text-[var(--color-accent)] transition-colors cursor-pointer"
+                  >
+                    {conversation.participants?.length || 0} participants
+                  </button>
+                )
               : isOtherOnline ? (
                   <span className="text-[var(--color-success)]">Online</span>
                 ) : 'Offline'
@@ -205,10 +215,19 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
       {/* Streaming overlay */}
       <StreamingOverlay streams={convStreams} onCancel={onCancelStream} />
 
+      {/* Group members panel */}
+      {showMembers && isGroup && (
+        <GroupMembersPanel
+          conversation={conversation}
+          onClose={() => setShowMembers(false)}
+        />
+      )}
+
       {/* Composer */}
       <MessageComposer
         onSend={handleSend}
         placeholder={`Message ${conversation.title || entityDisplayName(otherParticipant)}...`}
+        participants={conversation.participants}
       />
     </div>
   )

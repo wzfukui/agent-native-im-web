@@ -78,6 +78,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
             key={msg.id}
             message={msg}
             isSelf={msg.sender_id === myEntityId}
+            myEntityId={myEntityId}
             showSender={shouldShowSender(msg, i)}
             onInteractionReply={onInteractionReply}
             onRevoke={onRevoke}

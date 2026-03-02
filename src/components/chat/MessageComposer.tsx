@@ -1,31 +1,109 @@
-import { useState, useRef, useCallback } from 'react'
-import { Send, Paperclip, X, Image as ImageIcon, FileText, AtSign } from 'lucide-react'
-import { cn, formatFileSize } from '@/lib/utils'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { Send, Paperclip, X, Image as ImageIcon, FileText } from 'lucide-react'
+import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
+import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import type { Participant } from '@/lib/types'
 
 interface Props {
   onSend: (text: string, attachments?: File[], mentions?: number[]) => void
   onFileUpload?: (file: File) => Promise<string | null>
   disabled?: boolean
   placeholder?: string
+  participants?: Participant[]
 }
 
-export function MessageComposer({ onSend, onFileUpload, disabled, placeholder }: Props) {
+export function MessageComposer({ onSend, onFileUpload, disabled, placeholder, participants }: Props) {
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
+  const [mentionIds, setMentionIds] = useState<number[]>([])
+
+  // @mention autocomplete state
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null)
+  const [mentionIndex, setMentionIndex] = useState(0)
+  const [mentionStart, setMentionStart] = useState(-1) // cursor position of '@'
+
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const mentionRef = useRef<HTMLDivElement>(null)
+
+  // Filter participants by mention query
+  const mentionCandidates = useMemo(() => {
+    if (mentionQuery === null || !participants) return []
+    const q = mentionQuery.toLowerCase()
+    return participants
+      .filter((p) => p.entity)
+      .filter((p) => {
+        const name = p.entity!.name.toLowerCase()
+        const display = (p.entity!.display_name || '').toLowerCase()
+        return name.includes(q) || display.includes(q)
+      })
+      .slice(0, 8)
+  }, [mentionQuery, participants])
+
+  // Reset mention index when candidates change
+  useEffect(() => {
+    setMentionIndex(0)
+  }, [mentionCandidates.length])
+
+  const insertMention = useCallback((participant: Participant) => {
+    if (!participant.entity || mentionStart < 0) return
+    const before = text.slice(0, mentionStart)
+    const after = text.slice(textareaRef.current?.selectionStart ?? text.length)
+    const displayName = entityDisplayName(participant.entity)
+    const newText = `${before}@${displayName} ${after}`
+    setText(newText)
+    setMentionIds((prev) => prev.includes(participant.entity_id) ? prev : [...prev, participant.entity_id])
+    setMentionQuery(null)
+    setMentionStart(-1)
+    // Focus and set cursor after inserted mention
+    setTimeout(() => {
+      const ta = textareaRef.current
+      if (ta) {
+        const cursorPos = before.length + displayName.length + 2 // @name + space
+        ta.focus()
+        ta.setSelectionRange(cursorPos, cursorPos)
+      }
+    }, 0)
+  }, [text, mentionStart])
 
   const handleSubmit = useCallback(async () => {
     const trimmed = text.trim()
     if (!trimmed && files.length === 0) return
-    onSend(trimmed, files.length > 0 ? files : undefined)
+    onSend(trimmed, files.length > 0 ? files : undefined, mentionIds.length > 0 ? mentionIds : undefined)
     setText('')
     setFiles([])
+    setMentionIds([])
+    setMentionQuery(null)
     textareaRef.current?.focus()
-  }, [text, files, onSend])
+  }, [text, files, mentionIds, onSend])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    // Handle mention autocomplete navigation
+    if (mentionQuery !== null && mentionCandidates.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setMentionIndex((i) => (i + 1) % mentionCandidates.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setMentionIndex((i) => (i - 1 + mentionCandidates.length) % mentionCandidates.length)
+        return
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault()
+        insertMention(mentionCandidates[mentionIndex])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setMentionQuery(null)
+        setMentionStart(-1)
+        return
+      }
+    }
+
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSubmit()
@@ -46,11 +124,61 @@ export function MessageComposer({ onSend, onFileUpload, disabled, placeholder }:
     const ta = e.target
     ta.style.height = 'auto'
     ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
-    setText(ta.value)
+    const value = ta.value
+    setText(value)
+
+    // Detect @mention trigger
+    const cursor = ta.selectionStart
+    const textBeforeCursor = value.slice(0, cursor)
+    // Find the last '@' that isn't preceded by a word char
+    const atMatch = textBeforeCursor.match(/(^|[^a-zA-Z0-9])@([^\s@]*)$/)
+    if (atMatch && participants && participants.length > 0) {
+      setMentionQuery(atMatch[2])
+      setMentionStart(cursor - atMatch[2].length - 1) // position of '@'
+    } else {
+      setMentionQuery(null)
+      setMentionStart(-1)
+    }
   }
 
   return (
-    <div className="px-4 pb-4 pt-2">
+    <div className="px-4 pb-4 pt-2 relative">
+      {/* @mention autocomplete popover */}
+      {mentionQuery !== null && mentionCandidates.length > 0 && (
+        <div
+          ref={mentionRef}
+          className="absolute bottom-full left-4 right-4 mb-1 max-h-52 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] shadow-xl shadow-black/20 z-20"
+        >
+          {mentionCandidates.map((p, i) => (
+            <button
+              key={p.entity_id}
+              onMouseDown={(e) => { e.preventDefault(); insertMention(p) }}
+              className={cn(
+                'w-full flex items-center gap-2.5 px-3 py-2 text-left transition-colors cursor-pointer',
+                i === mentionIndex
+                  ? 'bg-[var(--color-accent)]/10'
+                  : 'hover:bg-[var(--color-bg-hover)]',
+              )}
+            >
+              <EntityAvatar entity={p.entity} size="xs" />
+              <div className="flex-1 min-w-0">
+                <span className="text-sm font-medium text-[var(--color-text-primary)] truncate block">
+                  {entityDisplayName(p.entity)}
+                </span>
+                <span className="text-[10px] text-[var(--color-text-muted)]">
+                  @{p.entity?.name}
+                  {p.entity?.entity_type !== 'user' && (
+                    <span className="ml-1 px-1 py-0.5 rounded bg-[var(--color-bot)]/15 text-[var(--color-bot)]">
+                      {p.entity?.entity_type}
+                    </span>
+                  )}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Attached files preview */}
       {files.length > 0 && (
         <div className="flex gap-2 mb-2 flex-wrap">
@@ -71,6 +199,26 @@ export function MessageComposer({ onSend, onFileUpload, disabled, placeholder }:
               </button>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Mention badges */}
+      {mentionIds.length > 0 && participants && (
+        <div className="flex gap-1.5 mb-2 flex-wrap">
+          {mentionIds.map((eid) => {
+            const p = participants.find((pp) => pp.entity_id === eid)
+            return (
+              <span key={eid} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-[11px] font-medium">
+                @{entityDisplayName(p?.entity)}
+                <button
+                  onClick={() => setMentionIds((prev) => prev.filter((id) => id !== eid))}
+                  className="hover:text-[var(--color-error)] cursor-pointer"
+                >
+                  <X className="w-2.5 h-2.5" />
+                </button>
+              </span>
+            )
+          })}
         </div>
       )}
 

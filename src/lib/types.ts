@@ -107,6 +107,7 @@ export type WSEventType =
   | 'connection.approved'
   | 'entity.online'
   | 'entity.offline'
+  | 'pong'
 
 export interface WSMessage {
   type: WSEventType

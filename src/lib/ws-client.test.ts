@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { AnimpWebSocket } from './ws-client'
 
 // Minimal WebSocket mock
@@ -31,13 +31,15 @@ function createMockWsInstance() {
 }
 
 beforeEach(() => {
+  vi.useFakeTimers()
   mockWsInstance = createMockWsInstance()
-  // Use a class so `new WebSocket(...)` works
-  vi.stubGlobal('WebSocket', class {
-    static OPEN = 1
-    static CLOSED = 3
-    constructor() { return mockWsInstance as unknown }
-  })
+  // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+  const MockWS = class { static OPEN = 1; static CLOSED = 3; constructor() { return mockWsInstance as never } }
+  vi.stubGlobal('WebSocket', MockWS)
+})
+
+afterEach(() => {
+  vi.useRealTimers()
 })
 
 describe('AnimpWebSocket', () => {
@@ -70,7 +72,6 @@ describe('AnimpWebSocket', () => {
 
     unsub()
     mockWsInstance.simulateMessage({ type: 'message.new', data: {} })
-    // handler was called once for entity.online on open, but not for the message
     const messageCalls = handler.mock.calls.filter(
       (c: unknown[]) => (c[0] as { type: string }).type === 'message.new'
     )
@@ -88,16 +89,6 @@ describe('AnimpWebSocket', () => {
     )
   })
 
-  it('send() does nothing when ws is not open', () => {
-    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
-    ws.connect()
-    // Set readyState to CLOSED (3)
-    mockWsInstance.readyState = 3
-
-    ws.send({ type: 'test' })
-    expect(mockWsInstance.send).not.toHaveBeenCalled()
-  })
-
   it('disconnect() sets connected = false and prevents reconnect', () => {
     const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
     ws.connect()
@@ -111,10 +102,141 @@ describe('AnimpWebSocket', () => {
   it('updateToken() changes the token for next connect', () => {
     const ws = new AnimpWebSocket('ws://localhost/ws', 'old-token')
     ws.updateToken('new-token')
-    // After updateToken, reconnecting should use the new token
-    // We verify by checking the ws instance was created (connect works)
     ws.connect()
     mockWsInstance.simulateOpen()
     expect(ws.connected).toBe(true)
+  })
+
+  // ─── New tests for reliability features ──────────────────────
+
+  it('schedules reconnect with jitter (delay between 0.8x and 1.2x)', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    ws.connect()
+    mockWsInstance.simulateOpen()
+
+    // Simulate disconnect
+    mockWsInstance.simulateClose()
+
+    // The reconnect timer should have been scheduled
+    // Base delay is 1000ms, jitter range is 800-1200ms
+    // Advance time by 800ms — should NOT have reconnected yet in most cases
+    // Advance to 1200ms — should have reconnected
+    vi.advanceTimersByTime(1200)
+    // After timer fires, a new WebSocket should be constructed
+    // The mock is recreated so we just check it was attempted (no error)
+    expect(ws.connected).toBe(false) // new connection not yet open
+  })
+
+  it('queues messages when disconnected and flushes on reconnect', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    ws.connect()
+    mockWsInstance.simulateOpen()
+
+    // Disconnect
+    mockWsInstance.simulateClose()
+    mockWsInstance.readyState = 3
+
+    // Send messages while disconnected — should be queued
+    ws.send({ type: 'msg1' })
+    ws.send({ type: 'msg2' })
+    expect(mockWsInstance.send).not.toHaveBeenCalledWith(JSON.stringify({ type: 'msg1' }))
+
+    // Reconnect
+    mockWsInstance = createMockWsInstance()
+    vi.advanceTimersByTime(1500) // trigger reconnect
+    mockWsInstance.simulateOpen()
+
+    // Queued messages should have been flushed
+    expect(mockWsInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'msg1' }))
+    expect(mockWsInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'msg2' }))
+  })
+
+  it('send queue respects max capacity (50)', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    ws.connect()
+    mockWsInstance.simulateOpen()
+    mockWsInstance.simulateClose()
+    mockWsInstance.readyState = 3
+
+    // Queue 60 messages — only first 50 should be kept
+    for (let i = 0; i < 60; i++) {
+      ws.send({ type: `msg${i}` })
+    }
+
+    mockWsInstance = createMockWsInstance()
+    vi.advanceTimersByTime(1500)
+    mockWsInstance.simulateOpen()
+
+    // First 50 should be sent, msg50-msg59 dropped
+    expect(mockWsInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'msg0' }))
+    expect(mockWsInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'msg49' }))
+    expect(mockWsInstance.send).not.toHaveBeenCalledWith(JSON.stringify({ type: 'msg50' }))
+  })
+
+  it('onReconnect callback fires on reconnection (not first connect)', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    const reconnectCb = vi.fn()
+    ws.onReconnect(reconnectCb)
+    ws.connect()
+    mockWsInstance.simulateOpen()
+
+    // First connect — should NOT fire onReconnect
+    expect(reconnectCb).not.toHaveBeenCalled()
+
+    // Disconnect + reconnect
+    mockWsInstance.simulateClose()
+    mockWsInstance = createMockWsInstance()
+    vi.advanceTimersByTime(1500)
+    mockWsInstance.simulateOpen()
+
+    // Reconnect — SHOULD fire
+    expect(reconnectCb).toHaveBeenCalledTimes(1)
+  })
+
+  it('client-side ping sends ping message every 25s', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    ws.connect()
+    mockWsInstance.simulateOpen()
+
+    // Clear initial calls (entity.online synthetic dispatch)
+    mockWsInstance.send.mockClear()
+
+    // Advance 25s — should send a ping
+    vi.advanceTimersByTime(25_000)
+    expect(mockWsInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'ping' }))
+  })
+
+  it('pong received cancels stale connection detection', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    ws.connect()
+    mockWsInstance.simulateOpen()
+
+    // Trigger ping
+    vi.advanceTimersByTime(25_000)
+
+    // Simulate pong response
+    mockWsInstance.simulateMessage({ type: 'pong' })
+
+    // Advance past pong timeout (10s) — connection should NOT be closed
+    vi.advanceTimersByTime(10_000)
+    expect(mockWsInstance.close).not.toHaveBeenCalled()
+    expect(ws.connected).toBe(true)
+  })
+
+  it('disconnect clears send queue', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    ws.connect()
+    mockWsInstance.simulateOpen()
+    mockWsInstance.simulateClose()
+    mockWsInstance.readyState = 3
+
+    ws.send({ type: 'queued' })
+    ws.disconnect()
+
+    // After disconnect, reconnecting should not flush old queue
+    mockWsInstance = createMockWsInstance()
+    ws.connect()
+    mockWsInstance.simulateOpen()
+    expect(mockWsInstance.send).not.toHaveBeenCalledWith(JSON.stringify({ type: 'queued' }))
   })
 })

@@ -6,6 +6,7 @@ const makeMsg = (overrides: Partial<Message> = {}): Message => ({
   id: 1,
   conversation_id: 100,
   sender_id: 10,
+  content_type: 'text',
   layers: { summary: 'hello' },
   created_at: '2026-03-01T00:00:00Z',
   ...overrides,

@@ -13,16 +13,18 @@ import {
 interface Props {
   message: Message
   isSelf: boolean
+  myEntityId?: number
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, onInteractionReply, onRevoke, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply, onRevoke, showSender = true }: Props) {
   const [showThinking, setShowThinking] = useState(false)
   const layers = message.layers || {}
   const isRevoked = !!message.revoked_at
   const isBot = message.sender_type === 'bot' || message.sender_type === 'service'
+  const isMentioned = myEntityId != null && message.mentions?.includes(myEntityId)
 
   // Can revoke within 2 minutes
   const canRevoke = isSelf && !isRevoked && onRevoke &&
@@ -150,9 +152,14 @@ export function MessageBubble({ message, isSelf, onInteractionReply, onRevoke, s
       className={cn(
         'flex gap-2.5 max-w-[85%] group',
         isSelf ? 'ml-auto flex-row-reverse' : '',
+        isMentioned ? 'relative' : '',
       )}
       style={{ animation: 'slideUp 0.2s ease-out' }}
     >
+      {/* Mention highlight bar */}
+      {isMentioned && !isSelf && (
+        <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-[var(--color-accent)]" />
+      )}
       {/* Avatar */}
       {showSender && !isSelf && (
         <EntityAvatar entity={message.sender} size="sm" className="mt-0.5" />
