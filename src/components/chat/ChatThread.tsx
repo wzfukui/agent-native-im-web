@@ -7,10 +7,11 @@ import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAuthStore } from '@/store/auth'
 import { useMessagesStore } from '@/store/messages'
 import { usePresenceStore } from '@/store/presence'
+import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Search, Users, ArrowLeft, Loader2 } from 'lucide-react'
+import { Search, Users, ArrowLeft, Loader2, X } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
 
@@ -33,7 +34,10 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchResults, setSearchResults] = useState<Message[] | null>(null)
+  const [searchLoading, setSearchLoading] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
+  const updateConversation = useConversationsStore((s) => s.updateConversation)
   const online = usePresenceStore((s) => s.online)
 
   // Determine other participant for direct chats
@@ -62,6 +66,16 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
     return () => { cancelled = true }
   }, [conversation.id, token])
 
+  // Mark as read when viewing messages
+  useEffect(() => {
+    if (messages.length === 0) return
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg.sender_id !== myEntity.id) {
+      api.markAsRead(token, conversation.id, lastMsg.id)
+    }
+    updateConversation(conversation.id, { unread_count: 0 })
+  }, [messages.length, conversation.id])
+
   // Load more
   const handleLoadMore = useCallback(async () => {
     if (loading || !hasMore) return
@@ -74,6 +88,23 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
     }
     setLoading(false)
   }, [loading, hasMore, messages, token, conversation.id])
+
+  // Debounced search
+  useEffect(() => {
+    if (!searching || !searchQuery.trim()) {
+      setSearchResults(null)
+      return
+    }
+    setSearchLoading(true)
+    const timeout = setTimeout(async () => {
+      const res = await api.searchMessages(token, conversation.id, searchQuery.trim())
+      if (res.ok && res.data) {
+        setSearchResults(res.data.messages)
+      }
+      setSearchLoading(false)
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [searchQuery, searching, token, conversation.id])
 
   // Send message
   const handleSend = useCallback(async (text: string, files?: File[], mentions?: number[]) => {
@@ -175,8 +206,19 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
         </div>
 
         <button
-          onClick={() => setSearching(!searching)}
-          className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors"
+          onClick={() => {
+            if (searching) {
+              setSearching(false)
+              setSearchQuery('')
+              setSearchResults(null)
+            } else {
+              setSearching(true)
+            }
+          }}
+          className={cn(
+            'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors',
+            searching ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
+          )}
         >
           <Search className="w-4 h-4" />
         </button>
@@ -185,13 +227,29 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
       {/* Search bar */}
       {searching && (
         <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search messages..."
-            autoFocus
-            className="w-full h-8 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search messages..."
+              autoFocus
+              className="flex-1 h-8 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
+            />
+            {searchLoading && <Loader2 className="w-4 h-4 text-[var(--color-text-muted)] animate-spin flex-shrink-0" />}
+            {searchQuery && !searchLoading && (
+              <button
+                onClick={() => { setSearchQuery(''); setSearchResults(null) }}
+                className="w-6 h-6 rounded flex items-center justify-center hover:bg-[var(--color-bg-hover)] cursor-pointer flex-shrink-0"
+              >
+                <X className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+              </button>
+            )}
+          </div>
+          {searchResults !== null && !searchLoading && (
+            <p className="text-[10px] text-[var(--color-text-muted)] mt-1 px-1">
+              {searchResults.length === 0 ? 'No results found' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} found`}
+            </p>
+          )}
         </div>
       )}
 
@@ -202,11 +260,11 @@ export function ChatThread({ conversation, onBack, onCancelStream }: Props) {
         </div>
       ) : (
         <MessageList
-          messages={messages}
+          messages={searchResults ?? messages}
           myEntityId={myEntity.id}
-          loading={loading}
-          hasMore={hasMore}
-          onLoadMore={handleLoadMore}
+          loading={searchResults !== null ? searchLoading : loading}
+          hasMore={searchResults !== null ? false : hasMore}
+          onLoadMore={searchResults !== null ? undefined : handleLoadMore}
           onInteractionReply={handleInteractionReply}
           onRevoke={handleRevoke}
         />

@@ -57,8 +57,24 @@ export default function App() {
     if (res.ok && res.data) {
       const convs = Array.isArray(res.data) ? res.data : []
       setConversations(convs)
+
+      // Load initial presence for all participants
+      const entityIds = new Set<number>()
+      for (const conv of convs) {
+        for (const p of conv.participants || []) {
+          if (p.entity_id !== entity?.id) entityIds.add(p.entity_id)
+        }
+      }
+      if (entityIds.size > 0) {
+        const presRes = await api.batchPresence(token, Array.from(entityIds))
+        if (presRes.ok && presRes.data?.presence) {
+          for (const [idStr, isOnline] of Object.entries(presRes.data.presence)) {
+            setOnline(Number(idStr), isOnline as boolean)
+          }
+        }
+      }
     }
-  }, [token])
+  }, [token, entity?.id])
 
   useEffect(() => {
     if (token) loadConversations()
@@ -77,25 +93,45 @@ export default function App() {
 
     const unsub = ws.onMessage((msg: WSMessage) => {
       switch (msg.type) {
-        case 'entity.online':
-          if ((msg.data as { self?: boolean })?.self) {
+        case 'entity.online': {
+          const onData = msg.data as { self?: boolean; entity_id?: number }
+          if (onData?.self) {
             setWsConnected(true)
+          } else if (onData?.entity_id) {
+            setOnline(onData.entity_id, true)
           }
           break
-        case 'entity.offline':
-          if ((msg.data as { self?: boolean })?.self) {
+        }
+        case 'entity.offline': {
+          const offData = msg.data as { self?: boolean; entity_id?: number }
+          if (offData?.self) {
             setWsConnected(false)
+          } else if (offData?.entity_id) {
+            setOnline(offData.entity_id, false)
           }
           break
+        }
 
         case 'message.new': {
           const message = msg.data as Message
           if (message) {
             addMessage(message)
-            updateConversation(message.conversation_id, {
-              last_message: message,
-              updated_at: message.created_at,
-            })
+            const currentActiveId = useConversationsStore.getState().activeId
+            const isActive = message.conversation_id === currentActiveId
+            const isSelf = message.sender_id === entity?.id
+            if (!isActive && !isSelf) {
+              const conv = useConversationsStore.getState().conversations.find((c) => c.id === message.conversation_id)
+              updateConversation(message.conversation_id, {
+                last_message: message,
+                updated_at: message.created_at,
+                unread_count: (conv?.unread_count || 0) + 1,
+              })
+            } else {
+              updateConversation(message.conversation_id, {
+                last_message: message,
+                updated_at: message.created_at,
+              })
+            }
           }
           break
         }

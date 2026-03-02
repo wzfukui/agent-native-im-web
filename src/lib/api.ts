@@ -60,6 +60,9 @@ export const removeParticipant = (token: string, convId: number, entityId: numbe
 export const updateSubscription = (token: string, convId: number, mode: string) =>
   request('PUT', `/api/v1/conversations/${convId}/subscription`, token, { mode })
 
+export const markAsRead = (token: string, convId: number, messageId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/read`, token, { message_id: messageId })
+
 // Messages
 export const listMessages = (token: string, convId: number, before?: number, limit = 30) => {
   const params = new URLSearchParams({ limit: String(limit) })
@@ -100,6 +103,9 @@ export const updateEntity = (token: string, id: number, data: { display_name?: s
 
 export const getEntityStatus = (token: string, id: number) =>
   request<{ online: boolean; last_seen?: string }>('GET', `/api/v1/entities/${id}/status`, token)
+
+export const batchPresence = (token: string, entityIds: number[]) =>
+  request<{ presence: Record<string, boolean> }>('POST', '/api/v1/presence/batch', token, { entity_ids: entityIds })
 
 export const updateProfile = (token: string, data: { display_name?: string; avatar_url?: string }) =>
   request<Entity>('PUT', '/api/v1/me', token, data)
