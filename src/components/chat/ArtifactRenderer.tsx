@@ -136,13 +136,16 @@ function MermaidRenderer({ source }: { source: string }) {
 }
 
 // ─── Image Renderer ────────────────────────────────────────────
-function ImageRenderer({ source, title }: { source: string; title?: string }) {
+function ImageRenderer({ source, title, fullscreen }: { source: string; title?: string; fullscreen?: boolean }) {
   return (
-    <div className="p-3 flex justify-center">
+    <div className={cn('p-3 flex justify-center', fullscreen && 'items-center h-full')}>
       <img
         src={source}
         alt={title || 'artifact image'}
-        className="max-w-full max-h-[400px] rounded-lg cursor-pointer object-contain"
+        className={cn(
+          'max-w-full rounded-lg cursor-pointer object-contain',
+          fullscreen ? 'max-h-full' : 'max-h-[400px]',
+        )}
         loading="lazy"
         onClick={() => window.open(source, '_blank')}
       />
@@ -171,7 +174,7 @@ export function ArtifactRenderer({ artifactType, source, title, language = '', h
       case 'mermaid':
         return <MermaidRenderer source={source} />
       case 'image':
-        return <ImageRenderer source={source} title={title} />
+        return <ImageRenderer source={source} title={title} fullscreen={fullscreen} />
       default:
         return (
           <pre className="p-3 text-xs text-[var(--color-text-muted)] whitespace-pre-wrap font-mono overflow-auto max-h-[300px]">
@@ -184,7 +187,7 @@ export function ArtifactRenderer({ artifactType, source, title, language = '', h
   const content = (
     <div className={cn(
       'artifact-container rounded-xl border border-[var(--color-border)] overflow-hidden',
-      fullscreen && 'fixed inset-4 z-50 bg-[var(--color-bg-primary)] shadow-2xl shadow-black/50',
+      fullscreen && 'fixed inset-4 z-50 bg-[var(--color-bg-primary)] shadow-2xl shadow-black/50 flex flex-col',
     )}>
       {/* Header */}
       <div className="artifact-header flex items-center gap-2 px-3 py-2 bg-[var(--color-bg-tertiary)] border-b border-[var(--color-border)]">
@@ -194,7 +197,7 @@ export function ArtifactRenderer({ artifactType, source, title, language = '', h
         </span>
         <div className="flex items-center gap-0.5">
           <CopyButton text={source} />
-          {(artifactType === 'html' || artifactType === 'mermaid') && (
+          {(artifactType === 'html' || artifactType === 'mermaid' || artifactType === 'image') && (
             <button
               onClick={() => setFullscreen(!fullscreen)}
               className="w-7 h-7 rounded-md hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors"
