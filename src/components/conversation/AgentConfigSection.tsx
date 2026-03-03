@@ -34,11 +34,13 @@ export function AgentConfigSection({ conversationId, canManage }: Props) {
 
   const handleSave = async () => {
     setSaving(true)
-    const res = await api.updateConversation(token, conversationId, { prompt: promptValue })
-    if (res.ok) {
-      setPrompt(promptValue)
-      setEditing(false)
-    }
+    try {
+      const res = await api.updateConversation(token, conversationId, { prompt: promptValue })
+      if (res.ok) {
+        setPrompt(promptValue)
+        setEditing(false)
+      }
+    } catch { /* network error */ }
     setSaving(false)
   }
 

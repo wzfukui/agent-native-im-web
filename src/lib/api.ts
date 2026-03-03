@@ -100,8 +100,11 @@ export const searchMessages = (token: string, convId: number, query: string, lim
 export const listEntities = (token: string) =>
   request<Entity[]>('GET', '/api/v1/entities', token)
 
-export const createEntity = (token: string, name: string) =>
-  request<{ entity: Entity; bootstrap_key: string; markdown_doc: string }>('POST', '/api/v1/entities', token, { name })
+export const createEntity = (token: string, name: string, metadata?: Record<string, unknown>) =>
+  request<{ entity: Entity; bootstrap_key: string; markdown_doc: string }>('POST', '/api/v1/entities', token, {
+    name,
+    ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
+  })
 
 export const deleteEntity = (token: string, id: number) =>
   request('DELETE', `/api/v1/entities/${id}`, token)
@@ -109,11 +112,19 @@ export const deleteEntity = (token: string, id: number) =>
 export const approveConnection = (token: string, id: number) =>
   request('POST', `/api/v1/entities/${id}/approve`, token)
 
+export const reactivateEntity = (token: string, id: number) =>
+  request<Entity>('POST', `/api/v1/entities/${id}/reactivate`, token)
+
 export const updateEntity = (token: string, id: number, data: { display_name?: string; metadata?: Record<string, unknown> }) =>
   request<Entity>('PUT', `/api/v1/entities/${id}`, token, data)
 
 export const getEntityStatus = (token: string, id: number) =>
   request<{ online: boolean; last_seen?: string }>('GET', `/api/v1/entities/${id}/status`, token)
+
+export const getEntityCredentials = (token: string, id: number) =>
+  request<{ entity_id: number; has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string }>(
+    'GET', `/api/v1/entities/${id}/credentials`, token,
+  )
 
 export const batchPresence = (token: string, entityIds: number[]) =>
   request<{ presence: Record<string, boolean> }>('POST', '/api/v1/presence/batch', token, { entity_ids: entityIds })

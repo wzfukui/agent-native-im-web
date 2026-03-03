@@ -7,20 +7,17 @@ import type { Entity } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { CreateAgentDialog } from './CreateAgentDialog'
-import {
-  Bot, Plus, Search, Loader2, Key, Copy, Check,
-  FileText, ChevronDown, ChevronUp, MessageSquare, Wifi, WifiOff,
-} from 'lucide-react'
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
+import { Bot, Plus, Search, Loader2, Wifi, WifiOff, PowerOff } from 'lucide-react'
 
 interface Props {
   selectedId: number | null
   onSelect: (id: number) => void
   onStartChat: (entityId: number) => void
+  onCreated: (result: { entity: Entity; key: string; doc: string }) => void
+  refreshTrigger?: number
 }
 
-export function BotList({ selectedId, onSelect, onStartChat }: Props) {
+export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshTrigger }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const online = usePresenceStore((s) => s.online)
@@ -28,9 +25,6 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
-  const [createdKey, setCreatedKey] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
-  const [copied, setCopied] = useState<string | false>(false)
-  const [docExpanded, setDocExpanded] = useState(false)
 
   const loadEntities = async () => {
     const res = await api.listEntities(token)
@@ -38,13 +32,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
     setLoading(false)
   }
 
-  useEffect(() => { loadEntities() }, [])
-
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text)
-    setCopied(label)
-    setTimeout(() => setCopied(false), 2000)
-  }
+  useEffect(() => { loadEntities() }, [refreshTrigger])
 
   const bots = entities.filter((e) => e.entity_type !== 'user')
   const filtered = search
@@ -54,6 +42,46 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
       )
     : bots
 
+  // Split into active and disabled groups, online bots sorted first
+  const activeBots = filtered
+    .filter((e) => e.status !== 'disabled')
+    .sort((a, b) => (online.has(a.id) ? 0 : 1) - (online.has(b.id) ? 0 : 1))
+  const disabledBots = filtered.filter((e) => e.status === 'disabled')
+
+  const renderBotItem = (entity: Entity, isDisabled: boolean) => {
+    const isOnline = online.has(entity.id)
+    const isActive = entity.id === selectedId
+    return (
+      <button
+        key={entity.id}
+        onClick={() => onSelect(entity.id)}
+        className={cn(
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left cursor-pointer',
+          isActive
+            ? 'bg-[var(--color-accent-dim)]'
+            : 'hover:bg-[var(--color-bg-hover)]',
+          isDisabled && 'opacity-50'
+        )}
+      >
+        <EntityAvatar entity={entity} size="sm" showStatus />
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+            {entityDisplayName(entity)}
+          </p>
+          <p className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
+            {isDisabled ? (
+              <><PowerOff className="w-2.5 h-2.5" /> {t('bot.disabled')}</>
+            ) : isOnline ? (
+              <><Wifi className="w-2.5 h-2.5 text-[var(--color-success)]" /> {t('common.online')}</>
+            ) : (
+              <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>
+            )}
+          </p>
+        </div>
+      </button>
+    )
+  }
+
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
@@ -61,10 +89,10 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
         <div className="flex items-center gap-2">
           <Bot className="w-4.5 h-4.5 text-[var(--color-bot)]" />
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t('bot.agents')}</h2>
-          <span className="text-xs text-[var(--color-text-muted)]">({bots.length})</span>
+          <span className="text-xs text-[var(--color-text-muted)]">({activeBots.length})</span>
         </div>
         <button
-          onClick={() => { setShowCreate(true); setCreatedKey(null) }}
+          onClick={() => setShowCreate(true)}
           className="w-8 h-8 rounded-lg bg-[var(--color-bot)]/10 hover:bg-[var(--color-bot)]/20 flex items-center justify-center transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4 text-[var(--color-bot)]" />
@@ -76,109 +104,12 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
         <CreateAgentDialog
           onClose={() => setShowCreate(false)}
           onCreated={(result) => {
-            setCreatedKey(result)
             setShowCreate(false)
             loadEntities()
+            onSelect(result.entity.id)
+            onCreated(result)
           }}
         />
-      )}
-
-      {/* Created key card */}
-      {createdKey && (
-        <div className="px-3 pb-2">
-          <div className="rounded-lg bg-[var(--color-success)]/8 border border-[var(--color-success)]/20 overflow-hidden">
-            <div className="flex items-center justify-between px-3 pt-3 pb-1.5">
-              <div className="flex items-center gap-1.5">
-                <Key className="w-3.5 h-3.5 text-[var(--color-success)]" />
-                <span className="text-xs font-medium text-[var(--color-success)]">
-                  {entityDisplayName(createdKey.entity)} {t('bot.created')}
-                </span>
-              </div>
-              <button
-                onClick={() => { setCreatedKey(null); setDocExpanded(false) }}
-                className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
-              >
-                {t('common.dismiss')}
-              </button>
-            </div>
-
-            {/* Connection fields */}
-            <div className="px-3 space-y-1.5">
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase w-10 flex-shrink-0">API</span>
-                <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
-                  {window.location.origin}/api/v1
-                </code>
-                <button
-                  onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')}
-                  className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
-                >
-                  {copied === 'api' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase w-10 flex-shrink-0">Token</span>
-                <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
-                  {createdKey.key}
-                </code>
-                <button
-                  onClick={() => handleCopy(createdKey.key, 'token')}
-                  className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
-                >
-                  {copied === 'token' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Action buttons */}
-            <div className="px-3 pt-2 pb-1.5 flex gap-1.5">
-              <button
-                onClick={() => handleCopy(createdKey.doc, 'doc')}
-                className="flex-1 py-1.5 rounded bg-[var(--color-bot)] hover:bg-[var(--color-bot)]/80 text-white text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-colors"
-              >
-                {copied === 'doc' ? <Check className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
-                {copied === 'doc' ? t('invite.copied') : t('bot.copyDoc')}
-              </button>
-              <button
-                onClick={() => {
-                  const envConfig = `IM_SERVER=${window.location.origin}\nBOT_TOKEN=${createdKey.key}`
-                  handleCopy(envConfig, 'env')
-                }}
-                className="flex-1 py-1.5 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-colors border border-[var(--color-border)]"
-              >
-                {copied === 'env' ? <Check className="w-3 h-3 text-[var(--color-success)]" /> : <Copy className="w-3 h-3" />}
-                {copied === 'env' ? t('invite.copied') : '.env'}
-              </button>
-            </div>
-
-            {/* Collapsible doc preview */}
-            <div className="px-3 pb-2">
-              <button
-                onClick={() => setDocExpanded(!docExpanded)}
-                className="w-full flex items-center justify-center gap-1 py-1 text-[9px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
-              >
-                {docExpanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
-                {docExpanded ? t('bot.collapseDoc') : t('bot.expandDoc')}
-              </button>
-              {docExpanded && (
-                <div className="mt-1 p-2 rounded bg-[var(--color-bg-primary)] border border-[var(--color-border)] max-h-48 overflow-y-auto text-[10px] prose prose-invert prose-xs max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{createdKey.doc}</ReactMarkdown>
-                </div>
-              )}
-            </div>
-
-            {/* Start chat button */}
-            <div className="px-3 pb-3">
-              <button
-                onClick={() => onStartChat(createdKey.entity.id)}
-                className="w-full py-1.5 rounded bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-colors"
-              >
-                <MessageSquare className="w-3 h-3" />
-                {t('bot.startChat')}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
 
       {/* Search */}
@@ -206,36 +137,25 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
             <p className="text-xs">{search ? t('common.noMatches') : t('bot.noAgents')}</p>
           </div>
         ) : (
-          filtered.map((entity) => {
-            const isOnline = online.has(entity.id)
-            const isActive = entity.id === selectedId
-            return (
-              <button
-                key={entity.id}
-                onClick={() => onSelect(entity.id)}
-                className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left cursor-pointer',
-                  isActive
-                    ? 'bg-[var(--color-accent-dim)]'
-                    : 'hover:bg-[var(--color-bg-hover)]'
-                )}
-              >
-                <EntityAvatar entity={entity} size="sm" showStatus />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-                    {entityDisplayName(entity)}
-                  </p>
-                  <p className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
-                    {isOnline ? (
-                      <><Wifi className="w-2.5 h-2.5 text-[var(--color-success)]" /> {t('common.online')}</>
-                    ) : (
-                      <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>
-                    )}
-                  </p>
+          <>
+            {/* Active bots (online first) */}
+            {activeBots.map((entity) => renderBotItem(entity, false))}
+
+            {/* Divider + Disabled bots */}
+            {disabledBots.length > 0 && (
+              <>
+                <div className="flex items-center gap-2 px-2 py-2 mt-1">
+                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                  <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
+                    <PowerOff className="w-2.5 h-2.5" />
+                    {t('bot.disabledSection')} ({disabledBots.length})
+                  </span>
+                  <div className="flex-1 h-px bg-[var(--color-border)]" />
                 </div>
-              </button>
-            )
-          })
+                {disabledBots.map((entity) => renderBotItem(entity, true))}
+              </>
+            )}
+          </>
         )}
       </div>
     </div>

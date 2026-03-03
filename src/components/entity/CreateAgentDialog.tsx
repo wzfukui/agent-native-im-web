@@ -23,18 +23,23 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
     if (!name.trim()) return
     setCreating(true)
     setError('')
-    const res = await api.createEntity(token, name.trim())
-    if (res.ok && res.data) {
-      // Update metadata with description/tags if provided
+    try {
+      // Build metadata for single-call creation
       const meta: Record<string, unknown> = {}
       if (description.trim()) meta.description = description.trim()
-      if (tags.trim()) meta.tags = tags.split(',').map((t) => t.trim()).filter(Boolean)
-      if (Object.keys(meta).length > 0) {
-        await api.updateEntity(token, res.data.entity.id, { metadata: meta })
+      if (tags.trim()) meta.tags = tags.split(',').map((v) => v.trim()).filter(Boolean)
+
+      const res = await api.createEntity(
+        token, name.trim(),
+        Object.keys(meta).length > 0 ? meta : undefined,
+      )
+      if (res.ok && res.data) {
+        onCreated({ entity: res.data.entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
+      } else {
+        setError(res.error || t('common.error'))
       }
-      onCreated({ entity: res.data.entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
-    } else {
-      setError(res.error || t('common.error'))
+    } catch {
+      setError(t('common.error'))
     }
     setCreating(false)
   }
@@ -44,7 +49,7 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
       <div
         className="w-full max-w-md bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ animation: 'slideUp 0.2s ease-out' }}
+        style={{ animation: 'slide-up 0.2s ease-out' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">

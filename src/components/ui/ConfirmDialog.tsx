@@ -21,7 +21,7 @@ export function ConfirmDialog({ open, title, message, confirmLabel, cancelLabel,
       <div
         className="w-full max-w-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ animation: 'slideUp 0.2s ease-out' }}
+        style={{ animation: 'slide-up 0.2s ease-out' }}
       >
         <div className="px-5 pt-5 pb-4">
           <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{title}</h3>

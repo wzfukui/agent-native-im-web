@@ -47,6 +47,8 @@ export default function App() {
   const [showSettings, setShowSettings] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
   const [leaveConfirmId, setLeaveConfirmId] = useState<number | null>(null)
+  const [createdCredentials, setCreatedCredentials] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
+  const [botListRefresh, setBotListRefresh] = useState(0)
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -354,11 +356,26 @@ export default function App() {
     setActive(convId)
   }
 
-  // ─── Delete bot from detail ───────────────────────────────────
-  const handleDeleteBot = async (botId: number) => {
+  // ─── Disable bot (soft delete) ──────────────────────────────
+  const handleDisableBot = async (botId: number) => {
+    await api.deleteEntity(token!, botId)
+    loadBotEntities()
+    setBotListRefresh(prev => prev + 1)
+  }
+
+  // ─── Reactivate disabled bot ──────────────────────────────
+  const handleReactivateBot = async (botId: number) => {
+    await api.reactivateEntity(token!, botId)
+    loadBotEntities()
+    setBotListRefresh(prev => prev + 1)
+  }
+
+  // ─── Hard delete bot (permanent) ──────────────────────────
+  const handleHardDeleteBot = async (botId: number) => {
     await api.deleteEntity(token!, botId)
     setSelectedBotId(null)
     loadBotEntities()
+    setBotListRefresh(prev => prev + 1)
   }
 
   // ─── Leave / Archive conversation ────────────────────────────
@@ -457,6 +474,12 @@ export default function App() {
                 selectedId={selectedBotId}
                 onSelect={(id) => { setSelectedBotId(id); loadBotEntities() }}
                 onStartChat={handleStartChatFromBot}
+                onCreated={(result) => {
+                  setCreatedCredentials(result)
+                  setSelectedBotId(result.entity.id)
+                  loadBotEntities()
+                }}
+                refreshTrigger={botListRefresh}
               />
             )}
           </div>
@@ -514,9 +537,13 @@ export default function App() {
                 <ErrorBoundary>
                   <BotDetail
                     bot={selectedBot}
+                    createdCredentials={selectedBot?.id === createdCredentials?.entity.id ? createdCredentials : null}
+                    onDismissCredentials={() => setCreatedCredentials(null)}
                     onBack={() => setSelectedBotId(null)}
                     onOpenConversation={handleOpenConversation}
-                    onDelete={handleDeleteBot}
+                    onDisable={handleDisableBot}
+                    onReactivate={handleReactivateBot}
+                    onHardDelete={handleHardDeleteBot}
                     onStartChat={handleStartChatFromBot}
                   />
                 </ErrorBoundary>

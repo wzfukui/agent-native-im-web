@@ -8,8 +8,8 @@ import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
 import type { Message } from '@/lib/types'
 import {
-  FileText, Download, Image as ImageIcon, Play, Pause,
-  Brain, ChevronDown, ChevronUp, Reply, CornerUpLeft, Ban, Trash2,
+  FileText, Download, Play, Pause,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2,
 } from 'lucide-react'
 
 function AudioPlayer({ url, duration: totalDuration }: { url?: string; duration?: number }) {
@@ -232,7 +232,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         isSelf ? 'ml-auto flex-row-reverse' : '',
         isMentioned ? 'relative' : '',
       )}
-      style={{ animation: 'slideUp 0.2s ease-out' }}
+      style={{ animation: 'slide-up 0.2s ease-out' }}
     >
       {/* Mention highlight bar */}
       {isMentioned && !isSelf && (

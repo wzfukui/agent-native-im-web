@@ -4,7 +4,7 @@ import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
-import type { Conversation, Participant, Entity } from '@/lib/types'
+import type { Conversation, Entity } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Loader2 } from 'lucide-react'
 
@@ -84,7 +84,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
       <div
         className="w-full max-w-sm bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
-        style={{ animation: 'slideUp 0.2s ease-out' }}
+        style={{ animation: 'slide-up 0.2s ease-out' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
@@ -123,7 +123,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
         {/* Members list */}
         <div className="max-h-72 overflow-y-auto">
           {participants.map((p) => (
-            <div key={p.entity_id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-[var(--color-bg-hover)] transition-colors">
+            <div key={p.entity_id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-[var(--color-bg-hover)] transition-colors group">
               <EntityAvatar entity={p.entity} size="sm" showStatus />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">

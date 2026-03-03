@@ -1,5 +1,6 @@
 import { Component, type ReactNode } from 'react'
 import { AlertTriangle, RefreshCw } from 'lucide-react'
+import i18n from '@/i18n'
 
 interface Props {
   children: ReactNode
@@ -36,9 +37,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <AlertTriangle className="w-6 h-6 text-[var(--color-error)]" />
           </div>
           <div>
-            <p className="text-sm font-medium text-[var(--color-text-primary)]">Something went wrong</p>
+            <p className="text-sm font-medium text-[var(--color-text-primary)]">{i18n.t('common.errorTitle')}</p>
             <p className="text-[11px] text-[var(--color-text-muted)] mt-1 max-w-xs">
-              {this.state.error?.message || 'An unexpected error occurred'}
+              {this.state.error?.message || i18n.t('common.errorUnexpected')}
             </p>
           </div>
           <button
@@ -46,7 +47,7 @@ export class ErrorBoundary extends Component<Props, State> {
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer hover:opacity-90 transition-opacity"
           >
             <RefreshCw className="w-3 h-3" />
-            Reload
+            {i18n.t('common.reload')}
           </button>
         </div>
       )

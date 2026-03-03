@@ -66,7 +66,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
       <div
         className="w-full max-w-md bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 max-h-[70vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
-        style={{ animation: 'slideUp 0.2s ease-out' }}
+        style={{ animation: 'slide-up 0.2s ease-out' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">

@@ -12,7 +12,7 @@ import * as api from '@/lib/api'
 import type { Conversation } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
-  X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Eye,
+  X, UserMinus, Bell, BellOff, Crown, Shield, Eye,
   Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2,
 } from 'lucide-react'
 
@@ -90,10 +90,12 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
 
   const handleArchive = async () => {
     setLoading(true)
-    await api.archiveConversation(token, conversation.id)
+    const res = await api.archiveConversation(token, conversation.id)
     setLoading(false)
-    onLeave?.()
-    onClose()
+    if (res.ok) {
+      onLeave?.()
+      onClose()
+    }
   }
 
   const roleIcon = (role: string) => {

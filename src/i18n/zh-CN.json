@@ -126,7 +126,8 @@
     "thinking": "思考过程",
     "replyTo": "回复消息 #{{id}}",
     "mentioned": "被提及",
-    "dropFiles": "拖放文件到此处发送"
+    "dropFiles": "拖放文件到此处发送",
+    "loadEarlier": "加载更早的消息"
   },
   "admin": {
     "dashboard": "仪表盘",
@@ -146,6 +147,7 @@
     "delete": "删除",
     "bootstrapKey": "引导密钥",
     "copyDoc": "复制接入文档",
+    "copyIntegration": "一键复制给 OpenClaw",
     "expandDoc": "展开文档",
     "collapseDoc": "收起文档",
     "approveConnection": "审批连接",
@@ -167,7 +169,18 @@
     "descriptionLabel": "描述（可选）",
     "descriptionPlaceholder": "这个 Agent 做什么？",
     "tagsLabel": "标签（可选）",
-    "tagsPlaceholder": "如：客服、财务、销售"
+    "tagsPlaceholder": "如：客服、财务、销售",
+    "pendingConnection": "等待连接",
+    "pendingConnectionDesc": "此 Agent 有引导密钥但尚未连接。",
+    "keyPrefix": "密钥前缀",
+    "keyLostHint": "完整密钥仅在创建时展示。",
+    "owner": "创建者",
+    "lastSeen": "最后活跃",
+    "disableAgent": "停用 Agent",
+    "disableConfirm": "停用 {{name}}？将停止接收消息，但可以稍后重新启用。",
+    "disabled": "已停用",
+    "reactivate": "重新启用",
+    "disabledSection": "已停用"
   },
   "task": {
     "title": "任务",
@@ -230,7 +243,10 @@
     "noEntities": "没有可添加的用户",
     "create": "创建",
     "dismiss": "关闭",
-    "noMatches": "无匹配结果"
+    "noMatches": "无匹配结果",
+    "errorTitle": "出错了",
+    "errorUnexpected": "发生了意外错误",
+    "reload": "重新加载"
   },
   "agentConfig": {
     "prompt": "会话指令",

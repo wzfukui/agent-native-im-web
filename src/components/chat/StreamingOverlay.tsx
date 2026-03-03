@@ -16,7 +16,7 @@ export function StreamingOverlay({ streams, onCancel }: Props) {
   if (streams.length === 0) return null
 
   return (
-    <div className="px-4 pb-2 space-y-2" style={{ animation: 'slideUp 0.25s ease-out' }}>
+    <div className="px-4 pb-2 space-y-2" style={{ animation: 'slide-up 0.25s ease-out' }}>
       {streams.map((stream) => {
         const status = stream.layers.status
         const thinking = stream.layers.thinking

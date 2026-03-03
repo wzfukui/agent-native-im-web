@@ -7,33 +7,50 @@ import type { Entity, Conversation } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import {
-  Bot, ArrowLeft, Wifi, WifiOff, Shield, Sparkles, FileText,
-  MessageSquare, Users, ChevronRight, Loader2, Trash2, Hash, Calendar, Tag,
+  Bot, ArrowLeft, Wifi, WifiOff, Sparkles, FileText, User,
+  MessageSquare, Users, ChevronRight, ChevronDown, ChevronUp, Loader2,
+  Trash2, Hash, Calendar, Tag, Key, Copy, Check, Clock, AlertCircle, Shield,
+  PowerOff, RotateCcw,
 } from 'lucide-react'
 
 interface Props {
   bot: Entity | null
+  createdCredentials?: { entity: Entity; key: string; doc: string } | null
+  onDismissCredentials?: () => void
   onBack: () => void
   onOpenConversation: (convId: number) => void
-  onDelete: (id: number) => void
+  onDisable: (id: number) => void
+  onReactivate: (id: number) => void
+  onHardDelete: (id: number) => void
   onStartChat: (entityId: number) => void
 }
 
-export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartChat }: Props) {
+export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBack, onOpenConversation, onDisable, onReactivate, onHardDelete, onStartChat }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
+  const myEntity = useAuthStore((s) => s.entity)!
   const online = usePresenceStore((s) => s.online)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [loadingConvs, setLoadingConvs] = useState(false)
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
-  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [confirmDisable, setConfirmDisable] = useState(false)
+  const [confirmHardDelete, setConfirmHardDelete] = useState(false)
+  const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)
+  const [lastSeen, setLastSeen] = useState<string | null>(null)
+  const [copied, setCopied] = useState<string | false>(false)
+  const [docExpanded, setDocExpanded] = useState(false)
 
+  // Load conversations
   useEffect(() => {
     if (!bot) return
     setLoadingConvs(true)
     setActiveTab('direct')
-    setConfirmDelete(false)
+    setConfirmDisable(false)
+    setConfirmHardDelete(false)
+    setDocExpanded(false)
     api.listConversations(token).then((res) => {
       if (res.ok && res.data) {
         const convs = (res.data as Conversation[]).filter((c) =>
@@ -42,8 +59,27 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
         setConversations(convs)
       }
       setLoadingConvs(false)
-    })
+    }).catch(() => { setLoadingConvs(false) })
   }, [bot?.id, token])
+
+  // Load credential status + entity status
+  useEffect(() => {
+    if (!bot) return
+    setCredStatus(null)
+    setLastSeen(null)
+    api.getEntityCredentials(token, bot.id).then((res) => {
+      if (res.ok && res.data) setCredStatus(res.data)
+    }).catch(() => {})
+    api.getEntityStatus(token, bot.id).then((res) => {
+      if (res.ok && res.data?.last_seen) setLastSeen(res.data.last_seen)
+    }).catch(() => {})
+  }, [bot?.id, token])
+
+  const handleCopy = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).catch(() => {})
+    setCopied(label)
+    setTimeout(() => setCopied(false), 2000)
+  }
 
   // Empty state
   if (!bot) {
@@ -61,12 +97,20 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
   }
 
   const isOnline = online.has(bot.id)
+  const isDisabled = bot.status === 'disabled'
   const meta = bot.metadata as Record<string, unknown> | undefined
   const description = (meta?.description as string) || ''
   const caps = (meta?.capabilities as string[]) || []
+  const tags = (meta?.tags as string[]) || []
+  const ownerEntity = bot.owner_id === myEntity?.id ? myEntity : null
   const directConvs = conversations.filter((c) => c.conv_type === 'direct')
   const groupConvs = conversations.filter((c) => c.conv_type === 'group' || c.conv_type === 'channel')
   const tabConvs = activeTab === 'direct' ? directConvs : groupConvs
+
+  // Show full credential card if just created
+  const showFullCreds = createdCredentials && createdCredentials.entity.id === bot.id
+  // Show pending connection card if has bootstrap but no API key (not yet approved)
+  const showPendingCreds = !showFullCreds && credStatus?.has_bootstrap && !credStatus?.has_api_key && !isOnline
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg-primary)]">
@@ -87,17 +131,144 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
         </div>
         <span className={cn(
           'px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1',
-          isOnline
-            ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-            : 'bg-[var(--color-text-muted)]/15 text-[var(--color-text-muted)]'
+          isDisabled
+            ? 'bg-amber-500/15 text-amber-500'
+            : isOnline
+              ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
+              : 'bg-[var(--color-text-muted)]/15 text-[var(--color-text-muted)]'
         )}>
-          {isOnline ? <><Wifi className="w-2.5 h-2.5" /> {t('common.online')}</> : <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>}
+          {isDisabled ? <><PowerOff className="w-2.5 h-2.5" /> {t('bot.disabled')}</> : isOnline ? <><Wifi className="w-2.5 h-2.5" /> {t('common.online')}</> : <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>}
         </span>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
-        {/* Bot info grid */}
+
+        {/* Full credential card (just created) */}
+        {showFullCreds && createdCredentials && (
+          <div className="px-4 py-3 border-b border-[var(--color-border)]">
+            <div className="rounded-lg bg-[var(--color-success)]/8 border border-[var(--color-success)]/20 overflow-hidden">
+              <div className="flex items-center justify-between px-3 pt-3 pb-1.5">
+                <div className="flex items-center gap-1.5">
+                  <Key className="w-3.5 h-3.5 text-[var(--color-success)]" />
+                  <span className="text-xs font-medium text-[var(--color-success)]">
+                    {entityDisplayName(createdCredentials.entity)} {t('bot.created')}
+                  </span>
+                </div>
+                <button
+                  onClick={onDismissCredentials}
+                  className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
+                >
+                  {t('common.dismiss')}
+                </button>
+              </div>
+
+              {/* Connection fields */}
+              <div className="px-3 space-y-1.5">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase w-10 flex-shrink-0">API</span>
+                  <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
+                    {window.location.origin}/api/v1
+                  </code>
+                  <button
+                    onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')}
+                    className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                  >
+                    {copied === 'api' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
+                  </button>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase w-10 flex-shrink-0">Token</span>
+                  <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
+                    {createdCredentials.key}
+                  </code>
+                  <button
+                    onClick={() => handleCopy(createdCredentials.key, 'token')}
+                    className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
+                  >
+                    {copied === 'token' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* One-click copy all integration info */}
+              <div className="px-3 pt-2 pb-1.5">
+                <button
+                  onClick={() => {
+                    const integrationInfo = `# Agent Integration Configuration
+API Endpoint: ${window.location.origin}/api/v1
+Token: ${createdCredentials.key}
+
+# Environment Variables (.env)
+IM_SERVER=${window.location.origin}
+BOT_TOKEN=${createdCredentials.key}
+
+# Integration Documentation
+${createdCredentials.doc}`
+                    handleCopy(integrationInfo, 'integration')
+                  }}
+                  className="w-full py-2 rounded-lg bg-gradient-to-r from-[var(--color-success)] to-[var(--color-bot)] hover:opacity-90 text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-opacity shadow-sm"
+                >
+                  {copied === 'integration' ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      <span>{t('invite.copied')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-4 h-4" />
+                      <span>{t('bot.copyIntegration')}</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Collapsible doc preview */}
+              <div className="px-3 pb-2">
+                <button
+                  onClick={() => setDocExpanded(!docExpanded)}
+                  className="w-full flex items-center justify-center gap-1 py-1 text-[9px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
+                >
+                  {docExpanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
+                  {docExpanded ? t('bot.collapseDoc') : t('bot.expandDoc')}
+                </button>
+                {docExpanded && (
+                  <div className="mt-1 p-2 rounded bg-[var(--color-bg-primary)] border border-[var(--color-border)] max-h-48 overflow-y-auto text-[10px] prose prose-invert prose-xs max-w-none">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{createdCredentials.doc}</ReactMarkdown>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Pending connection card (has bootstrap key but not just created) */}
+        {showPendingCreds && (
+          <div className="px-4 py-3 border-b border-[var(--color-border)]">
+            <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
+                <span className="text-xs font-medium text-amber-500">{t('bot.pendingConnection')}</span>
+              </div>
+              <p className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
+                {t('bot.pendingConnectionDesc')}
+              </p>
+              {credStatus?.bootstrap_prefix && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase">{t('bot.keyPrefix')}</span>
+                  <code className="text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-0.5 rounded">
+                    {credStatus.bootstrap_prefix}****
+                  </code>
+                </div>
+              )}
+              <p className="text-[9px] text-[var(--color-text-muted)] italic">{t('bot.keyLostHint')}</p>
+              {/* Only show approval button if we detect a pending request (future enhancement) */}
+              {/* For now, approval should be done via API or when bot actually attempts connection */}
+            </div>
+          </div>
+        )}
+
+        {/* Agent info card */}
         <div className="px-4 py-3 border-b border-[var(--color-border)]">
           {/* Description */}
           {description && (
@@ -107,37 +278,83 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
             </div>
           )}
 
-          {/* Info grid */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-            <div className="flex items-center gap-2">
-              <Tag className="w-3 h-3 text-[var(--color-text-muted)]" />
-              <span className="text-[10px] text-[var(--color-text-muted)]">{t('bot.type')}</span>
-              <span className="text-[11px] text-[var(--color-text-primary)] ml-auto">{bot.entity_type}</span>
+          {/* Info rows — vertical list (名片 style) */}
+          <div className="space-y-2">
+            {/* Owner */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+                <User className="w-3 h-3" />
+                {t('bot.owner')}
+              </span>
+              <div className="flex items-center gap-1.5">
+                {ownerEntity ? (
+                  <>
+                    <EntityAvatar entity={ownerEntity} size="xs" />
+                    <span className="text-[11px] text-[var(--color-text-primary)]">{entityDisplayName(ownerEntity)}</span>
+                  </>
+                ) : (
+                  <span className="text-[11px] text-[var(--color-text-muted)]">#{bot.owner_id || '—'}</span>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Hash className="w-3 h-3 text-[var(--color-text-muted)]" />
-              <span className="text-[10px] text-[var(--color-text-muted)]">ID</span>
-              <span className="text-[11px] text-[var(--color-text-primary)] ml-auto font-mono">{bot.id}</span>
+
+            {/* Type */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+                <Tag className="w-3 h-3" />
+                {t('bot.type')}
+              </span>
+              <span className="text-[11px] text-[var(--color-text-primary)] capitalize">{bot.entity_type}</span>
             </div>
-            <div className="flex items-center gap-2">
-              <Calendar className="w-3 h-3 text-[var(--color-text-muted)]" />
-              <span className="text-[10px] text-[var(--color-text-muted)]">{t('bot.createdAt')}</span>
-              <span className="text-[11px] text-[var(--color-text-primary)] ml-auto">
+
+            {/* ID */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+                <Hash className="w-3 h-3" />
+                ID
+              </span>
+              <span className="text-[11px] text-[var(--color-text-primary)] font-mono">{bot.id}</span>
+            </div>
+
+            {/* Created */}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+                <Calendar className="w-3 h-3" />
+                {t('bot.createdAt')}
+              </span>
+              <span className="text-[11px] text-[var(--color-text-primary)]">
                 {bot.created_at ? new Date(bot.created_at).toLocaleDateString() : '—'}
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              {isOnline ? <Wifi className="w-3 h-3 text-[var(--color-success)]" /> : <WifiOff className="w-3 h-3 text-[var(--color-text-muted)]" />}
-              <span className="text-[10px] text-[var(--color-text-muted)]">{t('bot.status')}</span>
-              <span className={cn('text-[11px] ml-auto', isOnline ? 'text-[var(--color-success)]' : 'text-[var(--color-text-muted)]')}>
-                {isOnline ? t('common.online') : t('common.offline')}
-              </span>
-            </div>
+
+            {/* Last seen */}
+            {lastSeen && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  {t('bot.lastSeen')}
+                </span>
+                <span className="text-[11px] text-[var(--color-text-primary)]">
+                  {new Date(lastSeen).toLocaleString()}
+                </span>
+              </div>
+            )}
           </div>
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-1 mt-2.5">
+              {tags.map((tag, i) => (
+                <span key={i} className="px-1.5 py-0.5 rounded-md bg-[var(--color-bot)]/10 text-[var(--color-bot)] text-[10px]">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
 
           {/* Capabilities */}
           {caps.length > 0 && (
-            <div className="flex items-start gap-2 mt-3">
+            <div className="flex items-start gap-2 mt-2.5">
               <FileText className="w-3.5 h-3.5 text-[var(--color-bot)] mt-0.5 flex-shrink-0" />
               <div className="flex flex-wrap gap-1">
                 {caps.map((cap, i) => (
@@ -149,32 +366,45 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
             </div>
           )}
 
-          {/* Compact action buttons */}
+          {/* Action buttons — varies by status */}
           <div className="flex gap-2 mt-3">
-            <button
-              onClick={() => onStartChat(bot.id)}
-              className="py-1.5 px-3 rounded-lg bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-            >
-              <MessageSquare className="w-3 h-3" />
-              {t('conversation.newChat')}
-            </button>
-
-            {!isOnline && (
-              <button
-                onClick={async () => { await api.approveConnection(token, bot.id) }}
-                className="py-1.5 px-3 rounded-lg bg-[var(--color-success)]/15 hover:bg-[var(--color-success)]/25 text-[var(--color-success)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-              >
-                <Shield className="w-3 h-3" />
-                {t('bot.approveConnection')}
-              </button>
+            {isDisabled ? (
+              <>
+                {/* Disabled state: re-enable + hard delete */}
+                <button
+                  onClick={() => onReactivate(bot.id)}
+                  className="py-1.5 px-3 rounded-lg bg-[var(--color-success)]/15 hover:bg-[var(--color-success)]/25 text-[var(--color-success)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  {t('bot.reactivate')}
+                </button>
+                <button
+                  onClick={() => setConfirmHardDelete(true)}
+                  className="py-1.5 px-3 rounded-lg hover:bg-[var(--color-error)]/15 text-[var(--color-text-muted)] hover:text-[var(--color-error)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
+                >
+                  <Trash2 className="w-3 h-3" />
+                  {t('bot.deleteAgent')}
+                </button>
+              </>
+            ) : (
+              <>
+                {/* Active state: start chat + disable */}
+                <button
+                  onClick={() => onStartChat(bot.id)}
+                  className="py-1.5 px-3 rounded-lg bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <MessageSquare className="w-3 h-3" />
+                  {t('conversation.newChat')}
+                </button>
+                <button
+                  onClick={() => setConfirmDisable(true)}
+                  className="py-1.5 px-2 rounded-lg hover:bg-amber-500/15 text-[var(--color-text-muted)] hover:text-amber-500 text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
+                >
+                  <PowerOff className="w-3 h-3" />
+                  {t('bot.disableAgent')}
+                </button>
+              </>
             )}
-
-            <button
-              onClick={() => setConfirmDelete(true)}
-              className="py-1.5 px-2 rounded-lg hover:bg-[var(--color-error)]/15 text-[var(--color-text-muted)] hover:text-[var(--color-error)] text-[11px] flex items-center cursor-pointer transition-colors ml-auto"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
           </div>
         </div>
 
@@ -257,13 +487,21 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
       </div>
 
       <ConfirmDialog
-        open={confirmDelete}
+        open={confirmDisable}
+        title={t('bot.disableAgent')}
+        message={t('bot.disableConfirm', { name: entityDisplayName(bot) })}
+        confirmLabel={t('bot.disableAgent')}
+        onConfirm={() => { setConfirmDisable(false); onDisable(bot.id) }}
+        onCancel={() => setConfirmDisable(false)}
+      />
+      <ConfirmDialog
+        open={confirmHardDelete}
         title={t('bot.deleteAgent')}
         message={t('bot.deleteConfirm', { name: entityDisplayName(bot) })}
         variant="danger"
         confirmLabel={t('common.delete')}
-        onConfirm={() => { setConfirmDelete(false); onDelete(bot.id) }}
-        onCancel={() => setConfirmDelete(false)}
+        onConfirm={() => { setConfirmHardDelete(false); onHardDelete(bot.id) }}
+        onCancel={() => setConfirmHardDelete(false)}
       />
     </div>
   )

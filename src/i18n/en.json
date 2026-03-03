@@ -126,7 +126,8 @@
     "thinking": "Thinking",
     "replyTo": "Replying to message #{{id}}",
     "mentioned": "mentioned",
-    "dropFiles": "Drop files here to send"
+    "dropFiles": "Drop files here to send",
+    "loadEarlier": "Load earlier messages"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -146,6 +147,7 @@
     "delete": "Delete",
     "bootstrapKey": "Bootstrap Key",
     "copyDoc": "Copy integration doc",
+    "copyIntegration": "Copy for OpenClaw",
     "expandDoc": "Expand doc",
     "collapseDoc": "Collapse doc",
     "approveConnection": "Approve connection",
@@ -167,7 +169,18 @@
     "descriptionLabel": "Description (optional)",
     "descriptionPlaceholder": "What does this agent do?",
     "tagsLabel": "Tags (optional)",
-    "tagsPlaceholder": "e.g. support, billing, sales"
+    "tagsPlaceholder": "e.g. support, billing, sales",
+    "pendingConnection": "Waiting for connection",
+    "pendingConnectionDesc": "This agent has a bootstrap key but hasn't connected yet.",
+    "keyPrefix": "Key prefix",
+    "keyLostHint": "The full key was shown at creation time only.",
+    "owner": "Owner",
+    "lastSeen": "Last seen",
+    "disableAgent": "Disable Agent",
+    "disableConfirm": "Disable {{name}}? It will stop receiving messages but can be re-enabled later.",
+    "disabled": "Disabled",
+    "reactivate": "Re-enable",
+    "disabledSection": "Disabled"
   },
   "task": {
     "title": "Tasks",
@@ -230,7 +243,10 @@
     "noEntities": "No available entities",
     "create": "Create",
     "dismiss": "Dismiss",
-    "noMatches": "No matches"
+    "noMatches": "No matches",
+    "errorTitle": "Something went wrong",
+    "errorUnexpected": "An unexpected error occurred",
+    "reload": "Reload"
   },
   "agentConfig": {
     "prompt": "Conversation Instructions",

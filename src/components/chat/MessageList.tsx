@@ -1,4 +1,5 @@
 import { useEffect, useRef, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageBubble } from './MessageBubble'
 import { Loader2 } from 'lucide-react'
 import type { Message } from '@/lib/types'
@@ -14,6 +15,7 @@ interface Props {
 }
 
 export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore, onInteractionReply, onRevoke }: Props) {
+  const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const prevLengthRef = useRef(0)
@@ -72,7 +74,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
               onClick={onLoadMore}
               className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] cursor-pointer transition-colors"
             >
-              Load earlier messages
+              {t('message.loadEarlier')}
             </button>
           )}
         </div>
