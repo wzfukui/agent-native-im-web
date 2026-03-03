@@ -202,16 +202,19 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
               className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none"
             />
             {tasks.length > 0 && (
-              <select
-                value={parentTaskId ?? ''}
-                onChange={(e) => setParentTaskId(e.target.value ? Number(e.target.value) : undefined)}
-                className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none max-w-[140px]"
-              >
-                <option value="">{t('task.noDependency')}</option>
-                {tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').map((t) => (
-                  <option key={t.id} value={t.id}>{t.title}</option>
-                ))}
-              </select>
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] text-[var(--color-text-muted)]">{t('task.dependency')}:</span>
+                <select
+                  value={parentTaskId ?? ''}
+                  onChange={(e) => setParentTaskId(e.target.value ? Number(e.target.value) : undefined)}
+                  className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none max-w-[120px]"
+                >
+                  <option value="">{t('task.noDependency')}</option>
+                  {tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').map((t) => (
+                    <option key={t.id} value={t.id}>{t.title}</option>
+                  ))}
+                </select>
+              </div>
             )}
           </div>
           <div className="flex justify-end">

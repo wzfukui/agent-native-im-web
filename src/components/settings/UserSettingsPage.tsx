@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { AvatarPicker } from '@/components/entity/AvatarPicker'
 import { cn } from '@/lib/utils'
 import * as api from '@/lib/api'
 import {
@@ -21,10 +22,12 @@ export function UserSettingsPage({ onBack }: Props) {
   const entity = useAuthStore((s) => s.entity)
   const token = useAuthStore((s) => s.token)!
   const setAuth = useAuthStore((s) => s.setAuth)
+  const logout = useAuthStore((s) => s.logout)
   const { theme, locale, setTheme, setLocale } = useSettingsStore()
 
   const [section, setSection] = useState<Section>('profile')
   const [editName, setEditName] = useState(entity?.display_name || '')
+  const [editAvatar, setEditAvatar] = useState(entity?.avatar_url || '')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
 
@@ -41,7 +44,13 @@ export function UserSettingsPage({ onBack }: Props) {
     if (!editName.trim() || !entity) return
     setSaving(true)
     setSaveMsg('')
-    const res = await api.updateProfile(token, { display_name: editName.trim() })
+    const updateData: { display_name?: string; avatar_url?: string } = {
+      display_name: editName.trim()
+    }
+    if (editAvatar && editAvatar !== entity.avatar_url) {
+      updateData.avatar_url = editAvatar
+    }
+    const res = await api.updateProfile(token, updateData)
     if (res.ok && res.data) {
       setAuth(token, res.data)
       setSaveMsg(t('settings.profileSaved'))
@@ -183,7 +192,11 @@ export function UserSettingsPage({ onBack }: Props) {
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.profile')}</h3>
 
               <div className="flex items-center gap-4">
-                <EntityAvatar entity={entity} size="lg" />
+                <AvatarPicker
+                  currentUrl={editAvatar || entity?.avatar_url}
+                  onSelect={setEditAvatar}
+                  size="md"
+                />
                 <div>
                   <p className="text-sm font-medium text-[var(--color-text-primary)]">@{entity?.name}</p>
                   <p className="text-xs text-[var(--color-text-muted)]">{entity?.entity_type}</p>
@@ -200,14 +213,23 @@ export function UserSettingsPage({ onBack }: Props) {
                 />
               </div>
 
-              <button
-                onClick={handleSaveProfile}
-                disabled={saving || !editName.trim()}
-                className="h-9 px-4 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-              >
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                {t('common.save')}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleSaveProfile}
+                  disabled={saving || !editName.trim()}
+                  className="h-9 px-4 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                  {t('common.save')}
+                </button>
+                <button
+                  onClick={logout}
+                  className="h-9 px-4 rounded-lg bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)]/20 text-[var(--color-danger)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  {t('sidebar.signOut')}
+                </button>
+              </div>
               {saveMsg && <p className="text-xs text-[var(--color-success)]">{saveMsg}</p>}
             </div>
           )}

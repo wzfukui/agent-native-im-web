@@ -38,6 +38,9 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const prependMessages = useMessagesStore((s) => s.prependMessages)
   const addMessage = useMessagesStore((s) => s.addMessage)
   const revokeMessage = useMessagesStore((s) => s.revokeMessage)
+  const addOptimisticMessage = useMessagesStore((s) => s.addOptimisticMessage)
+  const replaceOptimisticMessage = useMessagesStore((s) => s.replaceOptimisticMessage)
+  const removeOptimisticMessage = useMessagesStore((s) => s.removeOptimisticMessage)
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -134,41 +137,73 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
   // Send message
   const handleSend = useCallback(async (text: string, files?: File[], mentions?: number[]) => {
-    let attachments: { type: string; url: string; filename: string; mime_type: string; size: number }[] = []
+    // Generate a temporary ID for optimistic message
+    const tempId = `temp-${Date.now()}-${Math.random()}`
 
-    // Upload files first
-    if (files && files.length > 0) {
-      for (const file of files) {
-        const res = await api.uploadFile(token, file)
-        if (res.ok && res.data) {
-          attachments.push({
-            type: file.type.startsWith('image/') ? 'image' : 'file',
-            url: res.data.url,
-            filename: file.name,
-            mime_type: file.type,
-            size: file.size,
-          })
-        }
-      }
-    }
-
-    const contentType = attachments.some((a) => a.type === 'image') ? 'image' : 'text'
-
-    const res = await api.sendMessage(token, {
+    // Create optimistic message
+    const optimisticMsg: Message = {
+      id: -Math.floor(Math.random() * 1000000), // Negative ID for optimistic messages
       conversation_id: conversation.id,
-      content_type: contentType,
+      sender_id: myEntity.id,
+      sender_type: myEntity.entity_type,
+      sender: myEntity,
+      content_type: 'text',
       layers: {
         summary: text.length > 100 ? text.substring(0, 100) + '...' : text,
         data: { body: text },
       },
-      attachments: attachments.length > 0 ? attachments : undefined,
+      created_at: new Date().toISOString(),
+      attachments: [],
       mentions,
-    })
-
-    if (res.ok && res.data) {
-      addMessage(res.data)
     }
-  }, [token, conversation.id])
+
+    // Add optimistic message immediately
+    addOptimisticMessage(tempId, optimisticMsg)
+
+    try {
+      let attachments: { type: string; url: string; filename: string; mime_type: string; size: number }[] = []
+
+      // Upload files first
+      if (files && files.length > 0) {
+        for (const file of files) {
+          const res = await api.uploadFile(token, file)
+          if (res.ok && res.data) {
+            attachments.push({
+              type: file.type.startsWith('image/') ? 'image' : 'file',
+              url: res.data.url,
+              filename: file.name,
+              mime_type: file.type,
+              size: file.size,
+            })
+          }
+        }
+      }
+
+      const contentType = attachments.some((a) => a.type === 'image') ? 'image' : 'text'
+
+      const res = await api.sendMessage(token, {
+        conversation_id: conversation.id,
+        content_type: contentType,
+        layers: {
+          summary: text.length > 100 ? text.substring(0, 100) + '...' : text,
+          data: { body: text },
+        },
+        attachments: attachments.length > 0 ? attachments : undefined,
+        mentions,
+      })
+
+      if (res.ok && res.data) {
+        // Replace optimistic message with real message
+        replaceOptimisticMessage(tempId, res.data)
+      } else {
+        // Remove optimistic message on error
+        removeOptimisticMessage(tempId, conversation.id)
+      }
+    } catch (error) {
+      // Remove optimistic message on error
+      removeOptimisticMessage(tempId, conversation.id)
+    }
+  }, [token, conversation.id, myEntity, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage])
 
   // Revoke message
   const handleRevoke = useCallback(async (msgId: number) => {

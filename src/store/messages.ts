@@ -7,11 +7,18 @@ interface MessagesState {
   hasMore: Record<number, boolean>
   // active streams (transient)
   streams: Record<string, ActiveStream>
+  // optimistic messages (tempId -> message)
+  optimistic: Record<string, Message>
 
   setMessages: (convId: number, msgs: Message[], hasMore: boolean) => void
   prependMessages: (convId: number, msgs: Message[], hasMore: boolean) => void
   addMessage: (msg: Message) => void
   revokeMessage: (convId: number, msgId: number) => void
+
+  // optimistic messages
+  addOptimisticMessage: (tempId: string, msg: Message) => void
+  replaceOptimisticMessage: (tempId: string, msg: Message) => void
+  removeOptimisticMessage: (tempId: string, convId: number) => void
 
   // streaming
   startStream: (streamId: string, convId: number, senderId: number, layers: MessageLayers) => void
@@ -23,6 +30,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   byConv: {},
   hasMore: {},
   streams: {},
+  optimistic: {},
 
   setMessages: (convId, msgs, hasMore) =>
     set((s) => ({
@@ -54,6 +62,48 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         ),
       },
     })),
+
+  addOptimisticMessage: (tempId, msg) =>
+    set((s) => {
+      const existing = s.byConv[msg.conversation_id] || []
+      return {
+        optimistic: { ...s.optimistic, [tempId]: msg },
+        byConv: { ...s.byConv, [msg.conversation_id]: [...existing, msg] },
+      }
+    }),
+
+  replaceOptimisticMessage: (tempId, msg) =>
+    set((s) => {
+      const optimisticMsg = s.optimistic[tempId]
+      if (!optimisticMsg) return s
+
+      const convId = optimisticMsg.conversation_id
+      const messages = s.byConv[convId] || []
+      const updatedMessages = messages.map((m) =>
+        m.id === optimisticMsg.id ? msg : m
+      )
+
+      const { [tempId]: _, ...restOptimistic } = s.optimistic
+      return {
+        optimistic: restOptimistic,
+        byConv: { ...s.byConv, [convId]: updatedMessages },
+      }
+    }),
+
+  removeOptimisticMessage: (tempId, convId) =>
+    set((s) => {
+      const optimisticMsg = s.optimistic[tempId]
+      if (!optimisticMsg) return s
+
+      const messages = s.byConv[convId] || []
+      const updatedMessages = messages.filter((m) => m.id !== optimisticMsg.id)
+
+      const { [tempId]: _, ...restOptimistic } = s.optimistic
+      return {
+        optimistic: restOptimistic,
+        byConv: { ...s.byConv, [convId]: updatedMessages },
+      }
+    }),
 
   startStream: (streamId, convId, senderId, layers) =>
     set((s) => ({

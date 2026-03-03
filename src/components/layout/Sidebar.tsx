@@ -5,7 +5,7 @@ import { usePresenceStore } from '@/store/presence'
 import { useConversationsStore } from '@/store/conversations'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Bot, LogOut, Zap, Wifi, WifiOff, Shield, MessageSquare, Settings } from 'lucide-react'
+import { Bot, Zap, Wifi, WifiOff, Shield, MessageSquare } from 'lucide-react'
 
 interface Props {
   botMode: boolean
@@ -21,7 +21,6 @@ interface Props {
 export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBots, onToggleAdmin, onToggleChat, onToggleSettings }: Props) {
   const { t } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
-  const logout = useAuthStore((s) => s.logout)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
   const conversations = useConversationsStore((s) => s.conversations)
   const mutedIds = useConversationsStore((s) => s.mutedIds)
@@ -38,14 +37,6 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
       {/* Logo */}
       <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-accent)] to-[#8b5cf6] flex items-center justify-center shadow-md shadow-[var(--color-accent)]/15 mb-2">
         <Zap className="w-5 h-5 text-white" />
-      </div>
-
-      {/* Connection status */}
-      <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center',
-        wsConnected ? 'text-[var(--color-success)]' : 'text-[var(--color-text-muted)]',
-      )}>
-        {wsConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
       </div>
 
       {/* Chat with unread badge */}
@@ -100,36 +91,21 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
         </button>
       )}
 
-      {/* Settings */}
+      {/* User avatar (clickable for settings) */}
       <button
         onClick={onToggleSettings}
-        className={cn(
-          'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
-          settingsMode
-            ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
-            : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
-        )}
-        title={t('settings.title')}
+        className="relative group cursor-pointer"
+        title={entityDisplayName(entity)}
       >
-        <Settings className="w-5 h-5" />
+        <EntityAvatar entity={entity} size="sm" showStatus />
       </button>
 
-      {/* User avatar + logout */}
-      <div className="flex flex-col items-center gap-2">
-        <button
-          onClick={onToggleSettings}
-          className="relative group cursor-pointer"
-          title={entityDisplayName(entity)}
-        >
-          <EntityAvatar entity={entity} size="sm" showStatus />
-        </button>
-        <button
-          onClick={logout}
-          className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-danger)]"
-          title={t('sidebar.signOut')}
-        >
-          <LogOut className="w-4 h-4" />
-        </button>
+      {/* Connection status */}
+      <div className={cn(
+        'w-8 h-8 rounded-lg flex items-center justify-center',
+        wsConnected ? 'text-[var(--color-success)]' : 'text-[var(--color-text-muted)]',
+      )}>
+        {wsConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
       </div>
     </div>
   )

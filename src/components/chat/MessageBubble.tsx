@@ -6,6 +6,7 @@ import { cn, entityDisplayName, formatTime, formatFileSize } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
+import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import type { Message } from '@/lib/types'
 import {
   FileText, Download, Play, Pause,
@@ -94,6 +95,7 @@ interface Props {
 export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, showSender = true }: Props) {
   const { t } = useTranslation()
   const [showThinking, setShowThinking] = useState(false)
+  const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
   const layers = message.layers || {}
   const isRevoked = !!message.revoked_at
   const isBot = message.sender_type === 'bot' || message.sender_type === 'service'
@@ -153,15 +155,28 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         return (
           <div className="space-y-1.5">
             {body && <p className="text-sm">{body}</p>}
-            {message.attachments?.map((att, i) => (
-              <img
-                key={i}
-                src={att.url}
-                alt={att.filename || 'image'}
-                className="max-w-[280px] max-h-[280px] rounded-lg object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                loading="lazy"
-              />
-            ))}
+            <div className="flex flex-wrap gap-1.5">
+              {message.attachments?.map((att, i) => {
+                if (!att.url) return null
+                return (
+                  <div
+                    key={i}
+                    className="relative group cursor-pointer"
+                    onClick={() => setLightboxImage({ url: att.url!, alt: att.filename || 'image' })}
+                  >
+                    <img
+                      src={att.url}
+                      alt={att.filename || 'image'}
+                      className="w-[150px] h-[150px] rounded-lg object-cover hover:opacity-90 transition-opacity"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <span className="text-white text-xs font-medium">View</span>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )
 
@@ -226,6 +241,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   }
 
   return (
+    <>
     <div
       className={cn(
         'flex gap-2.5 max-w-[85%] group',
@@ -338,5 +354,15 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )}
       </div>
     </div>
+
+    {/* Image Lightbox */}
+    {lightboxImage && (
+      <ImageLightbox
+        url={lightboxImage.url}
+        alt={lightboxImage.alt}
+        onClose={() => setLightboxImage(null)}
+      />
+    )}
+  </>
   )
 }
