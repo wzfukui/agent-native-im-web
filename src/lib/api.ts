@@ -232,6 +232,13 @@ export const rejectChangeRequest = (token: string, convId: number, reqId: number
 export const changePassword = (token: string, oldPassword: string, newPassword: string) =>
   request('PUT', '/api/v1/me/password', token, { old_password: oldPassword, new_password: newPassword })
 
+// Devices
+export const listDevices = (token: string) =>
+  request<{ devices: { device_id: string; device_info: string; entity_id: number }[] }>('GET', '/api/v1/me/devices', token)
+
+export const kickDevice = (token: string, deviceId: string) =>
+  request('DELETE', `/api/v1/me/devices/${encodeURIComponent(deviceId)}`, token)
+
 // Updates (long polling fallback)
 export const getUpdates = (token: string, since?: string) =>
   request<{ events: unknown[] }>('GET', `/api/v1/updates${since ? `?since=${since}` : ''}`, token)

@@ -12,6 +12,11 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 export async function registerPushNotifications(token: string): Promise<boolean> {
+  if (!window.isSecureContext) {
+    console.warn('Push notifications require a secure context (HTTPS). Skipping registration.')
+    return false
+  }
+
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return false
   }

@@ -87,7 +87,14 @@
     "passwordTooShort": "密码至少 6 个字符",
     "passwordMismatch": "两次密码不一致",
     "passwordChanged": "密码修改成功",
-    "passwordError": "修改密码失败"
+    "passwordError": "修改密码失败",
+    "devices": "设备管理",
+    "devicesDesc": "管理已连接的设备",
+    "thisDevice": "当前设备",
+    "disconnectDevice": "断开连接",
+    "disconnectOthers": "断开所有其他设备",
+    "noDevices": "无已连接设备",
+    "deviceDisconnected": "设备已断开"
   },
   "message": {
     "revoked": "{{name}} 撤回了一条消息",

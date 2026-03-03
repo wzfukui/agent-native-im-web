@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
@@ -7,10 +7,10 @@ import { cn } from '@/lib/utils'
 import * as api from '@/lib/api'
 import {
   User, Lock, Palette, Globe, ChevronLeft,
-  Check, Loader2, Eye, EyeOff,
+  Check, Loader2, Eye, EyeOff, Smartphone, LogOut,
 } from 'lucide-react'
 
-type Section = 'profile' | 'security' | 'theme' | 'language'
+type Section = 'profile' | 'security' | 'devices' | 'theme' | 'language'
 
 interface Props {
   onBack: () => void
@@ -74,9 +74,57 @@ export function UserSettingsPage({ onBack }: Props) {
     }
   }
 
+  // Devices
+  type DeviceItem = { device_id: string; device_info: string; entity_id: number }
+  const [devices, setDevices] = useState<DeviceItem[]>([])
+  const [devicesLoading, setDevicesLoading] = useState(false)
+  const [deviceMsg, setDeviceMsg] = useState('')
+  const currentDeviceId = localStorage.getItem('aim_device_id') || ''
+
+  const loadDevices = useCallback(async () => {
+    setDevicesLoading(true)
+    const res = await api.listDevices(token)
+    if (res.ok && res.data?.devices) {
+      setDevices(res.data.devices)
+    }
+    setDevicesLoading(false)
+  }, [token])
+
+  useEffect(() => {
+    if (section === 'devices') loadDevices()
+  }, [section, loadDevices])
+
+  const handleKickDevice = async (deviceId: string) => {
+    const res = await api.kickDevice(token, deviceId)
+    if (res.ok) {
+      setDeviceMsg(t('settings.deviceDisconnected'))
+      setTimeout(() => setDeviceMsg(''), 2000)
+      loadDevices()
+    }
+  }
+
+  const handleKickOthers = async () => {
+    const others = devices.filter((d) => d.device_id !== currentDeviceId)
+    for (const d of others) {
+      await api.kickDevice(token, d.device_id)
+    }
+    setDeviceMsg(t('settings.deviceDisconnected'))
+    setTimeout(() => setDeviceMsg(''), 2000)
+    loadDevices()
+  }
+
+  const parseDeviceInfo = (info: string) => {
+    if (!info) return 'Unknown device'
+    // Extract browser + OS from User-Agent
+    const match = info.match(/(Chrome|Firefox|Safari|Edge|Opera)\/[\d.]+/)
+    const os = info.match(/(Windows|Mac OS|Linux|Android|iOS)/)
+    return [match?.[0], os?.[0]].filter(Boolean).join(' / ') || info.slice(0, 40)
+  }
+
   const navItems: { id: Section; icon: typeof User; label: string }[] = [
     { id: 'profile', icon: User, label: t('settings.profile') },
     { id: 'security', icon: Lock, label: t('settings.security') },
+    { id: 'devices', icon: Smartphone, label: t('settings.devices') },
     { id: 'theme', icon: Palette, label: t('settings.theme') },
     { id: 'language', icon: Globe, label: t('settings.language') },
   ]
@@ -217,6 +265,75 @@ export function UserSettingsPage({ onBack }: Props) {
                 {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Lock className="w-3.5 h-3.5" />}
                 {t('settings.changePassword')}
               </button>
+            </div>
+          )}
+
+          {section === 'devices' && (
+            <div className="space-y-6">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.devices')}</h3>
+              <p className="text-xs text-[var(--color-text-muted)]">{t('settings.devicesDesc')}</p>
+
+              {devicesLoading ? (
+                <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  {t('common.loading')}
+                </div>
+              ) : devices.length === 0 ? (
+                <p className="text-xs text-[var(--color-text-muted)]">{t('settings.noDevices')}</p>
+              ) : (
+                <div className="space-y-2">
+                  {devices.map((device) => {
+                    const isCurrent = device.device_id === currentDeviceId
+                    return (
+                      <div
+                        key={device.device_id}
+                        className={cn(
+                          'flex items-center gap-3 px-4 py-3 rounded-xl border transition-all',
+                          isCurrent
+                            ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5'
+                            : 'border-[var(--color-border)]',
+                        )}
+                      >
+                        <Smartphone className={cn('w-5 h-5 flex-shrink-0', isCurrent ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]')} />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+                            {parseDeviceInfo(device.device_info)}
+                            {isCurrent && (
+                              <span className="ml-2 text-[10px] text-[var(--color-accent)] font-normal">
+                                {t('settings.thisDevice')}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-[10px] text-[var(--color-text-muted)] font-mono truncate">
+                            {device.device_id.slice(0, 8)}...
+                          </p>
+                        </div>
+                        {!isCurrent && (
+                          <button
+                            onClick={() => handleKickDevice(device.device_id)}
+                            className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-[var(--color-error)] hover:bg-[var(--color-error)]/10 cursor-pointer transition-colors"
+                          >
+                            <LogOut className="w-3 h-3" />
+                            {t('settings.disconnectDevice')}
+                          </button>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {devices.length > 1 && (
+                <button
+                  onClick={handleKickOthers}
+                  className="h-9 px-4 rounded-lg bg-[var(--color-error)]/10 hover:bg-[var(--color-error)]/20 text-[var(--color-error)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  {t('settings.disconnectOthers')}
+                </button>
+              )}
+
+              {deviceMsg && <p className="text-xs text-[var(--color-success)]">{deviceMsg}</p>}
             </div>
           )}
 

@@ -87,7 +87,14 @@
     "passwordTooShort": "Password must be at least 6 characters",
     "passwordMismatch": "Passwords do not match",
     "passwordChanged": "Password changed successfully",
-    "passwordError": "Failed to change password"
+    "passwordError": "Failed to change password",
+    "devices": "Devices",
+    "devicesDesc": "Manage your connected devices",
+    "thisDevice": "This device",
+    "disconnectDevice": "Disconnect",
+    "disconnectOthers": "Disconnect all other devices",
+    "noDevices": "No connected devices",
+    "deviceDisconnected": "Device disconnected"
   },
   "message": {
     "revoked": "{{name}} revoked a message",
