@@ -27,9 +27,15 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
   const [showCreate, setShowCreate] = useState(false)
 
   const loadEntities = async () => {
-    const res = await api.listEntities(token)
-    if (res.ok && res.data) setEntities(Array.isArray(res.data) ? res.data : [])
-    setLoading(false)
+    try {
+      const res = await api.listEntities(token)
+      if (res.ok && res.data) setEntities(Array.isArray(res.data) ? res.data : [])
+    } catch (error) {
+      console.error('Failed to load entities:', error)
+      setEntities([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => { loadEntities() }, [refreshTrigger])

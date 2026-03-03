@@ -1,9 +1,10 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Camera, Upload, Loader2, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import { cn } from '@/lib/utils'
+import { reportError } from '@/lib/errors'
 
 // Preset bot avatar colors/emojis for quick selection
 const PRESET_AVATARS = [
@@ -31,13 +32,47 @@ export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
   const [uploading, setUploading] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  // Handle click outside
+  useEffect(() => {
+    if (!showPicker) return
+
+    const handleClick = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setShowPicker(false)
+      }
+    }
+
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowPicker(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClick)
+    document.addEventListener('keydown', handleEscape)
+    return () => {
+      document.removeEventListener('mousedown', handleClick)
+      document.removeEventListener('keydown', handleEscape)
+    }
+  }, [showPicker])
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    // Validate file type and size
-    if (!file.type.startsWith('image/')) return
-    if (file.size > 5 * 1024 * 1024) return // 5MB max
+
+    // Validate file type and size with error reporting
+    if (!file.type.startsWith('image/')) {
+      reportError({ message: t('error.invalidImageType') || 'Please select a valid image file' })
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB max
+      reportError({ message: t('error.fileTooLarge') || 'File size must be less than 5MB' })
+      if (fileRef.current) fileRef.current.value = ''
+      return
+    }
 
     setUploading(true)
     try {
@@ -45,8 +80,12 @@ export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
       if (res.ok && res.data?.url) {
         onSelect(res.data.url)
         setShowPicker(false)
+      } else {
+        reportError({ message: t('error.uploadFailed') || 'Failed to upload image' })
       }
-    } catch { /* ignore */ }
+    } catch (error) {
+      reportError({ message: t('error.uploadFailed') || 'Failed to upload image' })
+    }
     setUploading(false)
     if (fileRef.current) fileRef.current.value = ''
   }
@@ -61,7 +100,7 @@ export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
   const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
 
   return (
-    <div className="relative">
+    <div className="relative" ref={pickerRef}>
       <button
         type="button"
         onClick={() => setShowPicker(!showPicker)}

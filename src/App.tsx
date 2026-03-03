@@ -380,24 +380,36 @@ export default function App() {
 
   // ─── Disable bot (soft delete) ──────────────────────────────
   const handleDisableBot = async (botId: number) => {
-    await api.deleteEntity(token!, botId)
-    loadBotEntities()
-    setBotListRefresh(prev => prev + 1)
+    try {
+      await api.deleteEntity(token!, botId)
+      loadBotEntities()
+      setBotListRefresh(prev => prev + 1)
+    } catch (error) {
+      console.error('Failed to disable bot:', error)
+    }
   }
 
   // ─── Reactivate disabled bot ──────────────────────────────
   const handleReactivateBot = async (botId: number) => {
-    await api.reactivateEntity(token!, botId)
-    loadBotEntities()
-    setBotListRefresh(prev => prev + 1)
+    try {
+      await api.reactivateEntity(token!, botId)
+      loadBotEntities()
+      setBotListRefresh(prev => prev + 1)
+    } catch (error) {
+      console.error('Failed to reactivate bot:', error)
+    }
   }
 
   // ─── Hard delete bot (permanent) ──────────────────────────
   const handleHardDeleteBot = async (botId: number) => {
-    await api.deleteEntity(token!, botId)
-    setSelectedBotId(null)
-    loadBotEntities()
-    setBotListRefresh(prev => prev + 1)
+    try {
+      await api.deleteEntity(token!, botId)
+      setSelectedBotId(null)
+      loadBotEntities()
+      setBotListRefresh(prev => prev + 1)
+    } catch (error) {
+      console.error('Failed to delete bot:', error)
+    }
   }
 
   // ─── Leave / Archive conversation ────────────────────────────
@@ -507,14 +519,8 @@ export default function App() {
                 onSelect={setActive}
                 onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
                 onUpdateConversation={(id, title) => {
-                  const tok = useAuthStore.getState().token
-                  if (tok) {
-                    api.updateConversation(tok, id, { title }).then((res) => {
-                      if (res.ok && res.data) {
-                        updateConversation(id, { title: res.data.title })
-                      }
-                    })
-                  }
+                  // Just update local state, ConversationItem already called the API
+                  updateConversation(id, { title })
                 }}
                 onLeave={handleLeaveConversation}
                 onArchive={handleArchiveConversation}
@@ -550,8 +556,8 @@ export default function App() {
                       onCancelStream={handleCancelStream}
                       onTyping={handleTyping}
                       typingEntities={typingMap.get(activeConv.id)}
-                      onToggleSettings={() => { setShowSettings(!showSettings); setShowTasks(false) }}
-                      onToggleTasks={() => { setShowTasks(!showTasks); setShowSettings(false) }}
+                      onToggleSettings={() => { setShowSettings((prev) => !prev); setShowTasks(false) }}
+                      onToggleTasks={() => { setShowTasks((prev) => !prev); setShowSettings(false) }}
                       isArchived={isArchivedView}
                     />
                     </ErrorBoundary>
@@ -561,6 +567,7 @@ export default function App() {
                       conversation={activeConv}
                       onClose={() => setShowSettings(false)}
                       onLeave={() => removeConversation(activeConv.id)}
+                      isArchived={isArchivedView}
                     />
                   )}
                   {showTasks && (
@@ -571,6 +578,7 @@ export default function App() {
                         entity: p.entity as { id: number; display_name: string; name: string; entity_type: string } | undefined,
                       }))}
                       onClose={() => setShowTasks(false)}
+                      isArchived={isArchivedView}
                     />
                   )}
                 </>

@@ -20,9 +20,10 @@ interface Props {
   conversation: Conversation
   onClose: () => void
   onLeave?: () => void
+  isArchived?: boolean
 }
 
-export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Props) {
+export function ConversationSettingsPanel({ conversation, onClose, onLeave, isArchived }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
@@ -109,7 +110,9 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
     <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t('settings.title')}</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+          {t('settings.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
+        </h3>
         <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
           <X className="w-4 h-4 text-[var(--color-text-muted)]" />
         </button>
@@ -138,7 +141,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
           ) : (
             <div className="flex items-center gap-2 mt-1 group">
               <p className="text-sm text-[var(--color-text-primary)] flex-1">{conversation.title || 'Untitled'}</p>
-              {canManage && (
+              {canManage && !isArchived && (
                 <button onClick={() => { setTitleValue(conversation.title || ''); setEditingTitle(true) }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-opacity">
                   <Pencil className="w-3 h-3 text-[var(--color-text-muted)]" />
                 </button>
@@ -170,7 +173,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                 <p className="text-xs text-[var(--color-text-secondary)] flex-1 leading-relaxed">
                   {conversation.description || t('settings.noDescription')}
                 </p>
-                {canManage && (
+                {canManage && !isArchived && (
                   <button onClick={() => { setDescValue(conversation.description || ''); setEditingDesc(true) }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-opacity flex-shrink-0">
                     <Pencil className="w-3 h-3 text-[var(--color-text-muted)]" />
                   </button>
@@ -181,13 +184,13 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
         )}
 
         {/* Agent config (prompt editing) */}
-        <AgentConfigSection conversationId={conversation.id} canManage={canManage} />
+        <AgentConfigSection conversationId={conversation.id} canManage={canManage && !isArchived} />
 
         {/* Memory section */}
-        <MemorySection conversationId={conversation.id} canManage={canManage} />
+        <MemorySection conversationId={conversation.id} canManage={canManage && !isArchived} />
 
         {/* Invite links (owner/admin only) */}
-        {canManage && isGroup && (
+        {canManage && isGroup && !isArchived && (
           <InviteLinkSection conversationId={conversation.id} />
         )}
 
@@ -204,9 +207,11 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
               </div>
               <button
                 onClick={() => toggleMute(conversation.id)}
+                disabled={isArchived}
                 className={cn(
-                  'w-9 h-5 rounded-full transition-colors cursor-pointer relative',
+                  'w-9 h-5 rounded-full transition-colors relative',
                   muted ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]',
+                  isArchived ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
                 )}
               >
                 <div className={cn(
@@ -227,7 +232,11 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
               <select
                 value={myParticipant.subscription_mode}
                 onChange={(e) => handleSubscriptionChange(e.target.value)}
-                className="text-[11px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none focus:border-[var(--color-accent)]/50"
+                disabled={isArchived}
+                className={cn(
+                  "text-[11px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] focus:outline-none focus:border-[var(--color-accent)]/50",
+                  isArchived ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+                )}
               >
                 <option value="mention_only">{t('settings.mentionOnly')}</option>
                 <option value="subscribe_all">{t('settings.allMessages')}</option>
@@ -263,7 +272,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                     )}
                   </div>
                 </div>
-                {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && (
+                {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && !isArchived && (
                   <select
                     value={p.role}
                     onChange={(e) => api.updateParticipantRole(token, conversation.id, p.entity_id, e.target.value)}
@@ -274,7 +283,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                     <option value="observer">{t('settings.roleObserver')}</option>
                   </select>
                 )}
-                {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && (
+                {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && !isArchived && (
                   <button
                     onClick={() => setRemoveMemberId(p.entity_id)}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-error)]/15 rounded cursor-pointer transition-opacity"
@@ -289,7 +298,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
 
         {/* Actions */}
         <div className="px-4 py-3 space-y-1">
-          {isGroup && (
+          {isGroup && !isArchived && (
             <button
               onClick={handleArchive}
               disabled={loading}
@@ -299,7 +308,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
               {t('settings.archive')}
             </button>
           )}
-          {isGroup && myParticipant?.role !== 'owner' && (
+          {isGroup && myParticipant?.role !== 'owner' && !isArchived && (
             <button
               onClick={() => setConfirmLeave(true)}
               disabled={loading}

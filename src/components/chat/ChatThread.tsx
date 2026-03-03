@@ -172,11 +172,12 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
   // Revoke message
   const handleRevoke = useCallback(async (msgId: number) => {
+    if (isArchived) return // Block revoke for archived conversations
     const res = await api.revokeMessage(token, msgId)
     if (res.ok) {
       revokeMessage(conversation.id, msgId)
     }
-  }, [token, conversation.id])
+  }, [token, conversation.id, isArchived])
 
   // Send audio message
   const handleAudioSend = useCallback(async (blob: Blob, duration: number) => {
@@ -236,11 +237,12 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     e.preventDefault()
     dragCountRef.current = 0
     setDragging(false)
+    if (isArchived) return // Block file drop for archived conversations
     const droppedFiles = Array.from(e.dataTransfer.files)
     if (droppedFiles.length > 0) {
       handleSend('', droppedFiles)
     }
-  }, [handleSend])
+  }, [handleSend, isArchived])
 
   return (
     <div
@@ -312,7 +314,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           <Search className="w-4 h-4" />
         </button>
 
-        {onToggleTasks && (
+        {onToggleTasks && !isArchived && (
           <button
             onClick={onToggleTasks}
             className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
@@ -372,7 +374,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           hasMore={searchResults !== null ? false : hasMore}
           onLoadMore={searchResults !== null ? undefined : handleLoadMore}
           onInteractionReply={handleInteractionReply}
-          onRevoke={handleRevoke}
+          onRevoke={isArchived ? undefined : handleRevoke}
         />
       )}
 

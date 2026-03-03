@@ -56,7 +56,29 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
 
   const handleContextMenu = (e: React.MouseEvent) => {
     e.preventDefault()
-    setMenuPos({ x: e.clientX, y: e.clientY })
+
+    // Calculate position with viewport boundary detection
+    const menuWidth = 180 // approximate menu width
+    const menuHeight = 200 // approximate max menu height
+
+    let x = e.clientX
+    let y = e.clientY
+
+    // Check right boundary
+    if (x + menuWidth > window.innerWidth) {
+      x = window.innerWidth - menuWidth - 10
+    }
+
+    // Check bottom boundary
+    if (y + menuHeight > window.innerHeight) {
+      y = window.innerHeight - menuHeight - 10
+    }
+
+    // Ensure minimum offset from edges
+    x = Math.max(10, x)
+    y = Math.max(10, y)
+
+    setMenuPos({ x, y })
     setShowMenu(true)
   }
 

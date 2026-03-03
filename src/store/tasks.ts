@@ -20,14 +20,21 @@ export const useTasksStore = create<TasksState>((set) => ({
     if (existing.some((t) => t.id === task.id)) return s
     return { byConv: { ...s.byConv, [task.conversation_id]: [...existing, task] } }
   }),
-  updateTask: (task) => set((s) => ({
-    byConv: {
-      ...s.byConv,
-      [task.conversation_id]: (s.byConv[task.conversation_id] || []).map((t) =>
-        t.id === task.id ? task : t
-      ),
-    },
-  })),
+  updateTask: (task) => set((s) => {
+    const existing = s.byConv[task.conversation_id] || []
+    // Only update if the task exists in the conversation
+    if (!existing.some(t => t.id === task.id)) {
+      return s // Skip update if task doesn't exist
+    }
+    return {
+      byConv: {
+        ...s.byConv,
+        [task.conversation_id]: existing.map((t) =>
+          t.id === task.id ? task : t
+        ),
+      },
+    }
+  }),
   removeTask: (convId, taskId) => set((s) => ({
     byConv: {
       ...s.byConv,

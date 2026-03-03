@@ -58,6 +58,7 @@
     "leave": "Leave conversation",
     "archived": "Archived",
     "unarchive": "Unarchive",
+    "noArchivedConversations": "No archived conversations",
     "unnamed": "Unnamed Conversation",
     "direct": "Direct",
     "group": "Group",
@@ -204,7 +205,9 @@
     "dueDate": "Due date",
     "dependency": "Depends on",
     "noDependency": "None",
-    "blocked": "Blocked"
+    "blocked": "Blocked",
+    "deleteTitle": "Delete Task",
+    "deleteMessage": "Are you sure you want to delete \"{{title}}\"? This action cannot be undone."
   },
   "memory": {
     "prompt": "System Prompt",

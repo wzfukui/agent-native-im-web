@@ -39,7 +39,6 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [loadingConvs, setLoadingConvs] = useState(false)
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
   const [confirmDisable, setConfirmDisable] = useState(false)
-  const [confirmHardDelete, setConfirmHardDelete] = useState(false)
   const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
@@ -48,12 +47,14 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   // Load conversations
   useEffect(() => {
     if (!bot) return
+    let cancelled = false
     setLoadingConvs(true)
     setActiveTab('direct')
     setConfirmDisable(false)
-    setConfirmHardDelete(false)
     setDocExpanded(false)
+
     api.listConversations(token).then((res) => {
+      if (cancelled) return
       if (res.ok && res.data) {
         const convs = (res.data as Conversation[]).filter((c) =>
           c.participants?.some((p) => p.entity_id === bot.id)
@@ -61,20 +62,29 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
         setConversations(convs)
       }
       setLoadingConvs(false)
-    }).catch(() => { setLoadingConvs(false) })
+    }).catch(() => {
+      if (!cancelled) setLoadingConvs(false)
+    })
+
+    return () => { cancelled = true }
   }, [bot?.id, token])
 
   // Load credential status + entity status
   useEffect(() => {
     if (!bot) return
+    let cancelled = false
     setCredStatus(null)
     setLastSeen(null)
+
     api.getEntityCredentials(token, bot.id).then((res) => {
-      if (res.ok && res.data) setCredStatus(res.data)
+      if (!cancelled && res.ok && res.data) setCredStatus(res.data)
     }).catch(() => {})
+
     api.getEntityStatus(token, bot.id).then((res) => {
-      if (res.ok && res.data?.last_seen) setLastSeen(res.data.last_seen)
+      if (!cancelled && res.ok && res.data?.last_seen) setLastSeen(res.data.last_seen)
     }).catch(() => {})
+
+    return () => { cancelled = true }
   }, [bot?.id, token])
 
   const handleCopy = (text: string, label: string) => {
@@ -387,20 +397,13 @@ ${createdCredentials.doc}`
           <div className="flex gap-2 mt-3">
             {isDisabled ? (
               <>
-                {/* Disabled state: re-enable + hard delete */}
+                {/* Disabled state: re-enable only */}
                 <button
                   onClick={() => onReactivate(bot.id)}
                   className="py-1.5 px-3 rounded-lg bg-[var(--color-success)]/15 hover:bg-[var(--color-success)]/25 text-[var(--color-success)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
                   <RotateCcw className="w-3 h-3" />
                   {t('bot.reactivate')}
-                </button>
-                <button
-                  onClick={() => setConfirmHardDelete(true)}
-                  className="py-1.5 px-3 rounded-lg hover:bg-[var(--color-error)]/15 text-[var(--color-text-muted)] hover:text-[var(--color-error)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  {t('bot.deleteAgent')}
                 </button>
               </>
             ) : (
@@ -510,15 +513,6 @@ ${createdCredentials.doc}`
         confirmLabel={t('bot.disableAgent')}
         onConfirm={() => { setConfirmDisable(false); onDisable(bot.id) }}
         onCancel={() => setConfirmDisable(false)}
-      />
-      <ConfirmDialog
-        open={confirmHardDelete}
-        title={t('bot.deleteAgent')}
-        message={t('bot.deleteConfirm', { name: entityDisplayName(bot) })}
-        variant="danger"
-        confirmLabel={t('common.delete')}
-        onConfirm={() => { setConfirmHardDelete(false); onHardDelete(bot.id) }}
-        onCancel={() => setConfirmHardDelete(false)}
       />
     </div>
   )

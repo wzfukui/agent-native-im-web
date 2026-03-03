@@ -55,23 +55,42 @@ export function MemorySection({ conversationId, canManage }: Props) {
   }
 
   const handleDelete = async (memId: number) => {
-    await api.deleteMemory(token, conversationId, memId)
-    setMemories((prev) => prev.filter((m) => m.id !== memId))
+    try {
+      await api.deleteMemory(token, conversationId, memId)
+      setMemories((prev) => prev.filter((m) => m.id !== memId))
+    } catch (error) {
+      console.error('Failed to delete memory:', error)
+    }
   }
 
   const handleClearAll = async () => {
     setClearing(true)
-    for (const mem of memories) {
-      await api.deleteMemory(token, conversationId, mem.id)
+    try {
+      for (const mem of memories) {
+        try {
+          await api.deleteMemory(token, conversationId, mem.id)
+        } catch (error) {
+          console.error(`Failed to delete memory ${mem.id}:`, error)
+        }
+      }
+      setMemories([])
+    } catch (error) {
+      console.error('Failed to clear memories:', error)
+    } finally {
+      setClearing(false)
     }
-    setMemories([])
-    setClearing(false)
   }
 
   // Approximate token count (rough: 1 token ≈ 4 chars for English, 1-2 for Chinese)
-  const totalChars = messages.reduce((sum, m) => sum + (m.layers?.summary?.length || 0), 0)
+  // Count full message content from layers.data.body, not just summary
+  const totalChars = messages.reduce((sum, m) => {
+    const body = m.layers?.data?.body as string | undefined
+    const bodyLength = body?.length || 0
+    const summaryLength = m.layers?.summary?.length || 0
+    // Use body if available, otherwise fall back to summary
+    return sum + (bodyLength || summaryLength)
+  }, 0)
   const approxTokens = Math.round(totalChars / 3)
-  const memoryChars = memories.reduce((sum, m) => sum + m.key.length + m.content.length, 0)
 
   if (loading) {
     return (

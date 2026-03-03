@@ -27,8 +27,13 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
   const [archived, setArchived] = useState<Conversation[]>([])
 
   const loadArchived = useCallback(async () => {
-    const res = await api.listConversations(token, true)
-    if (res.ok && res.data) setArchived(Array.isArray(res.data) ? res.data : [])
+    try {
+      const res = await api.listConversations(token, true)
+      if (res.ok && res.data) setArchived(Array.isArray(res.data) ? res.data : [])
+    } catch (error) {
+      console.error('Failed to load archived conversations:', error)
+      setArchived([])
+    }
   }, [token])
 
   useEffect(() => {
@@ -107,7 +112,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
             {archivedOpen && (
               <div className="space-y-0.5 opacity-60">
                 {archived.length === 0 ? (
-                  <p className="text-[10px] text-[var(--color-text-muted)] text-center py-3">{t('conversation.noConversations')}</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)] text-center py-3">{t('conversation.noArchivedConversations')}</p>
                 ) : (
                   archived.map((conv) => (
                     <ConversationItem

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useTasksStore } from '@/store/tasks'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { entityDisplayName, cn } from '@/lib/utils'
 import * as api from '@/lib/api'
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types'
@@ -17,6 +18,7 @@ interface Props {
   conversationId: number
   participants: { entity_id: number; entity?: { id: number; display_name: string; name: string; entity_type: string } }[]
   onClose: () => void
+  isArchived?: boolean
 }
 
 const priorityColors: Record<TaskPriority, string> = {
@@ -32,7 +34,7 @@ const statusIcons: Record<TaskStatus, typeof Circle> = {
   cancelled: Ban,
 }
 
-export function TaskPanel({ conversationId, participants, onClose }: Props) {
+export function TaskPanel({ conversationId, participants, onClose, isArchived }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const tasks = useTasksStore((s) => s.byConv[conversationId] ?? EMPTY_TASKS)
@@ -47,6 +49,7 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
   const [dueDate, setDueDate] = useState('')
   const [parentTaskId, setParentTaskId] = useState<number | undefined>()
   const [creating, setCreating] = useState(false)
+  const [deleteConfirmTask, setDeleteConfirmTask] = useState<Task | null>(null)
 
   const loadTasks = useCallback(async () => {
     setLoading(true)
@@ -64,37 +67,57 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
   const handleCreate = async () => {
     if (!title.trim()) return
     setCreating(true)
-    const res = await api.createTask(token, conversationId, {
-      title: title.trim(),
-      priority,
-      ...(description.trim() && { description: description.trim() }),
-      ...(assigneeId && { assignee_id: assigneeId }),
-      ...(dueDate && { due_date: new Date(dueDate).toISOString() }),
-      ...(parentTaskId && { parent_task_id: parentTaskId }),
-    })
-    if (res.ok && res.data) {
-      useTasksStore.getState().addTask(res.data)
-      setTitle('')
-      setDescription('')
-      setAssigneeId(undefined)
-      setDueDate('')
-      setParentTaskId(undefined)
-      setShowForm(false)
+    try {
+      const res = await api.createTask(token, conversationId, {
+        title: title.trim(),
+        priority,
+        ...(description.trim() && { description: description.trim() }),
+        ...(assigneeId && { assignee_id: assigneeId }),
+        ...(dueDate && { due_date: new Date(dueDate).toISOString() }),
+        ...(parentTaskId && { parent_task_id: parentTaskId }),
+      })
+      if (res.ok && res.data) {
+        useTasksStore.getState().addTask(res.data)
+        setTitle('')
+        setDescription('')
+        setAssigneeId(undefined)
+        setDueDate('')
+        setParentTaskId(undefined)
+        setShowForm(false)
+      }
+    } catch (error) {
+      console.error('Failed to create task:', error)
+    } finally {
+      setCreating(false)
     }
-    setCreating(false)
   }
 
   const handleStatusChange = async (task: Task, status: TaskStatus) => {
-    const res = await api.updateTask(token, task.id, { status })
-    if (res.ok && res.data) {
-      useTasksStore.getState().updateTask(res.data)
+    try {
+      const res = await api.updateTask(token, task.id, { status })
+      if (res.ok && res.data) {
+        useTasksStore.getState().updateTask(res.data)
+      }
+    } catch (error) {
+      console.error('Failed to update task status:', error)
     }
   }
 
-  const handleDelete = async (task: Task) => {
-    const res = await api.deleteTask(token, task.id)
-    if (res.ok) {
-      useTasksStore.getState().removeTask(conversationId, task.id)
+  const handleDelete = (task: Task) => {
+    setDeleteConfirmTask(task)
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteConfirmTask) return
+    try {
+      const res = await api.deleteTask(token, deleteConfirmTask.id)
+      if (res.ok) {
+        useTasksStore.getState().removeTask(conversationId, deleteConfirmTask.id)
+      }
+    } catch (error) {
+      console.error('Failed to delete task:', error)
+    } finally {
+      setDeleteConfirmTask(null)
     }
   }
 
@@ -114,14 +137,18 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
     <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t('task.title')}</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+          {t('task.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
+        </h3>
         <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer text-[var(--color-accent)]"
-          >
-            <Plus className="w-4 h-4" />
-          </button>
+          {!isArchived && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer text-[var(--color-accent)]"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          )}
           <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
             <X className="w-4 h-4 text-[var(--color-text-muted)]" />
           </button>
@@ -134,7 +161,7 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleCreate()}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && !creating && handleCreate()}
             placeholder={t('task.newTaskPlaceholder')}
             className="w-full h-8 px-2 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
             autoFocus
@@ -260,27 +287,29 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
                             })()}
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {task.status !== 'done' && (
+                        {!isArchived && (
+                          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {task.status !== 'done' && (
+                              <button
+                                onClick={() => handleStatusChange(task, task.status === 'pending' ? 'in_progress' : 'done')}
+                                className="p-1 hover:bg-[var(--color-success)]/15 rounded cursor-pointer"
+                                title={task.status === 'pending' ? t('task.start') : t('task.complete')}
+                              >
+                                {task.status === 'pending' ? (
+                                  <Clock className="w-3 h-3 text-[var(--color-text-muted)]" />
+                                ) : (
+                                  <Check className="w-3 h-3 text-[var(--color-success)]" />
+                                )}
+                              </button>
+                            )}
                             <button
-                              onClick={() => handleStatusChange(task, task.status === 'pending' ? 'in_progress' : 'done')}
-                              className="p-1 hover:bg-[var(--color-success)]/15 rounded cursor-pointer"
-                              title={task.status === 'pending' ? t('task.start') : t('task.complete')}
+                              onClick={() => handleDelete(task)}
+                              className="p-1 hover:bg-[var(--color-error)]/15 rounded cursor-pointer"
                             >
-                              {task.status === 'pending' ? (
-                                <Clock className="w-3 h-3 text-[var(--color-text-muted)]" />
-                              ) : (
-                                <Check className="w-3 h-3 text-[var(--color-success)]" />
-                              )}
+                              <Trash2 className="w-3 h-3 text-[var(--color-text-muted)]" />
                             </button>
-                          )}
-                          <button
-                            onClick={() => handleDelete(task)}
-                            className="p-1 hover:bg-[var(--color-error)]/15 rounded cursor-pointer"
-                          >
-                            <Trash2 className="w-3 h-3 text-[var(--color-text-muted)]" />
-                          </button>
-                        </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )
@@ -290,6 +319,17 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
           })
         )}
       </div>
+
+      {/* Delete confirmation dialog */}
+      <ConfirmDialog
+        open={!!deleteConfirmTask}
+        title={deleteConfirmTask ? t('task.deleteTitle') : ''}
+        message={deleteConfirmTask ? t('task.deleteMessage', { title: deleteConfirmTask.title }) : ''}
+        confirmLabel={t('common.delete')}
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleteConfirmTask(null)}
+      />
     </div>
   )
 }

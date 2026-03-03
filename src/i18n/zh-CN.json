@@ -58,6 +58,7 @@
     "leave": "离开会话",
     "archived": "已归档",
     "unarchive": "取消归档",
+    "noArchivedConversations": "没有归档的会话",
     "unnamed": "未命名会话",
     "direct": "私聊",
     "group": "群组",
@@ -204,7 +205,9 @@
     "dueDate": "截止日期",
     "dependency": "依赖任务",
     "noDependency": "无",
-    "blocked": "被阻塞"
+    "blocked": "被阻塞",
+    "deleteTitle": "删除任务",
+    "deleteMessage": "确定要删除任务\"{{title}}\"吗？此操作无法撤销。"
   },
   "memory": {
     "prompt": "系统提示词",
