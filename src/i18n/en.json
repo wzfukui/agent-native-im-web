@@ -246,7 +246,13 @@
     "noMatches": "No matches",
     "errorTitle": "Something went wrong",
     "errorUnexpected": "An unexpected error occurred",
-    "reload": "Reload"
+    "reload": "Reload",
+    "copyDiagnostic": "Copy Diagnostic Info",
+    "copied": "Copied!",
+    "errorCode": "Error Code",
+    "requestId": "Request ID",
+    "showDetails": "Show Details",
+    "hideDetails": "Hide Details"
   },
   "agentConfig": {
     "prompt": "Conversation Instructions",

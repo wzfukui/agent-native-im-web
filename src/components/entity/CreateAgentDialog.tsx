@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
+import { extractError, reportError } from '@/lib/errors'
 import { X, Plus, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -36,7 +37,9 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
       if (res.ok && res.data) {
         onCreated({ entity: res.data.entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
       } else {
-        setError(res.error || t('common.error'))
+        const parsed = extractError(res)
+        setError(parsed.message)
+        reportError(parsed) // show ErrorToast with full diagnostic info
       }
     } catch {
       setError(t('common.error'))

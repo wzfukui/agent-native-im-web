@@ -70,7 +70,7 @@ export function UserSettingsPage({ onBack }: Props) {
       setNewPass('')
       setConfirmPass('')
     } else {
-      setPassError(res.error || t('settings.passwordError'))
+      setPassError(typeof res.error === 'string' ? res.error : res.error?.message || t('settings.passwordError'))
     }
   }
 

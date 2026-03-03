@@ -43,7 +43,7 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
       if (res.ok && res.data) {
         onRegister(res.data.token, res.data.entity)
       } else {
-        setError(res.error || t('auth.registerError'))
+        setError(typeof res.error === 'string' ? res.error : res.error?.message || t('auth.registerError'))
       }
     } catch {
       setError(t('auth.networkError'))

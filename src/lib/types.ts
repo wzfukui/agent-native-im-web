@@ -135,10 +135,21 @@ export interface WSMessage {
 }
 
 // ─── API Responses ───────────────────────────────────────────────
+export interface APIErrorDetail {
+  code: string
+  message: string
+  request_id: string
+  status: number
+  timestamp: string
+  method: string
+  path: string
+  details?: Record<string, unknown>
+}
+
 export interface APIResponse<T = unknown> {
   ok: boolean
   data?: T
-  error?: string
+  error?: string | APIErrorDetail
 }
 
 export interface LoginResponse {

@@ -26,6 +26,8 @@ import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
+import { setGlobalErrorHandler, getErrorMessage, type ParsedError } from '@/lib/errors'
 
 export default function App() {
   const { t } = useTranslation()
@@ -49,6 +51,26 @@ export default function App() {
   const [leaveConfirmId, setLeaveConfirmId] = useState<number | null>(null)
   const [createdCredentials, setCreatedCredentials] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
   const [botListRefresh, setBotListRefresh] = useState(0)
+  const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
+
+  // ─── Global error handler ────────────────────────────────────
+  const pushError = useCallback((parsed: ParsedError) => {
+    const toast: ErrorToastData = {
+      id: `err_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      message: parsed.message,
+      detail: parsed.detail,
+      timestamp: Date.now(),
+    }
+    setErrorToasts((prev) => [...prev.slice(-4), toast]) // keep max 5
+  }, [])
+
+  const dismissError = useCallback((id: string) => {
+    setErrorToasts((prev) => prev.filter((e) => e.id !== id))
+  }, [])
+
+  useEffect(() => {
+    setGlobalErrorHandler(pushError)
+  }, [pushError])
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -69,7 +91,7 @@ export default function App() {
       if (res.ok && res.data) {
         setAuth(res.data.token, res.data.entity)
       } else {
-        setLoginError(res.error || t('auth.loginError'))
+        setLoginError(getErrorMessage(res) || t('auth.loginError'))
       }
     } catch {
       setLoginError(t('auth.networkError'))
@@ -574,6 +596,8 @@ export default function App() {
         onConfirm={confirmLeave}
         onCancel={() => setLeaveConfirmId(null)}
       />
+
+      <ErrorToast errors={errorToasts} onDismiss={dismissError} />
     </div>
   )
 }

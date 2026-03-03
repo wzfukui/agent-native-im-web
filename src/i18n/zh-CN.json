@@ -246,7 +246,13 @@
     "noMatches": "无匹配结果",
     "errorTitle": "出错了",
     "errorUnexpected": "发生了意外错误",
-    "reload": "重新加载"
+    "reload": "重新加载",
+    "copyDiagnostic": "复制诊断信息",
+    "copied": "已复制！",
+    "errorCode": "错误代码",
+    "requestId": "请求 ID",
+    "showDetails": "展开详情",
+    "hideDetails": "收起详情"
   },
   "agentConfig": {
     "prompt": "会话指令",
