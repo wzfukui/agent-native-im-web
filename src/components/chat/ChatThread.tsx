@@ -43,6 +43,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const [searchResults, setSearchResults] = useState<Message[] | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const dragCountRef = useRef(0)
   const updateConversation = useConversationsStore((s) => s.updateConversation)
   const online = usePresenceStore((s) => s.online)
 
@@ -213,8 +215,47 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (res.ok && res.data) addMessage(res.data)
   }, [token, conversation.id])
 
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCountRef.current++
+    if (e.dataTransfer.types.includes('Files')) setDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCountRef.current--
+    if (dragCountRef.current === 0) setDragging(false)
+  }, [])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+  }, [])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    dragCountRef.current = 0
+    setDragging(false)
+    const droppedFiles = Array.from(e.dataTransfer.files)
+    if (droppedFiles.length > 0) {
+      handleSend('', droppedFiles)
+    }
+  }, [handleSend])
+
   return (
-    <div className="flex flex-col h-full bg-[var(--color-bg-primary)]">
+    <div
+      className="flex flex-col h-full bg-[var(--color-bg-primary)] relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drop overlay */}
+      {dragging && (
+        <div className="absolute inset-0 z-40 bg-[var(--color-accent)]/10 border-2 border-dashed border-[var(--color-accent)] rounded-lg flex items-center justify-center pointer-events-none">
+          <p className="text-sm font-medium text-[var(--color-accent)]">{t('message.dropFiles')}</p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         {onBack && (

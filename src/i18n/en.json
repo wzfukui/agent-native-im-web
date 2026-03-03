@@ -111,7 +111,11 @@
     "noDevices": "No connected devices",
     "deviceDisconnected": "Device disconnected",
     "unknownDevice": "Unknown device",
-    "deviceDisconnectedPartial": "{{failed}} device(s) failed to disconnect"
+    "deviceDisconnectedPartial": "{{failed}} device(s) failed to disconnect",
+    "removeMemberConfirm": "Remove {{name}} from this conversation?",
+    "roleAdmin": "Admin",
+    "roleMember": "Member",
+    "roleObserver": "Observer"
   },
   "message": {
     "revoked": "{{name}} revoked a message",
@@ -121,7 +125,8 @@
     "revoke": "Revoke message",
     "thinking": "Thinking",
     "replyTo": "Replying to message #{{id}}",
-    "mentioned": "mentioned"
+    "mentioned": "mentioned",
+    "dropFiles": "Drop files here to send"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -149,7 +154,20 @@
     "searchPlaceholder": "Search agents...",
     "agentDetails": "Agent Details",
     "selectAgent": "Select an agent to view details",
-    "noConversations": "No conversations yet"
+    "noConversations": "No conversations yet",
+    "type": "Type",
+    "id": "ID",
+    "status": "Status",
+    "createdAt": "Created",
+    "statusActive": "Active",
+    "statusOffline": "Offline",
+    "deleteAgent": "Delete Agent",
+    "deleteConfirm": "Are you sure you want to delete {{name}}? This action cannot be undone.",
+    "agentName": "Agent Name",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "What does this agent do?",
+    "tagsLabel": "Tags (optional)",
+    "tagsPlaceholder": "e.g. support, billing, sales"
   },
   "task": {
     "title": "Tasks",
@@ -213,5 +231,9 @@
     "create": "Create",
     "dismiss": "Dismiss",
     "noMatches": "No matches"
+  },
+  "agentConfig": {
+    "prompt": "Conversation Instructions",
+    "noPrompt": "No instructions set"
   }
 }

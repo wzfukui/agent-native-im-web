@@ -5,10 +5,12 @@ import { entityDisplayName, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
 import { usePresenceStore } from '@/store/presence'
+import { AgentConfigSection } from '@/components/conversation/AgentConfigSection'
 import { MemorySection } from '@/components/conversation/MemorySection'
 import { InviteLinkSection } from '@/components/conversation/InviteLinkSection'
 import * as api from '@/lib/api'
 import type { Conversation } from '@/lib/types'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
   X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Eye,
   Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2,
@@ -35,6 +37,8 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
   const [descValue, setDescValue] = useState(conversation.description || '')
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [confirmLeave, setConfirmLeave] = useState(false)
+  const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
 
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
@@ -75,7 +79,6 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
   }
 
   const handleLeave = async () => {
-    if (!confirm(t('settings.leaveConfirm'))) return
     setLoading(true)
     const res = await api.leaveConversation(token, conversation.id)
     setLoading(false)
@@ -175,7 +178,10 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
           </div>
         )}
 
-        {/* Memory & Prompt section */}
+        {/* Agent config (prompt editing) */}
+        <AgentConfigSection conversationId={conversation.id} canManage={canManage} />
+
+        {/* Memory section */}
         <MemorySection conversationId={conversation.id} canManage={canManage} />
 
         {/* Invite links (owner/admin only) */}
@@ -256,11 +262,19 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                   </div>
                 </div>
                 {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && (
+                  <select
+                    value={p.role}
+                    onChange={(e) => api.updateParticipantRole(token, conversation.id, p.entity_id, e.target.value)}
+                    className="text-[9px] px-1 py-0.5 rounded bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-muted)] cursor-pointer focus:outline-none opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <option value="admin">{t('settings.roleAdmin')}</option>
+                    <option value="member">{t('settings.roleMember')}</option>
+                    <option value="observer">{t('settings.roleObserver')}</option>
+                  </select>
+                )}
+                {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && (
                   <button
-                    onClick={async () => {
-                      if (!confirm(`${t('common.removeMember')} ${entityDisplayName(p.entity)}?`)) return
-                      await api.removeParticipant(token, conversation.id, p.entity_id)
-                    }}
+                    onClick={() => setRemoveMemberId(p.entity_id)}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-error)]/15 rounded cursor-pointer transition-opacity"
                   >
                     <UserMinus className="w-3 h-3 text-[var(--color-text-muted)]" />
@@ -285,7 +299,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
           )}
           {isGroup && myParticipant?.role !== 'owner' && (
             <button
-              onClick={handleLeave}
+              onClick={() => setConfirmLeave(true)}
               disabled={loading}
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-[var(--color-error)] hover:bg-[var(--color-error)]/10 cursor-pointer transition-colors"
             >
@@ -295,6 +309,31 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={confirmLeave}
+        title={t('settings.leave')}
+        message={t('settings.leaveConfirm')}
+        variant="danger"
+        confirmLabel={t('settings.leave')}
+        onConfirm={() => { setConfirmLeave(false); handleLeave() }}
+        onCancel={() => setConfirmLeave(false)}
+      />
+
+      <ConfirmDialog
+        open={removeMemberId !== null}
+        title={t('common.removeMember')}
+        message={t('settings.removeMemberConfirm', { name: entityDisplayName(participants.find((p) => p.entity_id === removeMemberId)?.entity) })}
+        variant="danger"
+        confirmLabel={t('common.removeMember')}
+        onConfirm={async () => {
+          if (removeMemberId !== null) {
+            await api.removeParticipant(token, conversation.id, removeMemberId)
+          }
+          setRemoveMemberId(null)
+        }}
+        onCancel={() => setRemoveMemberId(null)}
+      />
     </div>
   )
 }

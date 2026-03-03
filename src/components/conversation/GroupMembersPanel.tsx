@@ -5,6 +5,7 @@ import { entityDisplayName, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Conversation, Participant, Entity } from '@/lib/types'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -20,6 +21,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   const [showAddMember, setShowAddMember] = useState(false)
   const [entities, setEntities] = useState<Entity[]>([])
   const [loading, setLoading] = useState(false)
+  const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
 
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
@@ -45,10 +47,10 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   }
 
   const handleRemove = async (entityId: number) => {
-    if (!confirm(t('common.removeMember') + '?')) return
     setLoading(true)
     await api.removeParticipant(token, conversation.id, entityId)
     setLoading(false)
+    setRemoveMemberId(null)
     onUpdate?.()
   }
 
@@ -140,7 +142,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
               </div>
               {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && (
                 <button
-                  onClick={() => handleRemove(p.entity_id)}
+                  onClick={() => setRemoveMemberId(p.entity_id)}
                   className="w-7 h-7 rounded-lg hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
                   title={t('common.removeMember')}
                 >
@@ -197,6 +199,16 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={removeMemberId !== null}
+        title={t('common.removeMember')}
+        message={t('settings.removeMemberConfirm', { name: entityDisplayName(participants.find((p) => p.entity_id === removeMemberId)?.entity) })}
+        variant="danger"
+        confirmLabel={t('common.removeMember')}
+        onConfirm={() => { if (removeMemberId !== null) handleRemove(removeMemberId) }}
+        onCancel={() => setRemoveMemberId(null)}
+      />
     </div>
   )
 }

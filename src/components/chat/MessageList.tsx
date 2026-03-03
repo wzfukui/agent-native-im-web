@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { MessageBubble } from './MessageBubble'
 import { Loader2 } from 'lucide-react'
 import type { Message } from '@/lib/types'
@@ -38,6 +38,13 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
       onLoadMore?.()
     }
   }
+
+  // Build message map for reply previews
+  const messageMap = useMemo(() => {
+    const map = new Map<number, Message>()
+    for (const msg of messages) map.set(msg.id, msg)
+    return map
+  }, [messages])
 
   // Group consecutive messages from same sender
   const shouldShowSender = (msg: Message, i: number): boolean => {
@@ -80,6 +87,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
             isSelf={msg.sender_id === myEntityId}
             myEntityId={myEntityId}
             showSender={shouldShowSender(msg, i)}
+            replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
             onInteractionReply={onInteractionReply}
             onRevoke={onRevoke}
           />

@@ -24,6 +24,8 @@ import type { WSMessage, Message, Entity, Task } from '@/lib/types'
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
+import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 export default function App() {
   const { t } = useTranslation()
@@ -44,6 +46,7 @@ export default function App() {
   const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number }>>>(new Map())
   const [showSettings, setShowSettings] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
+  const [leaveConfirmId, setLeaveConfirmId] = useState<number | null>(null)
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -359,14 +362,18 @@ export default function App() {
   }
 
   // ─── Leave / Archive conversation ────────────────────────────
-  const handleLeaveConversation = useCallback(async (convId: number) => {
-    if (!token) return
-    if (!confirm(t('settings.leaveConfirm'))) return
-    const res = await api.leaveConversation(token, convId)
+  const handleLeaveConversation = useCallback((convId: number) => {
+    setLeaveConfirmId(convId)
+  }, [])
+
+  const confirmLeave = useCallback(async () => {
+    if (!token || !leaveConfirmId) return
+    const res = await api.leaveConversation(token, leaveConfirmId)
     if (res.ok) {
-      removeConversation(convId)
+      removeConversation(leaveConfirmId)
     }
-  }, [token, t])
+    setLeaveConfirmId(null)
+  }, [token, leaveConfirmId])
 
   const handleArchiveConversation = useCallback(async (convId: number) => {
     if (!token) return
@@ -408,10 +415,14 @@ export default function App() {
 
       {viewMode === 'admin' ? (
         <div className="flex-1 min-w-0">
-          <AdminPanel onBack={() => setViewMode('chat')} />
+          <ErrorBoundary>
+            <AdminPanel onBack={() => setViewMode('chat')} />
+          </ErrorBoundary>
         </div>
       ) : viewMode === 'settings' ? (
-        <UserSettingsPage onBack={() => setViewMode('chat')} />
+        <ErrorBoundary>
+          <UserSettingsPage onBack={() => setViewMode('chat')} />
+        </ErrorBoundary>
       ) : (
         <>
           {/* Left panel: ConversationList or BotList */}
@@ -456,6 +467,7 @@ export default function App() {
               activeConv ? (
                 <>
                   <div className="flex-1 min-w-0">
+                    <ErrorBoundary>
                     <ChatThread
                       key={activeConv.id}
                       conversation={activeConv}
@@ -466,6 +478,7 @@ export default function App() {
                       onToggleSettings={() => { setShowSettings(!showSettings); setShowTasks(false) }}
                       onToggleTasks={() => { setShowTasks(!showTasks); setShowSettings(false) }}
                     />
+                    </ErrorBoundary>
                   </div>
                   {showSettings && (
                     <ConversationSettingsPanel
@@ -498,13 +511,15 @@ export default function App() {
               )
             ) : (
               <div className="flex-1 min-w-0">
-                <BotDetail
-                  bot={selectedBot}
-                  onBack={() => setSelectedBotId(null)}
-                  onOpenConversation={handleOpenConversation}
-                  onDelete={handleDeleteBot}
-                  onStartChat={handleStartChatFromBot}
-                />
+                <ErrorBoundary>
+                  <BotDetail
+                    bot={selectedBot}
+                    onBack={() => setSelectedBotId(null)}
+                    onOpenConversation={handleOpenConversation}
+                    onDelete={handleDeleteBot}
+                    onStartChat={handleStartChatFromBot}
+                  />
+                </ErrorBoundary>
               </div>
             )}
           </div>
@@ -522,6 +537,16 @@ export default function App() {
           }}
         />
       )}
+
+      <ConfirmDialog
+        open={leaveConfirmId !== null}
+        title={t('settings.leave')}
+        message={t('settings.leaveConfirm')}
+        variant="danger"
+        confirmLabel={t('settings.leave')}
+        onConfirm={confirmLeave}
+        onCancel={() => setLeaveConfirmId(null)}
+      />
     </div>
   )
 }

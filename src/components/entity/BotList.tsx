@@ -6,8 +6,9 @@ import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
+import { CreateAgentDialog } from './CreateAgentDialog'
 import {
-  Bot, Plus, Search, Loader2, X, Key, Copy, Check,
+  Bot, Plus, Search, Loader2, Key, Copy, Check,
   FileText, ChevronDown, ChevronUp, MessageSquare, Wifi, WifiOff,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
@@ -27,8 +28,6 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
-  const [creating, setCreating] = useState(false)
-  const [newName, setNewName] = useState('')
   const [createdKey, setCreatedKey] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
   const [docExpanded, setDocExpanded] = useState(false)
@@ -40,19 +39,6 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
   }
 
   useEffect(() => { loadEntities() }, [])
-
-  const handleCreate = async () => {
-    if (!newName.trim()) return
-    setCreating(true)
-    const res = await api.createEntity(token, newName.trim())
-    if (res.ok && res.data) {
-      setCreatedKey({ entity: res.data.entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
-      setNewName('')
-      setShowCreate(false)
-      loadEntities()
-    }
-    setCreating(false)
-  }
 
   const handleCopy = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
@@ -78,35 +64,23 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
           <span className="text-xs text-[var(--color-text-muted)]">({bots.length})</span>
         </div>
         <button
-          onClick={() => { setShowCreate(!showCreate); setCreatedKey(null) }}
+          onClick={() => { setShowCreate(true); setCreatedKey(null) }}
           className="w-8 h-8 rounded-lg bg-[var(--color-bot)]/10 hover:bg-[var(--color-bot)]/20 flex items-center justify-center transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4 text-[var(--color-bot)]" />
         </button>
       </div>
 
-      {/* Inline create form */}
+      {/* Create agent dialog */}
       {showCreate && (
-        <div className="px-3 pb-2">
-          <div className="flex gap-2">
-            <input
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-              placeholder={t('bot.namePlaceholder')}
-              autoFocus
-              className="flex-1 h-8 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-bot)]/50"
-            />
-            <button
-              onClick={handleCreate}
-              disabled={creating || !newName.trim()}
-              className="h-8 px-3 rounded-lg bg-[var(--color-bot)] hover:bg-[var(--color-bot)]/80 disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
-            >
-              {creating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-              {t('common.create')}
-            </button>
-          </div>
-        </div>
+        <CreateAgentDialog
+          onClose={() => setShowCreate(false)}
+          onCreated={(result) => {
+            setCreatedKey(result)
+            setShowCreate(false)
+            loadEntities()
+          }}
+        />
       )}
 
       {/* Created key card */}

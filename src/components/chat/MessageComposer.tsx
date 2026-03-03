@@ -326,6 +326,21 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, d
               value={text}
               onChange={autoResize}
               onKeyDown={handleKeyDown}
+              onPaste={(e) => {
+                const items = e.clipboardData?.items
+                if (!items) return
+                const imageFiles: File[] = []
+                for (const item of items) {
+                  if (item.type.startsWith('image/')) {
+                    const file = item.getAsFile()
+                    if (file) imageFiles.push(file)
+                  }
+                }
+                if (imageFiles.length > 0) {
+                  e.preventDefault()
+                  setFiles((prev) => [...prev, ...imageFiles])
+                }
+              }}
               placeholder={placeholder || t('conversation.typeMessage')}
               disabled={disabled}
               rows={1}

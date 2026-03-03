@@ -62,6 +62,9 @@ export const addParticipant = (token: string, convId: number, entityId: number, 
 export const removeParticipant = (token: string, convId: number, entityId: number) =>
   request('DELETE', `/api/v1/conversations/${convId}/participants/${entityId}`, token)
 
+export const updateParticipantRole = (token: string, convId: number, entityId: number, role: string) =>
+  request('PUT', `/api/v1/conversations/${convId}/participants/${entityId}`, token, { role })
+
 export const updateSubscription = (token: string, convId: number, mode: string, contextWindow?: number) =>
   request('PUT', `/api/v1/conversations/${convId}/subscription`, token, {
     mode,

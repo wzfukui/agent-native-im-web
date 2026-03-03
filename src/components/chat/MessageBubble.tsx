@@ -85,12 +85,13 @@ interface Props {
   message: Message
   isSelf: boolean
   myEntityId?: number
+  replyMessage?: Message
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply, onRevoke, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, showSender = true }: Props) {
   const { t } = useTranslation()
   const [showThinking, setShowThinking] = useState(false)
   const layers = message.layers || {}
@@ -262,9 +263,16 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
 
         {/* Reply indicator */}
         {message.reply_to && (
-          <div className={cn('flex items-center gap-1 px-1 text-[10px] text-[var(--color-text-muted)]', isSelf ? 'flex-row-reverse' : '')}>
-            <CornerUpLeft className="w-3 h-3" />
-            <span>{t('message.replyTo', { id: message.reply_to })}</span>
+          <div className={cn('flex items-center gap-1.5 px-1 text-[10px]', isSelf ? 'flex-row-reverse' : '')}>
+            <CornerUpLeft className="w-3 h-3 text-[var(--color-text-muted)] flex-shrink-0" />
+            {replyMessage ? (
+              <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--color-bg-tertiary)] border-l-2 border-[var(--color-accent)]/40 max-w-[200px]">
+                <span className="font-medium text-[var(--color-accent)] truncate">{entityDisplayName(replyMessage.sender)}</span>
+                <span className="text-[var(--color-text-muted)] truncate">{(replyMessage.layers?.summary || '').slice(0, 50)}</span>
+              </div>
+            ) : (
+              <span className="text-[var(--color-text-muted)]">{t('message.replyTo', { id: message.reply_to })}</span>
+            )}
           </div>
         )}
 

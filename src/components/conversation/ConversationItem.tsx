@@ -89,8 +89,18 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         )}
       >
         {isGroup ? (
-          <div className="w-10 h-10 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center flex-shrink-0">
-            <Users className="w-4.5 h-4.5 text-[var(--color-accent)]" />
+          <div className="relative w-10 h-10 flex-shrink-0">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center">
+              <Users className="w-4.5 h-4.5 text-[var(--color-accent)]" />
+            </div>
+            {/* Agent indicator dot */}
+            {conv.participants?.some((p) => p.entity?.entity_type === 'bot' || p.entity?.entity_type === 'service') && (
+              <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[var(--color-bot)] border-2 border-[var(--color-bg-secondary)] flex items-center justify-center">
+                <span className="text-[7px] text-white font-bold">
+                  {conv.participants.filter((p) => p.entity?.entity_type === 'bot' || p.entity?.entity_type === 'service').length}
+                </span>
+              </div>
+            )}
           </div>
         ) : (
           <EntityAvatar entity={displayEntity} size="md" showStatus />

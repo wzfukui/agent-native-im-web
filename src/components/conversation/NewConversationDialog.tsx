@@ -5,7 +5,7 @@ import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { X, Plus, Users, MessageSquare, Loader2, Check } from 'lucide-react'
+import { X, Plus, Users, MessageSquare, Loader2, Check, Search } from 'lucide-react'
 
 interface Props {
   onClose: () => void
@@ -22,6 +22,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   const [title, setTitle] = useState('')
   const [isGroup, setIsGroup] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [search, setSearch] = useState('')
 
   useEffect(() => {
     api.listEntities(token).then((res) => {
@@ -118,7 +119,18 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
             <label className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
               {t('conversation.selectParticipants')}
             </label>
-            {entities.map((entity) => (
+            <div className="relative mb-2">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={t('conversation.search')}
+                className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
+              />
+            </div>
+            {entities.filter((e) =>
+              !search || entityDisplayName(e).toLowerCase().includes(search.toLowerCase()) || e.name?.toLowerCase().includes(search.toLowerCase())
+            ).map((entity) => (
               <button
                 key={entity.id}
                 onClick={() => toggleSelect(entity.id)}
