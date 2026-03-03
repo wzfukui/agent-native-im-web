@@ -303,7 +303,7 @@ export default function App() {
       for (const convId of loaded) {
         api.listMessages(token, convId).then((res) => {
           if (res.ok && res.data) {
-            for (const msg of res.data.messages) {
+            for (const msg of (res.data.messages || [])) {
               addMessage(msg)
             }
           }

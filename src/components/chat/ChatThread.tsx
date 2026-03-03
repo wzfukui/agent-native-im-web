@@ -81,7 +81,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       setLoading(true)
       const res = await api.listMessages(token, conversation.id)
       if (!cancelled && res.ok && res.data) {
-        setMessages(conversation.id, res.data.messages.reverse(), res.data.has_more)
+        setMessages(conversation.id, (res.data.messages || []).reverse(), res.data.has_more)
       }
       setLoading(false)
     }
@@ -107,7 +107,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     setLoading(true)
     const res = await api.listMessages(token, conversation.id, oldest.id)
     if (res.ok && res.data) {
-      prependMessages(conversation.id, res.data.messages.reverse(), res.data.has_more)
+      prependMessages(conversation.id, (res.data.messages || []).reverse(), res.data.has_more)
     }
     setLoading(false)
   }, [loading, hasMore, messages, token, conversation.id])
@@ -122,7 +122,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     const timeout = setTimeout(async () => {
       const res = await api.searchMessages(token, conversation.id, searchQuery.trim())
       if (res.ok && res.data) {
-        setSearchResults(res.data.messages)
+        setSearchResults(res.data.messages || [])
       }
       setSearchLoading(false)
     }, 300)
