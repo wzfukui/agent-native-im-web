@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function NewConversationDialog({ onClose, onCreated, preselectedEntityId }: Props) {
+  const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const [entities, setEntities] = useState<Entity[]>([])
@@ -69,7 +71,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
           <h2 className="text-base font-semibold flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-[var(--color-accent)]" />
-            New Conversation
+            {t('conversation.newChat')}
           </h2>
           <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
             <X className="w-4 h-4 text-[var(--color-text-muted)]" />
@@ -87,7 +89,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
               )}
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              Direct
+              {t('conversation.direct')}
             </button>
             <button
               onClick={() => setIsGroup(true)}
@@ -97,7 +99,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
               )}
             >
               <Users className="w-3.5 h-3.5" />
-              Group
+              {t('conversation.group')}
             </button>
           </div>
 
@@ -106,7 +108,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
             <input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Group name (optional)"
+              placeholder={t('conversation.groupNamePlaceholder')}
               className="w-full h-9 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
             />
           )}
@@ -114,7 +116,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
           {/* Participant list */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-              Select participants
+              {t('conversation.selectParticipants')}
             </label>
             {entities.map((entity) => (
               <button
@@ -149,7 +151,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
             className="w-full h-10 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 text-white font-medium text-sm flex items-center justify-center gap-2 cursor-pointer transition-colors"
           >
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            Create {isGroup ? 'Group' : 'Chat'}
+            {t('conversation.create')} {isGroup ? t('conversation.group') : t('conversation.chat')}
           </button>
         </div>
       </div>

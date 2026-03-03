@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function BotList({ selectedId, onSelect, onStartChat }: Props) {
+  const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const online = usePresenceStore((s) => s.online)
   const [entities, setEntities] = useState<Entity[]>([])
@@ -161,7 +163,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
                 className="flex-1 py-1.5 rounded bg-[var(--color-bot)] hover:bg-[var(--color-bot)]/80 text-white text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-colors"
               >
                 {copied === 'doc' ? <Check className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
-                {copied === 'doc' ? 'Copied!' : '复制接入文档'}
+                {copied === 'doc' ? t('invite.copied') : t('bot.copyDoc')}
               </button>
               <button
                 onClick={() => {
@@ -171,7 +173,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
                 className="flex-1 py-1.5 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-colors border border-[var(--color-border)]"
               >
                 {copied === 'env' ? <Check className="w-3 h-3 text-[var(--color-success)]" /> : <Copy className="w-3 h-3" />}
-                {copied === 'env' ? 'Copied!' : '.env'}
+                {copied === 'env' ? t('invite.copied') : '.env'}
               </button>
             </div>
 
@@ -182,7 +184,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
                 className="w-full flex items-center justify-center gap-1 py-1 text-[9px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
               >
                 {docExpanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
-                {docExpanded ? '收起文档' : '展开文档'}
+                {docExpanded ? t('bot.collapseDoc') : t('bot.expandDoc')}
               </button>
               {docExpanded && (
                 <div className="mt-1 p-2 rounded bg-[var(--color-bg-primary)] border border-[var(--color-border)] max-h-48 overflow-y-auto text-[10px] prose prose-invert prose-xs max-w-none">
@@ -198,7 +200,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
                 className="w-full py-1.5 rounded bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] text-[10px] font-medium flex items-center justify-center gap-1 cursor-pointer transition-colors"
               >
                 <MessageSquare className="w-3 h-3" />
-                开始对话
+                {t('bot.startChat')}
               </button>
             </div>
           </div>

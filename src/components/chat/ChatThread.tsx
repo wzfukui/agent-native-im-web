@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MessageList } from './MessageList'
 import { MessageComposer } from './MessageComposer'
 import { StreamingOverlay } from './StreamingOverlay'
@@ -26,6 +27,7 @@ interface Props {
 }
 
 export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings, onToggleTasks }: Props) {
+  const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const messages = useMessagesStore((s) => s.byConv[conversation.id] ?? EMPTY_MESSAGES)
@@ -244,8 +246,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
                   </button>
                 )
               : isOtherOnline ? (
-                  <span className="text-[var(--color-success)]">Online</span>
-                ) : 'Offline'
+                  <span className="text-[var(--color-success)]">{t('common.online')}</span>
+                ) : t('common.offline')
             }
           </p>
         </div>
@@ -293,7 +295,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search messages..."
+              placeholder={t('conversation.searchMessages')}
               autoFocus
               className="flex-1 h-8 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
             />
@@ -309,7 +311,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           </div>
           {searchResults !== null && !searchLoading && (
             <p className="text-[10px] text-[var(--color-text-muted)] mt-1 px-1">
-              {searchResults.length === 0 ? 'No results found' : `${searchResults.length} result${searchResults.length !== 1 ? 's' : ''} found`}
+              {searchResults.length === 0 ? t('conversation.noResults') : t('conversation.resultsFound', { count: searchResults.length })}
             </p>
           )}
         </div>

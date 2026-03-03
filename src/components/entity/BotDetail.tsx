@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
@@ -19,6 +20,7 @@ interface Props {
 }
 
 export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartChat }: Props) {
+  const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const online = usePresenceStore((s) => s.online)
   const [conversations, setConversations] = useState<Conversation[]>([])
@@ -150,7 +152,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
                 className="flex-1 py-2 rounded-lg bg-[var(--color-success)]/15 hover:bg-[var(--color-success)]/25 text-[var(--color-success)] text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
               >
                 <Shield className="w-3.5 h-3.5" />
-                审批连接
+                {t('bot.approveConnection')}
               </button>
             )}
 
@@ -160,13 +162,13 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
                   onClick={() => { onDelete(bot.id); setConfirmDelete(false) }}
                   className="py-2 px-3 rounded-lg bg-[var(--color-error)]/15 hover:bg-[var(--color-error)]/25 text-[var(--color-error)] text-xs font-medium cursor-pointer transition-colors"
                 >
-                  Confirm
+                  {t('common.confirm')}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
                   className="py-2 px-3 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] text-xs font-medium cursor-pointer transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             ) : (

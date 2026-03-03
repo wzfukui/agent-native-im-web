@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic } from 'lucide-react'
 import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
@@ -17,6 +18,7 @@ interface Props {
 }
 
 export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver }: Props) {
+  const { t } = useTranslation()
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -177,7 +179,7 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, d
     return (
       <div className="px-4 pb-4 pt-2">
         <div className="rounded-xl bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] px-4 py-3 text-center text-sm text-[var(--color-text-muted)]">
-          You are an observer in this conversation
+          {t('conversation.observer')}
         </div>
       </div>
     )

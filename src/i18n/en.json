@@ -42,7 +42,12 @@
     "archive": "Archive conversation",
     "leave": "Leave conversation",
     "archived": "Archived",
-    "unarchive": "Unarchive"
+    "unarchive": "Unarchive",
+    "direct": "Direct",
+    "group": "Group",
+    "chat": "Chat",
+    "create": "Create",
+    "groupNamePlaceholder": "Group name (optional)"
   },
   "settings": {
     "title": "Settings",
@@ -87,7 +92,11 @@
     "revoked": "{{name}} revoked a message",
     "isTyping": "{{name}} is typing...",
     "areTyping": "{{names}} are typing...",
-    "voiceMessage": "Voice message ({{duration}}s)"
+    "voiceMessage": "Voice message ({{duration}}s)",
+    "revoke": "Revoke message",
+    "thinking": "Thinking",
+    "replyTo": "Replying to message #{{id}}",
+    "mentioned": "mentioned"
   },
   "admin": {
     "dashboard": "Dashboard",
@@ -105,7 +114,11 @@
     "noAgents": "No agents yet",
     "startChat": "Start Chat",
     "delete": "Delete",
-    "bootstrapKey": "Bootstrap Key"
+    "bootstrapKey": "Bootstrap Key",
+    "copyDoc": "Copy integration doc",
+    "expandDoc": "Expand doc",
+    "collapseDoc": "Collapse doc",
+    "approveConnection": "Approve connection"
   },
   "task": {
     "title": "Tasks",
@@ -134,6 +147,10 @@
     "expires": "Expires {{date}}",
     "copied": "Copied!"
   },
+  "streaming": {
+    "processing": "Processing...",
+    "stop": "Stop"
+  },
   "interaction": {
     "responded": "Responded: {{value}}",
     "inputPlaceholder": "Type your response..."
@@ -160,6 +177,7 @@
     "removeMember": "Remove member",
     "unmute": "Unmute",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "noEntities": "No available entities"
   }
 }

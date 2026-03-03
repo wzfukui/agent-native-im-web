@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { cn, entityDisplayName, formatTime, formatFileSize } from '@/lib/utils'
@@ -90,6 +91,7 @@ interface Props {
 }
 
 export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply, onRevoke, showSender = true }: Props) {
+  const { t } = useTranslation()
   const [showThinking, setShowThinking] = useState(false)
   const layers = message.layers || {}
   const isRevoked = !!message.revoked_at
@@ -106,7 +108,7 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
       <div className="flex justify-center py-1">
         <span className="text-[11px] text-[var(--color-text-muted)] italic flex items-center gap-1">
           <Ban className="w-3 h-3" />
-          {entityDisplayName(message.sender)} revoked a message
+          {t('message.revoked', { name: entityDisplayName(message.sender) })}
         </span>
       </div>
     )
@@ -262,7 +264,7 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
         {message.reply_to && (
           <div className={cn('flex items-center gap-1 px-1 text-[10px] text-[var(--color-text-muted)]', isSelf ? 'flex-row-reverse' : '')}>
             <CornerUpLeft className="w-3 h-3" />
-            <span>Replying to message #{message.reply_to}</span>
+            <span>{t('message.replyTo', { id: message.reply_to })}</span>
           </div>
         )}
 
@@ -294,7 +296,7 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
             <button
               onClick={() => onRevoke!(message.id)}
               className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer transition-all flex-shrink-0"
-              title="撤回消息"
+              title={t('message.revoke')}
             >
               <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
             </button>
@@ -309,7 +311,7 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
               className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer"
             >
               <Brain className="w-3 h-3" />
-              <span>Thinking</span>
+              <span>{t('message.thinking')}</span>
               {showThinking ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
             </button>
             {showThinking && (
@@ -323,7 +325,7 @@ export function MessageBubble({ message, isSelf, myEntityId, onInteractionReply,
         {/* Mentions */}
         {message.mentions && message.mentions.length > 0 && (
           <div className="px-1 flex items-center gap-1 text-[10px] text-[var(--color-accent)] opacity-60">
-            @{message.mentions.length} mentioned
+            @{message.mentions.length} {t('message.mentioned')}
           </div>
         )}
       </div>

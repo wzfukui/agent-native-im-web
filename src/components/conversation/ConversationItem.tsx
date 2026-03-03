@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn, entityDisplayName, formatTime, truncate } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useConversationsStore } from '@/store/conversations'
@@ -18,6 +19,7 @@ interface Props {
 }
 
 export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, onLeave, onArchive }: Props) {
+  const { t } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(conv.title || '')
   const [saving, setSaving] = useState(false)
@@ -180,7 +182,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
             className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
           >
             <VolumeX className="w-3.5 h-3.5" />
-            {muted ? 'Unmute' : 'Mute'}
+            {muted ? t('common.unmute') : t('settings.mute')}
           </button>
           {isGroup && (
             <button
@@ -188,7 +190,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
             >
               <Archive className="w-3.5 h-3.5" />
-              Archive
+              {t('conversation.archive')}
             </button>
           )}
           {isGroup && myParticipant?.role !== 'owner' && (
@@ -197,7 +199,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-error)] hover:bg-[var(--color-error)]/10 cursor-pointer transition-colors"
             >
               <LogOut className="w-3.5 h-3.5" />
-              Leave
+              {t('conversation.leave')}
             </button>
           )}
         </div>

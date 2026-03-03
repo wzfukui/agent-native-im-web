@@ -2,6 +2,7 @@ import { cn } from '@/lib/utils'
 import type { ActiveStream } from '@/lib/types'
 import { Loader2, Brain, ChevronDown, ChevronUp, Square } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface Props {
   streams: ActiveStream[]
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function StreamingOverlay({ streams, onCancel }: Props) {
+  const { t } = useTranslation()
   const [expandedThinking, setExpandedThinking] = useState<string | null>(null)
 
   if (streams.length === 0) return null
@@ -31,7 +33,7 @@ export function StreamingOverlay({ streams, onCancel }: Props) {
               <Loader2 className="w-3.5 h-3.5 text-[var(--color-accent)] flex-shrink-0" style={{ animation: 'spin 1.2s linear infinite' }} />
               <div className="flex-1 min-w-0">
                 <p className="text-xs text-[var(--color-text-secondary)] truncate">
-                  {status?.text || stream.layers.summary || 'Processing...'}
+                  {status?.text || stream.layers.summary || t('streaming.processing')}
                 </p>
               </div>
               {status?.phase && (
@@ -43,10 +45,10 @@ export function StreamingOverlay({ streams, onCancel }: Props) {
                 <button
                   onClick={() => onCancel(stream.stream_id, stream.conversation_id)}
                   className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-error)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-error)]/10 px-2 py-1 rounded-md cursor-pointer transition-colors flex-shrink-0"
-                  title="停止生成"
+                  title={t('streaming.stop')}
                 >
                   <Square className="w-2.5 h-2.5" />
-                  Stop
+                  {t('streaming.stop')}
                 </button>
               )}
             </div>
@@ -69,7 +71,7 @@ export function StreamingOverlay({ streams, onCancel }: Props) {
                   className="flex items-center gap-1.5 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] transition-colors cursor-pointer"
                 >
                   <Brain className="w-3 h-3" />
-                  <span>Thinking process</span>
+                  <span>{t('message.thinking')}</span>
                   {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
                 </button>
                 {isExpanded && (

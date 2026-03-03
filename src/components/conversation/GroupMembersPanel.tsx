@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
@@ -13,6 +14,7 @@ interface Props {
 }
 
 export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
+  const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const [showAddMember, setShowAddMember] = useState(false)
@@ -43,7 +45,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   }
 
   const handleRemove = async (entityId: number) => {
-    if (!confirm('确定移除该成员？')) return
+    if (!confirm(t('common.removeMember') + '?')) return
     setLoading(true)
     await api.removeParticipant(token, conversation.id, entityId)
     setLoading(false)
@@ -85,8 +87,8 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
           <div>
-            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Group Members</h3>
-            <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{participants.length} participants</p>
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t('conversation.groupMembers')}</h3>
+            <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">{t('conversation.participants', { count: participants.length })}</p>
           </div>
           <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
             <X className="w-4 h-4 text-[var(--color-text-muted)]" />
@@ -101,17 +103,17 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                 ? <Bell className="w-3.5 h-3.5" />
                 : <BellOff className="w-3.5 h-3.5" />
               }
-              <span>Notifications</span>
+              <span>{t('settings.notifications')}</span>
             </div>
             <select
               value={myParticipant.subscription_mode}
               onChange={(e) => handleSubscriptionChange(e.target.value)}
               className="text-[11px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none focus:border-[var(--color-accent)]/50"
             >
-              <option value="mention_only">Only @mentioned</option>
-              <option value="subscribe_all">All messages</option>
-              <option value="mention_with_context">@mentioned + context</option>
-              <option value="subscribe_digest">Digest (poll)</option>
+              <option value="mention_only">{t('settings.mentionOnly')}</option>
+              <option value="subscribe_all">{t('settings.allMessages')}</option>
+              <option value="mention_with_context">{t('settings.mentionContext')}</option>
+              <option value="subscribe_digest">{t('settings.digest')}</option>
             </select>
           </div>
         )}
@@ -128,7 +130,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                     {entityDisplayName(p.entity)}
                   </span>
                   {p.entity_id === myEntity.id && (
-                    <span className="text-[9px] text-[var(--color-text-muted)]">(you)</span>
+                    <span className="text-[9px] text-[var(--color-text-muted)]">{t('common.you')}</span>
                   )}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -140,7 +142,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                 <button
                   onClick={() => handleRemove(p.entity_id)}
                   className="w-7 h-7 rounded-lg hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer transition-colors opacity-0 group-hover:opacity-100"
-                  title="Remove member"
+                  title={t('common.removeMember')}
                 >
                   <UserMinus className="w-3.5 h-3.5 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
                 </button>
@@ -160,7 +162,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                   </div>
                 )}
                 {entities.length === 0 && !loading && (
-                  <p className="text-xs text-[var(--color-text-muted)] text-center py-2">No available entities</p>
+                  <p className="text-xs text-[var(--color-text-muted)] text-center py-2">{t('common.noEntities')}</p>
                 )}
                 {entities.map((e) => (
                   <button
@@ -180,7 +182,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                   onClick={() => setShowAddMember(false)}
                   className="w-full text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] py-1 cursor-pointer"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
               </div>
             ) : (
@@ -189,7 +191,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                 className="w-full flex items-center justify-center gap-1.5 px-5 py-3 text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 cursor-pointer transition-colors"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                Add Member
+                {t('common.addMember')}
               </button>
             )}
           </div>
