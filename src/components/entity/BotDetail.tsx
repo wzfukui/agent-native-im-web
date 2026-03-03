@@ -52,8 +52,8 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
           <Bot className="w-10 h-10 text-[var(--color-bot)] opacity-40" />
         </div>
         <div className="text-center">
-          <p className="text-base font-medium text-[var(--color-text-secondary)]">Agent Details</p>
-          <p className="text-xs mt-1">Select an agent to view details</p>
+          <p className="text-base font-medium text-[var(--color-text-secondary)]">{t('bot.agentDetails')}</p>
+          <p className="text-xs mt-1">{t('bot.selectAgent')}</p>
         </div>
       </div>
     )
@@ -90,7 +90,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
             ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
             : 'bg-[var(--color-text-muted)]/15 text-[var(--color-text-muted)]'
         )}>
-          {isOnline ? <><Wifi className="w-2.5 h-2.5" /> Online</> : <><WifiOff className="w-2.5 h-2.5" /> Offline</>}
+          {isOnline ? <><Wifi className="w-2.5 h-2.5" /> {t('common.online')}</> : <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>}
         </span>
       </div>
 
@@ -141,7 +141,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
               className="flex-1 py-2 rounded-lg bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] text-xs font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              New Conversation
+              {t('conversation.newChat')}
             </button>
 
             {!isOnline && (
@@ -195,7 +195,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
               )}
             >
               <MessageSquare className="w-4 h-4" />
-              Direct
+              {t('conversation.direct')}
               <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-[10px]">
                 {directConvs.length}
               </span>
@@ -210,7 +210,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
               )}
             >
               <Users className="w-4 h-4" />
-              Groups
+              {t('conversation.group')}
               <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-[10px]">
                 {groupConvs.length}
               </span>
@@ -241,7 +241,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-                      {conv.title || 'Unnamed Conversation'}
+                      {conv.title || t('conversation.unnamed')}
                     </p>
                     <p className="text-[10px] text-[var(--color-text-muted)]">
                       {new Date(conv.updated_at).toLocaleDateString()}
@@ -252,7 +252,7 @@ export function BotDetail({ bot, onBack, onOpenConversation, onDelete, onStartCh
               ))}
               {tabConvs.length === 0 && (
                 <p className="text-center text-xs text-[var(--color-text-muted)] py-6">
-                  No {activeTab === 'direct' ? 'direct' : 'group'} conversations yet
+                  {t('bot.noConversations')}
                 </p>
               )}
             </div>

@@ -74,7 +74,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
       <div className="px-4 pt-4 pb-2 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bot className="w-4.5 h-4.5 text-[var(--color-bot)]" />
-          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Agents</h2>
+          <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t('bot.agents')}</h2>
           <span className="text-xs text-[var(--color-text-muted)]">({bots.length})</span>
         </div>
         <button
@@ -93,7 +93,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-              placeholder="Agent name..."
+              placeholder={t('bot.namePlaceholder')}
               autoFocus
               className="flex-1 h-8 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-bot)]/50"
             />
@@ -103,7 +103,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
               className="h-8 px-3 rounded-lg bg-[var(--color-bot)] hover:bg-[var(--color-bot)]/80 disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1 cursor-pointer transition-colors"
             >
               {creating ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
-              Create
+              {t('common.create')}
             </button>
           </div>
         </div>
@@ -117,14 +117,14 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
               <div className="flex items-center gap-1.5">
                 <Key className="w-3.5 h-3.5 text-[var(--color-success)]" />
                 <span className="text-xs font-medium text-[var(--color-success)]">
-                  {entityDisplayName(createdKey.entity)} created!
+                  {entityDisplayName(createdKey.entity)} {t('bot.created')}
                 </span>
               </div>
               <button
                 onClick={() => { setCreatedKey(null); setDocExpanded(false) }}
                 className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
               >
-                Dismiss
+                {t('common.dismiss')}
               </button>
             </div>
 
@@ -214,7 +214,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search agents..."
+            placeholder={t('bot.searchPlaceholder')}
             className="w-full h-8 pl-8.5 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
           />
         </div>
@@ -229,7 +229,7 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-[var(--color-text-muted)]">
             <Bot className="w-8 h-8 mb-2 opacity-40" />
-            <p className="text-xs">{search ? 'No matches' : 'No agents yet'}</p>
+            <p className="text-xs">{search ? t('common.noMatches') : t('bot.noAgents')}</p>
           </div>
         ) : (
           filtered.map((entity) => {
@@ -253,9 +253,9 @@ export function BotList({ selectedId, onSelect, onStartChat }: Props) {
                   </p>
                   <p className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
                     {isOnline ? (
-                      <><Wifi className="w-2.5 h-2.5 text-[var(--color-success)]" /> Online</>
+                      <><Wifi className="w-2.5 h-2.5 text-[var(--color-success)]" /> {t('common.online')}</>
                     ) : (
-                      <><WifiOff className="w-2.5 h-2.5" /> Offline</>
+                      <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>
                     )}
                   </p>
                 </div>

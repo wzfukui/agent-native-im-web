@@ -43,6 +43,7 @@
     "leave": "Leave conversation",
     "archived": "Archived",
     "unarchive": "Unarchive",
+    "unnamed": "Unnamed Conversation",
     "direct": "Direct",
     "group": "Group",
     "chat": "Chat",
@@ -118,7 +119,13 @@
     "copyDoc": "Copy integration doc",
     "expandDoc": "Expand doc",
     "collapseDoc": "Collapse doc",
-    "approveConnection": "Approve connection"
+    "approveConnection": "Approve connection",
+    "namePlaceholder": "Agent name...",
+    "created": "created!",
+    "searchPlaceholder": "Search agents...",
+    "agentDetails": "Agent Details",
+    "selectAgent": "Select an agent to view details",
+    "noConversations": "No conversations yet"
   },
   "task": {
     "title": "Tasks",
@@ -178,6 +185,9 @@
     "unmute": "Unmute",
     "online": "Online",
     "offline": "Offline",
-    "noEntities": "No available entities"
+    "noEntities": "No available entities",
+    "create": "Create",
+    "dismiss": "Dismiss",
+    "noMatches": "No matches"
   }
 }

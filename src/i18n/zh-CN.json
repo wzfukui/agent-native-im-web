@@ -43,6 +43,7 @@
     "leave": "离开会话",
     "archived": "已归档",
     "unarchive": "取消归档",
+    "unnamed": "未命名会话",
     "direct": "私聊",
     "group": "群组",
     "chat": "聊天",
@@ -118,7 +119,13 @@
     "copyDoc": "复制接入文档",
     "expandDoc": "展开文档",
     "collapseDoc": "收起文档",
-    "approveConnection": "审批连接"
+    "approveConnection": "审批连接",
+    "namePlaceholder": "Agent 名称...",
+    "created": "已创建！",
+    "searchPlaceholder": "搜索 Agent...",
+    "agentDetails": "Agent 详情",
+    "selectAgent": "选择一个 Agent 查看详情",
+    "noConversations": "暂无会话"
   },
   "task": {
     "title": "任务",
@@ -178,6 +185,9 @@
     "unmute": "取消静音",
     "online": "在线",
     "offline": "离线",
-    "noEntities": "没有可添加的用户"
+    "noEntities": "没有可添加的用户",
+    "create": "创建",
+    "dismiss": "关闭",
+    "noMatches": "无匹配结果"
   }
 }
