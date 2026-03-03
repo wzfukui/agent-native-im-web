@@ -31,11 +31,13 @@ export function MemorySection({ conversationId, canManage }: Props) {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const res = await api.listMemories(token, conversationId)
-    if (res.ok && res.data) {
-      setMemories(res.data.memories || [])
-      setPrompt(res.data.prompt || '')
-    }
+    try {
+      const res = await api.listMemories(token, conversationId)
+      if (res.ok && res.data) {
+        setMemories(res.data.memories || [])
+        setPrompt(res.data.prompt || '')
+      }
+    } catch { /* network error */ }
     setLoading(false)
   }, [token, conversationId])
 

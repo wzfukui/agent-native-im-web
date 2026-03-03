@@ -22,7 +22,11 @@ async function request<T>(method: string, path: string, token?: string, body?: u
     headers,
     body: body ? JSON.stringify(body) : undefined,
   })
-  return res.json()
+  try {
+    return await res.json()
+  } catch {
+    return { ok: false, error: `HTTP ${res.status}` } as APIResponse<T>
+  }
 }
 
 // Auth
@@ -142,7 +146,11 @@ export async function uploadFile(token: string, file: File): Promise<APIResponse
     headers: { Authorization: `Bearer ${token}` },
     body: form,
   })
-  return res.json()
+  try {
+    return await res.json()
+  } catch {
+    return { ok: false, error: `HTTP ${res.status}` } as APIResponse<{ url: string }>
+  }
 }
 
 // Push notifications

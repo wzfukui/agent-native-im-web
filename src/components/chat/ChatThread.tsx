@@ -64,8 +64,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       if (eid !== myEntity.id && v.expiresAt > now) names.push(v.name)
     })
     if (names.length === 0) return ''
-    if (names.length === 1) return `${names[0]} is typing...`
-    return `${names.slice(0, 2).join(', ')} are typing...`
+    if (names.length === 1) return t('message.isTyping', { name: names[0] })
+    return t('message.areTyping', { names: names.slice(0, 2).join(', ') })
   }, [typingEntities, myEntity.id])
 
   // Active streams for this conversation
@@ -242,7 +242,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
                     onClick={() => setShowMembers(true)}
                     className="hover:text-[var(--color-accent)] transition-colors cursor-pointer"
                   >
-                    {conversation.participants?.length || 0} participants
+                    {t('conversation.participants', { count: conversation.participants?.length || 0 })}
                   </button>
                 )
               : isOtherOnline ? (
@@ -357,7 +357,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         onSend={handleSend}
         onAudioSend={handleAudioSend}
         onTyping={onTyping ? () => onTyping(conversation.id) : undefined}
-        placeholder={`Message ${conversation.title || entityDisplayName(otherParticipant)}...`}
+        placeholder={t('conversation.typeMessage')}
         participants={conversation.participants}
         isObserver={isObserver}
       />

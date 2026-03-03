@@ -11,6 +11,8 @@ import {
   ChevronDown, Loader2, Trash2, Calendar,
 } from 'lucide-react'
 
+const EMPTY_TASKS: Task[] = []
+
 interface Props {
   conversationId: number
   participants: { entity_id: number; entity?: { id: number; display_name: string; name: string; entity_type: string } }[]
@@ -33,7 +35,7 @@ const statusIcons: Record<TaskStatus, typeof Circle> = {
 export function TaskPanel({ conversationId, participants, onClose }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
-  const tasks = useTasksStore((s) => s.byConv[conversationId] || [])
+  const tasks = useTasksStore((s) => s.byConv[conversationId] ?? EMPTY_TASKS)
   const setTasks = useTasksStore((s) => s.setTasks)
 
   const [loading, setLoading] = useState(true)
@@ -44,12 +46,14 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
 
   const loadTasks = useCallback(async () => {
     setLoading(true)
-    const res = await api.listTasks(token, conversationId)
-    if (res.ok && res.data) {
-      setTasks(conversationId, Array.isArray(res.data) ? res.data : [])
-    }
+    try {
+      const res = await api.listTasks(token, conversationId)
+      if (res.ok && res.data) {
+        setTasks(conversationId, Array.isArray(res.data) ? res.data : [])
+      }
+    } catch { /* network error — silently fail */ }
     setLoading(false)
-  }, [token, conversationId])
+  }, [token, conversationId, setTasks])
 
   useEffect(() => { loadTasks() }, [loadTasks])
 

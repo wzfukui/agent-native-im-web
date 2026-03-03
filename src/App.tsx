@@ -64,10 +64,10 @@ export default function App() {
       if (res.ok && res.data) {
         setAuth(res.data.token, res.data.entity)
       } else {
-        setLoginError(res.error || 'Login failed')
+        setLoginError(res.error || t('auth.loginError'))
       }
     } catch {
-      setLoginError('Network error — cannot reach server')
+      setLoginError(t('auth.networkError'))
     }
   }
 
