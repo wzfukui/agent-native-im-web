@@ -15,12 +15,11 @@ export const useTasksStore = create<TasksState>((set) => ({
   setTasks: (convId, tasks) => set((s) => ({
     byConv: { ...s.byConv, [convId]: tasks },
   })),
-  addTask: (task) => set((s) => ({
-    byConv: {
-      ...s.byConv,
-      [task.conversation_id]: [...(s.byConv[task.conversation_id] || []), task],
-    },
-  })),
+  addTask: (task) => set((s) => {
+    const existing = s.byConv[task.conversation_id] || []
+    if (existing.some((t) => t.id === task.id)) return s
+    return { byConv: { ...s.byConv, [task.conversation_id]: [...existing, task] } }
+  }),
   updateTask: (task) => set((s) => ({
     byConv: {
       ...s.byConv,

@@ -24,9 +24,10 @@ interface Props {
   typingEntities?: Map<number, { name: string; expiresAt: number }>
   onToggleSettings?: () => void
   onToggleTasks?: () => void
+  isArchived?: boolean
 }
 
-export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings, onToggleTasks }: Props) {
+export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings, onToggleTasks, isArchived }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
@@ -400,7 +401,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         onTyping={onTyping ? () => onTyping(conversation.id) : undefined}
         placeholder={t('conversation.typeMessage')}
         participants={conversation.participants}
-        isObserver={isObserver}
+        isObserver={isObserver || isArchived}
       />
     </div>
   )

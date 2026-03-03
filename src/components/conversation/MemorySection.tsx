@@ -3,8 +3,9 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { ConversationMemory } from '@/lib/types'
+import { useMessagesStore } from '@/store/messages'
 import {
-  Plus, Trash2, Loader2, Brain,
+  Plus, Trash2, Loader2, Brain, BarChart3, Eraser,
 } from 'lucide-react'
 
 interface Props {
@@ -16,9 +17,11 @@ export function MemorySection({ conversationId, canManage }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
 
+  const messages = useMessagesStore((s) => s.byConv[conversationId] ?? [])
   const [memories, setMemories] = useState<ConversationMemory[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [clearing, setClearing] = useState(false)
 
   // Add/edit memory
   const [showForm, setShowForm] = useState(false)
@@ -56,6 +59,20 @@ export function MemorySection({ conversationId, canManage }: Props) {
     setMemories((prev) => prev.filter((m) => m.id !== memId))
   }
 
+  const handleClearAll = async () => {
+    setClearing(true)
+    for (const mem of memories) {
+      await api.deleteMemory(token, conversationId, mem.id)
+    }
+    setMemories([])
+    setClearing(false)
+  }
+
+  // Approximate token count (rough: 1 token ≈ 4 chars for English, 1-2 for Chinese)
+  const totalChars = messages.reduce((sum, m) => sum + (m.layers?.summary?.length || 0), 0)
+  const approxTokens = Math.round(totalChars / 3)
+  const memoryChars = memories.reduce((sum, m) => sum + m.key.length + m.content.length, 0)
+
   if (loading) {
     return (
       <div className="px-4 py-3 flex items-center justify-center">
@@ -66,6 +83,18 @@ export function MemorySection({ conversationId, canManage }: Props) {
 
   return (
     <div className="px-4 py-3 border-b border-[var(--color-border)]">
+      {/* Context stats */}
+      <div className="flex items-center gap-3 mb-3 p-2 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)]">
+        <BarChart3 className="w-3.5 h-3.5 text-[var(--color-accent)] flex-shrink-0" />
+        <div className="flex-1 text-[10px] text-[var(--color-text-secondary)]">
+          <span>{t('context.messages')}: <strong>{messages.length}</strong></span>
+          <span className="mx-2">|</span>
+          <span>{t('context.tokens')}: <strong>~{approxTokens.toLocaleString()}</strong></span>
+          <span className="mx-2">|</span>
+          <span>{t('memory.memories')}: <strong>{memories.length}</strong></span>
+        </div>
+      </div>
+
       {/* Memory list */}
       <div>
         <div className="flex items-center justify-between">
@@ -123,6 +152,18 @@ export function MemorySection({ conversationId, canManage }: Props) {
             </div>
           ))}
         </div>
+
+        {/* Clear all memories */}
+        {canManage && memories.length > 0 && (
+          <button
+            onClick={handleClearAll}
+            disabled={clearing}
+            className="mt-2 w-full py-1.5 rounded-lg border border-[var(--color-error)]/20 hover:bg-[var(--color-error)]/10 text-[var(--color-error)] text-[10px] font-medium flex items-center justify-center gap-1.5 cursor-pointer transition-colors disabled:opacity-40"
+          >
+            {clearing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Eraser className="w-3 h-3" />}
+            {t('context.clearMemory')}
+          </button>
+        )}
       </div>
     </div>
   )

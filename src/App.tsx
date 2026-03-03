@@ -20,7 +20,7 @@ import { NewConversationDialog } from '@/components/conversation/NewConversation
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import { registerPushNotifications } from '@/lib/push'
-import type { WSMessage, Message, Entity, Task } from '@/lib/types'
+import type { WSMessage, Message, Entity, Task, Conversation } from '@/lib/types'
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
@@ -414,16 +414,44 @@ export default function App() {
     setLeaveConfirmId(null)
   }, [token, leaveConfirmId])
 
+  const [archiveRefresh, setArchiveRefresh] = useState(0)
+
   const handleArchiveConversation = useCallback(async (convId: number) => {
     if (!token) return
     const res = await api.archiveConversation(token, convId)
     if (res.ok) {
       removeConversation(convId)
+      setArchiveRefresh((n) => n + 1)
     }
   }, [token])
 
+  const handleUnarchiveConversation = useCallback(async (convId: number) => {
+    if (!token) return
+    const res = await api.unarchiveConversation(token, convId)
+    if (res.ok) {
+      setArchiveRefresh((n) => n + 1)
+      loadConversations()
+    }
+  }, [token, loadConversations])
+
+  // ─── Archived conversation view ─────────────────────────────────
+  const [archivedConv, setArchivedConv] = useState<Conversation | null>(null)
+
+  // When activeId changes, check if it's in the main list or needs to be fetched as archived
+  useEffect(() => {
+    if (!activeId || !token) { setArchivedConv(null); return }
+    const inMain = conversations.find((c) => c.id === activeId)
+    if (inMain) { setArchivedConv(null); return }
+    // Not in main list — fetch it (likely archived)
+    api.getConversation(token, activeId).then((res) => {
+      if (res.ok && res.data) setArchivedConv(res.data)
+      else setArchivedConv(null)
+    })
+  }, [activeId, conversations, token])
+
   // ─── Active conversation ───────────────────────────────────────
-  const activeConv = conversations.find((c) => c.id === activeId)
+  const activeConv = conversations.find((c) => c.id === activeId) || archivedConv
+  const isArchivedView = activeConv === archivedConv && archivedConv !== null
 
   // ─── Not logged in ─────────────────────────────────────────────
   if (showRegister) {
@@ -490,6 +518,8 @@ export default function App() {
                 }}
                 onLeave={handleLeaveConversation}
                 onArchive={handleArchiveConversation}
+                onUnarchive={handleUnarchiveConversation}
+                archiveRefresh={archiveRefresh}
               />
             ) : (
               <BotList
@@ -522,6 +552,7 @@ export default function App() {
                       typingEntities={typingMap.get(activeConv.id)}
                       onToggleSettings={() => { setShowSettings(!showSettings); setShowTasks(false) }}
                       onToggleTasks={() => { setShowTasks(!showTasks); setShowSettings(false) }}
+                      isArchived={isArchivedView}
                     />
                     </ErrorBoundary>
                   </div>
@@ -535,9 +566,9 @@ export default function App() {
                   {showTasks && (
                     <TaskPanel
                       conversationId={activeConv.id}
-                      participants={(activeConv.participants || []).map((p) => ({
+                      participants={(activeConv.participants || []).map((p: { entity_id: number; entity?: Entity }) => ({
                         entity_id: p.entity_id,
-                        entity: p.entity as any,
+                        entity: p.entity as { id: number; display_name: string; name: string; entity_type: string } | undefined,
                       }))}
                       onClose={() => setShowTasks(false)}
                     />
@@ -567,6 +598,7 @@ export default function App() {
                     onReactivate={handleReactivateBot}
                     onHardDelete={handleHardDeleteBot}
                     onStartChat={handleStartChatFromBot}
+                    onRefresh={loadBotEntities}
                   />
                 </ErrorBoundary>
               </div>

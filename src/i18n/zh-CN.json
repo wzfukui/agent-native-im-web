@@ -180,7 +180,10 @@
     "disableConfirm": "停用 {{name}}？将停止接收消息，但可以稍后重新启用。",
     "disabled": "已停用",
     "reactivate": "重新启用",
-    "disabledSection": "已停用"
+    "disabledSection": "已停用",
+    "avatar": "头像",
+    "uploadAvatar": "上传图片",
+    "changeAvatar": "更换头像"
   },
   "task": {
     "title": "任务",
@@ -193,7 +196,15 @@
     "medium": "中",
     "high": "高",
     "start": "开始任务",
-    "complete": "完成任务"
+    "complete": "完成任务",
+    "description": "描述",
+    "descriptionPlaceholder": "添加描述...",
+    "assignee": "负责人",
+    "unassigned": "未分配",
+    "dueDate": "截止日期",
+    "dependency": "依赖任务",
+    "noDependency": "无",
+    "blocked": "被阻塞"
   },
   "memory": {
     "prompt": "系统提示词",
@@ -257,5 +268,10 @@
   "agentConfig": {
     "prompt": "会话指令",
     "noPrompt": "未设置指令"
+  },
+  "context": {
+    "messages": "消息数",
+    "tokens": "Token (估算)",
+    "clearMemory": "清除所有记忆"
   }
 }

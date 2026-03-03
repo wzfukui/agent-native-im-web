@@ -180,7 +180,10 @@
     "disableConfirm": "Disable {{name}}? It will stop receiving messages but can be re-enabled later.",
     "disabled": "Disabled",
     "reactivate": "Re-enable",
-    "disabledSection": "Disabled"
+    "disabledSection": "Disabled",
+    "avatar": "Avatar",
+    "uploadAvatar": "Upload image",
+    "changeAvatar": "Change avatar"
   },
   "task": {
     "title": "Tasks",
@@ -193,7 +196,15 @@
     "medium": "Medium",
     "high": "High",
     "start": "Start task",
-    "complete": "Complete task"
+    "complete": "Complete task",
+    "description": "Description",
+    "descriptionPlaceholder": "Add description...",
+    "assignee": "Assignee",
+    "unassigned": "Unassigned",
+    "dueDate": "Due date",
+    "dependency": "Depends on",
+    "noDependency": "None",
+    "blocked": "Blocked"
   },
   "memory": {
     "prompt": "System Prompt",
@@ -257,5 +268,10 @@
   "agentConfig": {
     "prompt": "Conversation Instructions",
     "noPrompt": "No instructions set"
+  },
+  "context": {
+    "messages": "Messages",
+    "tokens": "Tokens (approx)",
+    "clearMemory": "Clear all memories"
   }
 }

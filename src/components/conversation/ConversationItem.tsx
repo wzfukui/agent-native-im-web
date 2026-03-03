@@ -16,9 +16,11 @@ interface Props {
   onUpdate?: (id: number, title: string) => void
   onLeave?: (id: number) => void
   onArchive?: (id: number) => void
+  onUnarchive?: (id: number) => void
+  isArchived?: boolean
 }
 
-export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, onLeave, onArchive }: Props) {
+export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, onLeave, onArchive, onUnarchive, isArchived }: Props) {
   const { t } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(conv.title || '')
@@ -194,13 +196,22 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
             <VolumeX className="w-3.5 h-3.5" />
             {muted ? t('common.unmute') : t('settings.mute')}
           </button>
-          {isGroup && (
+          {isGroup && !isArchived && (
             <button
               onClick={() => { setShowMenu(false); onArchive?.(conv.id) }}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
             >
               <Archive className="w-3.5 h-3.5" />
               {t('conversation.archive')}
+            </button>
+          )}
+          {isArchived && (
+            <button
+              onClick={() => { setShowMenu(false); onUnarchive?.(conv.id) }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
+            >
+              <Archive className="w-3.5 h-3.5" />
+              {t('conversation.unarchive')}
             </button>
           )}
           {isGroup && myParticipant?.role !== 'owner' && (

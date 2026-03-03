@@ -43,8 +43,8 @@ export const refreshToken = (token: string) =>
   request<{ token: string }>('POST', '/api/v1/auth/refresh', token)
 
 // Conversations
-export const listConversations = (token: string) =>
-  request<Conversation[]>('GET', '/api/v1/conversations', token)
+export const listConversations = (token: string, archived = false) =>
+  request<Conversation[]>('GET', `/api/v1/conversations${archived ? '?archived=true' : ''}`, token)
 
 export const getConversation = (token: string, id: number) =>
   request<Conversation>('GET', `/api/v1/conversations/${id}`, token)
@@ -115,7 +115,7 @@ export const approveConnection = (token: string, id: number) =>
 export const reactivateEntity = (token: string, id: number) =>
   request<Entity>('POST', `/api/v1/entities/${id}/reactivate`, token)
 
-export const updateEntity = (token: string, id: number, data: { display_name?: string; metadata?: Record<string, unknown> }) =>
+export const updateEntity = (token: string, id: number, data: { display_name?: string; avatar_url?: string; metadata?: Record<string, unknown> }) =>
   request<Entity>('PUT', `/api/v1/entities/${id}`, token, data)
 
 export const getEntityStatus = (token: string, id: number) =>
@@ -212,7 +212,7 @@ export const editMessage = (token: string, msgId: number, text: string) =>
   request<Message>('PUT', `/api/v1/messages/${msgId}`, token, { layers: { summary: text } })
 
 // Tasks
-export const createTask = (token: string, convId: number, data: { title: string; description?: string; assignee_id?: number; priority?: string; due_date?: string }) =>
+export const createTask = (token: string, convId: number, data: { title: string; description?: string; assignee_id?: number; priority?: string; due_date?: string; parent_task_id?: number }) =>
   request<Task>('POST', `/api/v1/conversations/${convId}/tasks`, token, data)
 
 export const listTasks = (token: string, convId: number, status?: string) =>

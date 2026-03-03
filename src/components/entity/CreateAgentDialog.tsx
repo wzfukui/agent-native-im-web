@@ -4,6 +4,7 @@ import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
 import { extractError, reportError } from '@/lib/errors'
+import { AvatarPicker } from './AvatarPicker'
 import { X, Plus, Loader2 } from 'lucide-react'
 
 interface Props {
@@ -17,6 +18,7 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
+  const [avatarUrl, setAvatarUrl] = useState('')
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
@@ -35,7 +37,13 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
         Object.keys(meta).length > 0 ? meta : undefined,
       )
       if (res.ok && res.data) {
-        onCreated({ entity: res.data.entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
+        let entity = res.data.entity
+        // Set avatar if one was selected
+        if (avatarUrl) {
+          const avatarRes = await api.updateEntity(token, entity.id, { avatar_url: avatarUrl })
+          if (avatarRes.ok && avatarRes.data) entity = avatarRes.data
+        }
+        onCreated({ entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
       } else {
         const parsed = extractError(res)
         setError(parsed.message)
@@ -64,17 +72,20 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
 
         {/* Form */}
         <div className="px-5 py-4 space-y-3">
-          {/* Name (required) */}
-          <div>
-            <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('bot.agentName')} *</label>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
-              placeholder={t('bot.namePlaceholder')}
-              autoFocus
-              className="w-full h-9 mt-1 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-bot)]/50 transition-colors"
-            />
+          {/* Avatar + Name row */}
+          <div className="flex items-end gap-3">
+            <AvatarPicker currentUrl={avatarUrl} onSelect={setAvatarUrl} size="sm" />
+            <div className="flex-1">
+              <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('bot.agentName')} *</label>
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+                placeholder={t('bot.namePlaceholder')}
+                autoFocus
+                className="w-full h-9 mt-1 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-bot)]/50 transition-colors"
+              />
+            </div>
           </div>
 
           {/* Description (optional) */}

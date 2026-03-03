@@ -8,7 +8,7 @@ import * as api from '@/lib/api'
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types'
 import {
   X, Plus, Check, Circle, Clock, Ban,
-  ChevronDown, Loader2, Trash2, Calendar,
+  ChevronDown, Loader2, Trash2, Calendar, User,
 } from 'lucide-react'
 
 const EMPTY_TASKS: Task[] = []
@@ -41,7 +41,11 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
   const [priority, setPriority] = useState<TaskPriority>('medium')
+  const [assigneeId, setAssigneeId] = useState<number | undefined>()
+  const [dueDate, setDueDate] = useState('')
+  const [parentTaskId, setParentTaskId] = useState<number | undefined>()
   const [creating, setCreating] = useState(false)
 
   const loadTasks = useCallback(async () => {
@@ -60,10 +64,21 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
   const handleCreate = async () => {
     if (!title.trim()) return
     setCreating(true)
-    const res = await api.createTask(token, conversationId, { title: title.trim(), priority })
+    const res = await api.createTask(token, conversationId, {
+      title: title.trim(),
+      priority,
+      ...(description.trim() && { description: description.trim() }),
+      ...(assigneeId && { assignee_id: assigneeId }),
+      ...(dueDate && { due_date: new Date(dueDate).toISOString() }),
+      ...(parentTaskId && { parent_task_id: parentTaskId }),
+    })
     if (res.ok && res.data) {
       useTasksStore.getState().addTask(res.data)
       setTitle('')
+      setDescription('')
+      setAssigneeId(undefined)
+      setDueDate('')
+      setParentTaskId(undefined)
       setShowForm(false)
     }
     setCreating(false)
@@ -119,12 +134,19 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleCreate()}
             placeholder={t('task.newTaskPlaceholder')}
             className="w-full h-8 px-2 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
             autoFocus
           />
-          <div className="flex items-center gap-2">
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder={t('task.descriptionPlaceholder')}
+            rows={2}
+            className="w-full px-2 py-1.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50 resize-none"
+          />
+          <div className="flex items-center gap-2 flex-wrap">
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value as TaskPriority)}
@@ -134,7 +156,38 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
               <option value="medium">{t('task.medium')}</option>
               <option value="high">{t('task.high')}</option>
             </select>
-            <div className="flex-1" />
+            <select
+              value={assigneeId ?? ''}
+              onChange={(e) => setAssigneeId(e.target.value ? Number(e.target.value) : undefined)}
+              className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none max-w-[120px]"
+            >
+              <option value="">{t('task.unassigned')}</option>
+              {participants.map((p) => (
+                <option key={p.entity_id} value={p.entity_id}>
+                  {p.entity ? (p.entity.display_name || p.entity.name) : `#${p.entity_id}`}
+                </option>
+              ))}
+            </select>
+            <input
+              type="date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none"
+            />
+            {tasks.length > 0 && (
+              <select
+                value={parentTaskId ?? ''}
+                onChange={(e) => setParentTaskId(e.target.value ? Number(e.target.value) : undefined)}
+                className="text-[10px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none max-w-[140px]"
+              >
+                <option value="">{t('task.noDependency')}</option>
+                {tasks.filter((t) => t.status !== 'done' && t.status !== 'cancelled').map((t) => (
+                  <option key={t.id} value={t.id}>{t.title}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div className="flex justify-end">
             <button
               onClick={handleCreate}
               disabled={creating || !title.trim()}
@@ -179,6 +232,9 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
                           )}>
                             {task.title}
                           </p>
+                          {task.description && (
+                            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5 line-clamp-2">{task.description}</p>
+                          )}
                           <div className="flex items-center gap-2 mt-1">
                             {task.assignee && (
                               <div className="flex items-center gap-1">
@@ -192,6 +248,16 @@ export function TaskPanel({ conversationId, participants, onClose }: Props) {
                                 {new Date(task.due_date).toLocaleDateString()}
                               </div>
                             )}
+                            {task.parent_task_id && (() => {
+                              const parent = tasks.find((t) => t.id === task.parent_task_id)
+                              if (!parent) return null
+                              const isBlocked = parent.status !== 'done'
+                              return (
+                                <span className={cn('text-[9px] px-1 py-0.5 rounded', isBlocked ? 'bg-amber-500/10 text-amber-500' : 'text-[var(--color-text-muted)]')}>
+                                  {isBlocked ? t('task.blocked') : ''} ← {parent.title}
+                                </span>
+                              )
+                            })()}
                           </div>
                         </div>
                         <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">

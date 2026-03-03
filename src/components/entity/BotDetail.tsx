@@ -5,6 +5,7 @@ import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
 import type { Entity, Conversation } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
+import { AvatarPicker } from './AvatarPicker'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import ReactMarkdown from 'react-markdown'
@@ -26,9 +27,10 @@ interface Props {
   onReactivate: (id: number) => void
   onHardDelete: (id: number) => void
   onStartChat: (entityId: number) => void
+  onRefresh?: () => void
 }
 
-export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBack, onOpenConversation, onDisable, onReactivate, onHardDelete, onStartChat }: Props) {
+export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBack, onOpenConversation, onDisable, onReactivate, onHardDelete, onStartChat, onRefresh }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
@@ -270,6 +272,21 @@ ${createdCredentials.doc}`
 
         {/* Agent info card */}
         <div className="px-4 py-3 border-b border-[var(--color-border)]">
+          {/* Avatar change */}
+          {!isDisabled && (
+            <div className="flex items-center gap-3 mb-3">
+              <AvatarPicker
+                currentUrl={bot.avatar_url}
+                onSelect={async (url) => {
+                  await api.updateEntity(token, bot.id, { avatar_url: url })
+                  onRefresh?.()
+                }}
+                size="sm"
+              />
+              <span className="text-[10px] text-[var(--color-text-muted)]">{t('bot.changeAvatar')}</span>
+            </div>
+          )}
+
           {/* Description */}
           {description && (
             <div className="flex items-start gap-2 mb-3">
