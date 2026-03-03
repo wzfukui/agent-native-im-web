@@ -1,6 +1,7 @@
 import type {
   APIResponse, LoginResponse, Entity, Conversation,
   MessagesResponse, SearchResponse, Message, AdminStats,
+  Task, ConversationMemory, ChangeRequest,
 } from './types'
 
 let baseUrl = ''
@@ -47,7 +48,7 @@ export const getConversation = (token: string, id: number) =>
 export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
   request<Conversation>('POST', '/api/v1/conversations', token, data)
 
-export const updateConversation = (token: string, id: number, data: { title?: string; description?: string }) =>
+export const updateConversation = (token: string, id: number, data: { title?: string; description?: string; prompt?: string }) =>
   request<Conversation>('PUT', `/api/v1/conversations/${id}`, token, data)
 
 // Participants
@@ -187,6 +188,49 @@ export const deleteInviteLink = (token: string, id: number) =>
 // Message edit
 export const editMessage = (token: string, msgId: number, text: string) =>
   request<Message>('PUT', `/api/v1/messages/${msgId}`, token, { layers: { summary: text } })
+
+// Tasks
+export const createTask = (token: string, convId: number, data: { title: string; description?: string; assignee_id?: number; priority?: string; due_date?: string }) =>
+  request<Task>('POST', `/api/v1/conversations/${convId}/tasks`, token, data)
+
+export const listTasks = (token: string, convId: number, status?: string) =>
+  request<Task[]>('GET', `/api/v1/conversations/${convId}/tasks${status ? `?status=${status}` : ''}`, token)
+
+export const getTask = (token: string, taskId: number) =>
+  request<Task>('GET', `/api/v1/tasks/${taskId}`, token)
+
+export const updateTask = (token: string, taskId: number, data: { title?: string; description?: string; status?: string; priority?: string; assignee_id?: number; due_date?: string }) =>
+  request<Task>('PUT', `/api/v1/tasks/${taskId}`, token, data)
+
+export const deleteTask = (token: string, taskId: number) =>
+  request('DELETE', `/api/v1/tasks/${taskId}`, token)
+
+// Memories
+export const listMemories = (token: string, convId: number) =>
+  request<{ memories: ConversationMemory[]; prompt: string }>('GET', `/api/v1/conversations/${convId}/memories`, token)
+
+export const upsertMemory = (token: string, convId: number, key: string, content: string) =>
+  request<ConversationMemory>('POST', `/api/v1/conversations/${convId}/memories`, token, { key, content })
+
+export const deleteMemory = (token: string, convId: number, memId: number) =>
+  request('DELETE', `/api/v1/conversations/${convId}/memories/${memId}`, token)
+
+// Change Requests
+export const createChangeRequest = (token: string, convId: number, field: string, newValue: string) =>
+  request<ChangeRequest>('POST', `/api/v1/conversations/${convId}/change-requests`, token, { field, new_value: newValue })
+
+export const listChangeRequests = (token: string, convId: number, status?: string) =>
+  request<ChangeRequest[]>('GET', `/api/v1/conversations/${convId}/change-requests${status ? `?status=${status}` : ''}`, token)
+
+export const approveChangeRequest = (token: string, convId: number, reqId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/change-requests/${reqId}/approve`, token)
+
+export const rejectChangeRequest = (token: string, convId: number, reqId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/change-requests/${reqId}/reject`, token)
+
+// Change password
+export const changePassword = (token: string, oldPassword: string, newPassword: string) =>
+  request('PUT', '/api/v1/me/password', token, { old_password: oldPassword, new_password: newPassword })
 
 // Updates (long polling fallback)
 export const getUpdates = (token: string, since?: string) =>

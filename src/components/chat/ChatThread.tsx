@@ -11,7 +11,7 @@ import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Search, Users, ArrowLeft, Loader2, X, Settings } from 'lucide-react'
+import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
 
@@ -22,9 +22,10 @@ interface Props {
   onTyping?: (conversationId: number) => void
   typingEntities?: Map<number, { name: string; expiresAt: number }>
   onToggleSettings?: () => void
+  onToggleTasks?: () => void
 }
 
-export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings }: Props) {
+export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings, onToggleTasks }: Props) {
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const messages = useMessagesStore((s) => s.byConv[conversation.id] ?? EMPTY_MESSAGES)
@@ -267,6 +268,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           <Search className="w-4 h-4" />
         </button>
 
+        {onToggleTasks && (
+          <button
+            onClick={onToggleTasks}
+            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+          >
+            <ListTodo className="w-4 h-4" />
+          </button>
+        )}
         {onToggleSettings && (
           <button
             onClick={onToggleSettings}

@@ -1,27 +1,32 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import { useMessagesStore } from '@/store/messages'
 import { usePresenceStore } from '@/store/presence'
+import { useTasksStore } from '@/store/tasks'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { RegisterForm } from '@/components/auth/RegisterForm'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ConversationList } from '@/components/conversation/ConversationList'
 import { ChatThread } from '@/components/chat/ChatThread'
 import { ConversationSettingsPanel } from '@/components/conversation/ConversationSettingsPanel'
+import { TaskPanel } from '@/components/task/TaskPanel'
+import { UserSettingsPage } from '@/components/settings/UserSettingsPage'
 import { BotList } from '@/components/entity/BotList'
 import { BotDetail } from '@/components/entity/BotDetail'
 import { NewConversationDialog } from '@/components/conversation/NewConversationDialog'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import { registerPushNotifications } from '@/lib/push'
-import type { WSMessage, Message, Entity } from '@/lib/types'
+import type { WSMessage, Message, Entity, Task } from '@/lib/types'
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
 
 export default function App() {
+  const { t } = useTranslation()
   const { token, entity, setAuth, logout } = useAuthStore()
   const { conversations, activeId, setConversations, setActive, addConversation, updateConversation, removeConversation, mutedIds } = useConversationsStore()
   const { addMessage, revokeMessage, startStream, updateStream, endStream } = useMessagesStore()
@@ -29,7 +34,7 @@ export default function App() {
 
   const [loginError, setLoginError] = useState('')
   const [showRegister, setShowRegister] = useState(false)
-  const [viewMode, setViewMode] = useState<'chat' | 'bots' | 'admin'>('chat')
+  const [viewMode, setViewMode] = useState<'chat' | 'bots' | 'admin' | 'settings'>('chat')
   const [isAdmin, setIsAdmin] = useState(false)
   const [selectedBotId, setSelectedBotId] = useState<number | null>(null)
   const [showNewChat, setShowNewChat] = useState(false)
@@ -38,6 +43,7 @@ export default function App() {
   const [botEntities, setBotEntities] = useState<Entity[]>([])
   const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number }>>>(new Map())
   const [showSettings, setShowSettings] = useState(false)
+  const [showTasks, setShowTasks] = useState(false)
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -204,7 +210,6 @@ export default function App() {
             entity_id?: number
           }
           if (convData?.conversation_id) {
-            // If I was removed, remove from list
             if (
               (convData.action === 'member_removed' || convData.action === 'member_left') &&
               convData.entity_id === entity?.id
@@ -217,7 +222,6 @@ export default function App() {
                 setActive(null)
               }
             } else {
-              // Refresh conversation data
               if (token) {
                 api.getConversation(token, convData.conversation_id).then((res) => {
                   if (res.ok && res.data) {
@@ -228,6 +232,28 @@ export default function App() {
                     })
                   }
                 })
+              }
+            }
+          }
+          break
+        }
+
+        case 'task.updated': {
+          const taskData = msg.data as { action?: string; task?: Task; task_id?: number }
+          if (taskData?.task) {
+            const store = useTasksStore.getState()
+            if (taskData.action === 'created') {
+              store.addTask(taskData.task)
+            } else if (taskData.action === 'updated') {
+              store.updateTask(taskData.task)
+            }
+          } else if (taskData?.action === 'deleted' && taskData?.task_id) {
+            // For delete, we don't know the convId, but the tasks store will handle it
+            const store = useTasksStore.getState()
+            for (const [convId, tasks] of Object.entries(store.byConv)) {
+              if (tasks.some((t) => t.id === taskData.task_id)) {
+                store.removeTask(Number(convId), taskData.task_id!)
+                break
               }
             }
           }
@@ -283,7 +309,6 @@ export default function App() {
           }
         })
       }
-      // Also refresh conversation list
       loadConversations()
     })
 
@@ -336,12 +361,12 @@ export default function App() {
   // ─── Leave / Archive conversation ────────────────────────────
   const handleLeaveConversation = useCallback(async (convId: number) => {
     if (!token) return
-    if (!confirm('Are you sure you want to leave this conversation?')) return
+    if (!confirm(t('settings.leaveConfirm'))) return
     const res = await api.leaveConversation(token, convId)
     if (res.ok) {
       removeConversation(convId)
     }
-  }, [token])
+  }, [token, t])
 
   const handleArchiveConversation = useCallback(async (convId: number) => {
     if (!token) return
@@ -373,16 +398,20 @@ export default function App() {
       <Sidebar
         botMode={viewMode === 'bots'}
         adminMode={viewMode === 'admin'}
+        settingsMode={viewMode === 'settings'}
         isAdmin={isAdmin}
         onToggleBots={() => setViewMode(viewMode === 'bots' ? 'chat' : 'bots')}
         onToggleAdmin={() => setViewMode(viewMode === 'admin' ? 'chat' : 'admin')}
         onToggleChat={() => setViewMode('chat')}
+        onToggleSettings={() => setViewMode(viewMode === 'settings' ? 'chat' : 'settings')}
       />
 
       {viewMode === 'admin' ? (
         <div className="flex-1 min-w-0">
           <AdminPanel onBack={() => setViewMode('chat')} />
         </div>
+      ) : viewMode === 'settings' ? (
+        <UserSettingsPage onBack={() => setViewMode('chat')} />
       ) : (
         <>
           {/* Left panel: ConversationList or BotList */}
@@ -434,7 +463,8 @@ export default function App() {
                       onCancelStream={handleCancelStream}
                       onTyping={handleTyping}
                       typingEntities={typingMap.get(activeConv.id)}
-                      onToggleSettings={() => setShowSettings(!showSettings)}
+                      onToggleSettings={() => { setShowSettings(!showSettings); setShowTasks(false) }}
+                      onToggleTasks={() => { setShowTasks(!showTasks); setShowSettings(false) }}
                     />
                   </div>
                   {showSettings && (
@@ -442,6 +472,16 @@ export default function App() {
                       conversation={activeConv}
                       onClose={() => setShowSettings(false)}
                       onLeave={() => removeConversation(activeConv.id)}
+                    />
+                  )}
+                  {showTasks && (
+                    <TaskPanel
+                      conversationId={activeConv.id}
+                      participants={(activeConv.participants || []).map((p) => ({
+                        entity_id: p.entity_id,
+                        entity: p.entity as any,
+                      }))}
+                      onClose={() => setShowTasks(false)}
                     />
                   )}
                 </>
@@ -452,7 +492,7 @@ export default function App() {
                   </div>
                   <div className="text-center">
                     <p className="text-base font-medium text-[var(--color-text-secondary)]">Agent-Native IM</p>
-                    <p className="text-xs mt-1">Select a conversation or start a new one</p>
+                    <p className="text-xs mt-1">{t('app.selectConversation')}</p>
                   </div>
                 </div>
               )

@@ -36,7 +36,13 @@
     "noResults": "未找到结果",
     "resultsFound": "找到 {{count}} 条结果",
     "typeMessage": "输入消息...",
-    "observer": "你是此会话的观察者"
+    "observer": "你是此会话的观察者",
+    "groupMembers": "群组成员",
+    "selectParticipants": "选择参与者",
+    "archive": "归档会话",
+    "leave": "离开会话",
+    "archived": "已归档",
+    "unarchive": "取消归档"
   },
   "settings": {
     "title": "设置",
@@ -62,7 +68,20 @@
     "themeDark": "暗色",
     "themeMidnight": "午夜",
     "themeLight": "亮色",
-    "themeGreen": "绿色"
+    "themeGreen": "绿色",
+    "profile": "个人信息",
+    "security": "账号安全",
+    "displayName": "显示名称",
+    "profileSaved": "资料已保存",
+    "changePasswordDesc": "修改您的账户密码",
+    "currentPassword": "当前密码",
+    "newPassword": "新密码",
+    "confirmPassword": "确认密码",
+    "changePassword": "修改密码",
+    "passwordTooShort": "密码至少 6 个字符",
+    "passwordMismatch": "两次密码不一致",
+    "passwordChanged": "密码修改成功",
+    "passwordError": "修改密码失败"
   },
   "message": {
     "revoked": "{{name}} 撤回了一条消息",
@@ -88,6 +107,45 @@
     "delete": "删除",
     "bootstrapKey": "引导密钥"
   },
+  "task": {
+    "title": "任务",
+    "noTasks": "暂无任务",
+    "newTaskPlaceholder": "任务标题...",
+    "pending": "待处理",
+    "inProgress": "进行中",
+    "completed": "已完成",
+    "low": "低",
+    "medium": "中",
+    "high": "高",
+    "start": "开始任务",
+    "complete": "完成任务"
+  },
+  "memory": {
+    "prompt": "系统提示词",
+    "noPrompt": "未设置系统提示词",
+    "memories": "记忆",
+    "keyPlaceholder": "键（如 project_goal）",
+    "contentPlaceholder": "内容..."
+  },
+  "invite": {
+    "title": "邀请链接",
+    "noLinks": "暂无邀请链接",
+    "uses": "{{count}}/{{max}} 次使用",
+    "expires": "到期 {{date}}",
+    "copied": "已复制！"
+  },
+  "interaction": {
+    "responded": "已回复：{{value}}",
+    "inputPlaceholder": "输入回复..."
+  },
+  "changeRequest": {
+    "title": "变更请求",
+    "pending": "待审批",
+    "approved": "已批准",
+    "rejected": "已拒绝",
+    "approve": "批准",
+    "reject": "拒绝"
+  },
   "common": {
     "you": "(你)",
     "loading": "加载中...",
@@ -100,6 +158,8 @@
     "close": "关闭",
     "addMember": "添加成员",
     "removeMember": "移除成员",
-    "unmute": "取消静音"
+    "unmute": "取消静音",
+    "online": "在线",
+    "offline": "离线"
   }
 }

@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
 import { usePresenceStore } from '@/store/presence'
+import { MemorySection } from '@/components/conversation/MemorySection'
+import { InviteLinkSection } from '@/components/conversation/InviteLinkSection'
 import * as api from '@/lib/api'
 import type { Conversation } from '@/lib/types'
 import {
@@ -18,6 +21,7 @@ interface Props {
 }
 
 export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Props) {
+  const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const updateConversation = useConversationsStore((s) => s.updateConversation)
@@ -71,7 +75,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
   }
 
   const handleLeave = async () => {
-    if (!confirm('Are you sure you want to leave this conversation?')) return
+    if (!confirm(t('settings.leaveConfirm'))) return
     setLoading(true)
     const res = await api.leaveConversation(token, conversation.id)
     setLoading(false)
@@ -100,7 +104,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
     <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">Settings</h3>
+        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">{t('settings.title')}</h3>
         <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
           <X className="w-4 h-4 text-[var(--color-text-muted)]" />
         </button>
@@ -109,7 +113,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
       <div className="flex-1 overflow-y-auto">
         {/* Title */}
         <div className="px-4 py-3 border-b border-[var(--color-border)]">
-          <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Name</label>
+          <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.name')}</label>
           {editingTitle ? (
             <div className="flex items-center gap-1 mt-1">
               <input
@@ -141,7 +145,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
         {/* Description */}
         {isGroup && (
           <div className="px-4 py-3 border-b border-[var(--color-border)]">
-            <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Description</label>
+            <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.description')}</label>
             {editingDesc ? (
               <div className="mt-1 space-y-1">
                 <textarea
@@ -152,14 +156,14 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                   autoFocus
                 />
                 <div className="flex gap-1">
-                  <button onClick={handleSaveDesc} disabled={saving} className="px-2 py-1 text-[10px] bg-[var(--color-accent)] text-white rounded cursor-pointer">Save</button>
-                  <button onClick={() => setEditingDesc(false)} className="px-2 py-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer">Cancel</button>
+                  <button onClick={handleSaveDesc} disabled={saving} className="px-2 py-1 text-[10px] bg-[var(--color-accent)] text-white rounded cursor-pointer">{t('common.save')}</button>
+                  <button onClick={() => setEditingDesc(false)} className="px-2 py-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer">{t('common.cancel')}</button>
                 </div>
               </div>
             ) : (
               <div className="flex items-start gap-2 mt-1 group">
                 <p className="text-xs text-[var(--color-text-secondary)] flex-1 leading-relaxed">
-                  {conversation.description || 'No description'}
+                  {conversation.description || t('settings.noDescription')}
                 </p>
                 {canManage && (
                   <button onClick={() => { setDescValue(conversation.description || ''); setEditingDesc(true) }} className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-opacity flex-shrink-0">
@@ -171,16 +175,24 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
           </div>
         )}
 
+        {/* Memory & Prompt section */}
+        <MemorySection conversationId={conversation.id} canManage={canManage} />
+
+        {/* Invite links (owner/admin only) */}
+        {canManage && isGroup && (
+          <InviteLinkSection conversationId={conversation.id} />
+        )}
+
         {/* Notification settings */}
         {myParticipant && (
           <div className="px-4 py-3 border-b border-[var(--color-border)] space-y-3">
-            <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">Notifications</label>
+            <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.notifications')}</label>
 
             {/* Mute toggle */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
                 {muted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
-                <span>Mute</span>
+                <span>{t('settings.mute')}</span>
               </div>
               <button
                 onClick={() => toggleMute(conversation.id)}
@@ -202,17 +214,17 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                 {myParticipant.subscription_mode === 'subscribe_all' || myParticipant.subscription_mode === 'mention_with_context'
                   ? <Bell className="w-3.5 h-3.5" />
                   : <BellOff className="w-3.5 h-3.5" />}
-                <span>Mode</span>
+                <span>{t('settings.mode')}</span>
               </div>
               <select
                 value={myParticipant.subscription_mode}
                 onChange={(e) => handleSubscriptionChange(e.target.value)}
                 className="text-[11px] px-2 py-1 rounded-md bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-secondary)] cursor-pointer focus:outline-none focus:border-[var(--color-accent)]/50"
               >
-                <option value="mention_only">@mentioned only</option>
-                <option value="subscribe_all">All messages</option>
-                <option value="mention_with_context">@mentioned + context</option>
-                <option value="subscribe_digest">Digest</option>
+                <option value="mention_only">{t('settings.mentionOnly')}</option>
+                <option value="subscribe_all">{t('settings.allMessages')}</option>
+                <option value="mention_with_context">{t('settings.mentionContext')}</option>
+                <option value="subscribe_digest">{t('settings.digest')}</option>
               </select>
             </div>
           </div>
@@ -221,7 +233,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
         {/* Members */}
         <div className="px-4 py-3 border-b border-[var(--color-border)]">
           <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">
-            Members ({participants.length})
+            {t('settings.members')} ({participants.length})
           </label>
           <div className="mt-2 space-y-1">
             {participants.map((p) => (
@@ -239,14 +251,14 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
                       {entityDisplayName(p.entity)}
                     </span>
                     {p.entity_id === myEntity.id && (
-                      <span className="text-[9px] text-[var(--color-text-muted)]">(you)</span>
+                      <span className="text-[9px] text-[var(--color-text-muted)]">{t('common.you')}</span>
                     )}
                   </div>
                 </div>
                 {canManage && p.entity_id !== myEntity.id && p.role !== 'owner' && (
                   <button
                     onClick={async () => {
-                      if (!confirm(`Remove ${entityDisplayName(p.entity)}?`)) return
+                      if (!confirm(`${t('common.removeMember')} ${entityDisplayName(p.entity)}?`)) return
                       await api.removeParticipant(token, conversation.id, p.entity_id)
                     }}
                     className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-error)]/15 rounded cursor-pointer transition-opacity"
@@ -268,7 +280,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
             >
               <Archive className="w-3.5 h-3.5" />
-              Archive conversation
+              {t('settings.archive')}
             </button>
           )}
           {isGroup && myParticipant?.role !== 'owner' && (
@@ -278,7 +290,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave }: Pr
               className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-[var(--color-error)] hover:bg-[var(--color-error)]/10 cursor-pointer transition-colors"
             >
               {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogOut className="w-3.5 h-3.5" />}
-              Leave conversation
+              {t('settings.leave')}
             </button>
           )}
         </div>

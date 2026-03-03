@@ -36,7 +36,13 @@
     "noResults": "No results found",
     "resultsFound": "{{count}} result(s) found",
     "typeMessage": "Type a message...",
-    "observer": "You are an observer in this conversation"
+    "observer": "You are an observer in this conversation",
+    "groupMembers": "Group Members",
+    "selectParticipants": "Select participants",
+    "archive": "Archive conversation",
+    "leave": "Leave conversation",
+    "archived": "Archived",
+    "unarchive": "Unarchive"
   },
   "settings": {
     "title": "Settings",
@@ -62,7 +68,20 @@
     "themeDark": "Dark",
     "themeMidnight": "Midnight",
     "themeLight": "Light",
-    "themeGreen": "Green"
+    "themeGreen": "Green",
+    "profile": "Profile",
+    "security": "Security",
+    "displayName": "Display Name",
+    "profileSaved": "Profile saved",
+    "changePasswordDesc": "Change your account password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm Password",
+    "changePassword": "Change Password",
+    "passwordTooShort": "Password must be at least 6 characters",
+    "passwordMismatch": "Passwords do not match",
+    "passwordChanged": "Password changed successfully",
+    "passwordError": "Failed to change password"
   },
   "message": {
     "revoked": "{{name}} revoked a message",
@@ -88,6 +107,45 @@
     "delete": "Delete",
     "bootstrapKey": "Bootstrap Key"
   },
+  "task": {
+    "title": "Tasks",
+    "noTasks": "No tasks yet",
+    "newTaskPlaceholder": "Task title...",
+    "pending": "To Do",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "low": "Low",
+    "medium": "Medium",
+    "high": "High",
+    "start": "Start task",
+    "complete": "Complete task"
+  },
+  "memory": {
+    "prompt": "System Prompt",
+    "noPrompt": "No system prompt set",
+    "memories": "Memories",
+    "keyPlaceholder": "Key (e.g. project_goal)",
+    "contentPlaceholder": "Content..."
+  },
+  "invite": {
+    "title": "Invite Links",
+    "noLinks": "No invite links",
+    "uses": "{{count}}/{{max}} uses",
+    "expires": "Expires {{date}}",
+    "copied": "Copied!"
+  },
+  "interaction": {
+    "responded": "Responded: {{value}}",
+    "inputPlaceholder": "Type your response..."
+  },
+  "changeRequest": {
+    "title": "Change Requests",
+    "pending": "Pending approval",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
   "common": {
     "you": "(you)",
     "loading": "Loading...",
@@ -100,6 +158,8 @@
     "close": "Close",
     "addMember": "Add Member",
     "removeMember": "Remove member",
-    "unmute": "Unmute"
+    "unmute": "Unmute",
+    "online": "Online",
+    "offline": "Offline"
   }
 }
