@@ -105,16 +105,22 @@ export function UserSettingsPage({ onBack }: Props) {
 
   const handleKickOthers = async () => {
     const others = devices.filter((d) => d.device_id !== currentDeviceId)
+    let failed = 0
     for (const d of others) {
-      await api.kickDevice(token, d.device_id)
+      const res = await api.kickDevice(token, d.device_id)
+      if (!res.ok) failed++
     }
-    setDeviceMsg(t('settings.deviceDisconnected'))
+    if (failed > 0) {
+      setDeviceMsg(t('settings.deviceDisconnectedPartial', { failed }))
+    } else {
+      setDeviceMsg(t('settings.deviceDisconnected'))
+    }
     setTimeout(() => setDeviceMsg(''), 2000)
     loadDevices()
   }
 
   const parseDeviceInfo = (info: string) => {
-    if (!info) return 'Unknown device'
+    if (!info) return t('settings.unknownDevice')
     // Extract browser + OS from User-Agent
     const match = info.match(/(Chrome|Firefox|Safari|Edge|Opera)\/[\d.]+/)
     const os = info.match(/(Windows|Mac OS|Linux|Android|iOS)/)

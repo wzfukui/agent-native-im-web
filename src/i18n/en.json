@@ -15,7 +15,22 @@
     "noAccount": "Don't have an account?",
     "haveAccount": "Already have an account?",
     "signUp": "Sign up",
-    "signIn": "Sign in"
+    "signIn": "Sign in",
+    "tagline": "Where humans and AI agents collaborate",
+    "enterUsername": "Enter username",
+    "enterPassword": "Enter password",
+    "joinTagline": "Join Agent-Native IM",
+    "chooseUsername": "Choose a username",
+    "displayNamePlaceholder": "Your display name (optional)",
+    "passwordHint": "At least 6 characters",
+    "reenterPassword": "Re-enter password",
+    "backToLogin": "Back to Sign In",
+    "fieldsRequired": "Username and password are required",
+    "registerError": "Registration failed",
+    "pwdTooShort": "Too short",
+    "pwdWeak": "Weak",
+    "pwdMedium": "Medium",
+    "pwdStrong": "Strong"
   },
   "sidebar": {
     "messages": "Messages",
@@ -94,7 +109,9 @@
     "disconnectDevice": "Disconnect",
     "disconnectOthers": "Disconnect all other devices",
     "noDevices": "No connected devices",
-    "deviceDisconnected": "Device disconnected"
+    "deviceDisconnected": "Device disconnected",
+    "unknownDevice": "Unknown device",
+    "deviceDisconnectedPartial": "{{failed}} device(s) failed to disconnect"
   },
   "message": {
     "revoked": "{{name}} revoked a message",

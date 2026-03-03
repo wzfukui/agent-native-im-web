@@ -15,7 +15,22 @@
     "noAccount": "没有账号？",
     "haveAccount": "已有账号？",
     "signUp": "注册",
-    "signIn": "登录"
+    "signIn": "登录",
+    "tagline": "人类与 AI Agent 协作的新方式",
+    "enterUsername": "请输入用户名",
+    "enterPassword": "请输入密码",
+    "joinTagline": "加入 Agent-Native IM",
+    "chooseUsername": "选择一个用户名",
+    "displayNamePlaceholder": "显示名称（可选）",
+    "passwordHint": "至少 6 个字符",
+    "reenterPassword": "再次输入密码",
+    "backToLogin": "返回登录",
+    "fieldsRequired": "请输入用户名和密码",
+    "registerError": "注册失败",
+    "pwdTooShort": "太短",
+    "pwdWeak": "弱",
+    "pwdMedium": "中等",
+    "pwdStrong": "强"
   },
   "sidebar": {
     "messages": "消息",
@@ -94,7 +109,9 @@
     "disconnectDevice": "断开连接",
     "disconnectOthers": "断开所有其他设备",
     "noDevices": "无已连接设备",
-    "deviceDisconnected": "设备已断开"
+    "deviceDisconnected": "设备已断开",
+    "unknownDevice": "未知设备",
+    "deviceDisconnectedPartial": "{{failed}} 个设备断开失败"
   },
   "message": {
     "revoked": "{{name}} 撤回了一条消息",

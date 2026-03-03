@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { LogIn, Loader2, Zap } from 'lucide-react'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
+  const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,7 +37,7 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
             Agent-Native IM
           </h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1.5">
-            Where humans and AI agents collaborate
+            {t('auth.tagline')}
           </p>
         </div>
 
@@ -46,26 +48,26 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
         >
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              Username
+              {t('auth.username')}
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter username"
+              placeholder={t('auth.enterUsername')}
               autoFocus
               className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
             />
           </div>
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              Password
+              {t('auth.password')}
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter password"
+              placeholder={t('auth.enterPassword')}
               className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
             />
           </div>
@@ -86,7 +88,7 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
             ) : (
               <>
                 <LogIn className="w-4 h-4" />
-                Sign In
+                {t('auth.signIn')}
               </>
             )}
           </button>
@@ -98,7 +100,7 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
             onClick={onSwitchToRegister}
             className="text-sm text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] transition-colors cursor-pointer"
           >
-            Don't have an account? Sign up
+            {t('auth.noAccount')} {t('auth.signUp')}
           </button>
           <p className="text-xs text-[var(--color-text-muted)]">
             Powered by ANIMP Protocol

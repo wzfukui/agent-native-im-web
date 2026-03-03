@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { UserPlus, Loader2, Zap, ArrowLeft } from 'lucide-react'
 import type { Entity } from '@/lib/types'
 import * as api from '@/lib/api'
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
+  const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -21,17 +23,17 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
     setError('')
     
     if (!username || !password) {
-      setError('Username and password are required')
+      setError(t('auth.fieldsRequired'))
       return
     }
     
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      setError(t('settings.passwordTooShort'))
       return
     }
     
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError(t('settings.passwordMismatch'))
       return
     }
     
@@ -41,10 +43,10 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
       if (res.ok && res.data) {
         onRegister(res.data.token, res.data.entity)
       } else {
-        setError(res.error || 'Registration failed')
+        setError(res.error || t('auth.registerError'))
       }
     } catch {
-      setError('Network error — cannot reach server')
+      setError(t('auth.networkError'))
     } finally {
       setLoading(false)
     }
@@ -52,16 +54,16 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
 
   const getPasswordStrength = (pwd: string): { level: number; text: string } => {
     if (pwd.length === 0) return { level: 0, text: '' }
-    if (pwd.length < 6) return { level: 1, text: 'Too short' }
-    if (pwd.length < 8) return { level: 2, text: 'Weak' }
+    if (pwd.length < 6) return { level: 1, text: t('auth.pwdTooShort') }
+    if (pwd.length < 8) return { level: 2, text: t('auth.pwdWeak') }
     const hasUpper = /[A-Z]/.test(pwd)
     const hasLower = /[a-z]/.test(pwd)
     const hasNumber = /[0-9]/.test(pwd)
     const hasSpecial = /[^A-Za-z0-9]/.test(pwd)
     const strength = [hasUpper, hasLower, hasNumber, hasSpecial].filter(Boolean).length
-    if (strength >= 3 && pwd.length >= 8) return { level: 4, text: 'Strong' }
-    if (strength >= 2) return { level: 3, text: 'Medium' }
-    return { level: 2, text: 'Weak' }
+    if (strength >= 3 && pwd.length >= 8) return { level: 4, text: t('auth.pwdStrong') }
+    if (strength >= 2) return { level: 3, text: t('auth.pwdMedium') }
+    return { level: 2, text: t('auth.pwdWeak') }
   }
 
   const passwordStrength = getPasswordStrength(password)
@@ -75,10 +77,10 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
             <Zap className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
-            Create Account
+            {t('auth.register')}
           </h1>
           <p className="text-sm text-[var(--color-text-muted)] mt-1.5">
-            Join Agent-Native IM
+            {t('auth.joinTagline')}
           </p>
         </div>
 
@@ -89,13 +91,13 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
         >
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              Username *
+              {t('auth.username')} *
             </label>
             <input
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Choose a username"
+              placeholder={t('auth.chooseUsername')}
               autoFocus
               className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
             />
@@ -103,26 +105,26 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
           
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              Display Name
+              {t('auth.displayName')}
             </label>
             <input
               type="text"
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
-              placeholder="Your display name (optional)"
+              placeholder={t('auth.displayNamePlaceholder')}
               className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
             />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              Password *
+              {t('auth.password')} *
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="At least 6 characters"
+              placeholder={t('auth.passwordHint')}
               className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
             />
             {password && (
@@ -152,13 +154,13 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
 
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              Confirm Password *
+              {t('settings.confirmPassword')} *
             </label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="Re-enter password"
+              placeholder={t('auth.reenterPassword')}
               className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
             />
           </div>
@@ -179,7 +181,7 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
             ) : (
               <>
                 <UserPlus className="w-4 h-4" />
-                Create Account
+                {t('auth.register')}
               </>
             )}
           </button>
@@ -190,7 +192,7 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
             className="w-full h-10 rounded-lg bg-transparent hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] font-medium text-sm flex items-center justify-center gap-2 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Sign In
+            {t('auth.backToLogin')}
           </button>
         </form>
 

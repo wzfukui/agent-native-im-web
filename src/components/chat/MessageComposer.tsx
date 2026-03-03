@@ -326,7 +326,7 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, d
               value={text}
               onChange={autoResize}
               onKeyDown={handleKeyDown}
-              placeholder={placeholder || 'Type a message...'}
+              placeholder={placeholder || t('conversation.typeMessage')}
               disabled={disabled}
               rows={1}
               className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[120px] py-1"
