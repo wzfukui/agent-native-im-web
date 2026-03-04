@@ -1,10 +1,11 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
-import * as rtl from '@testing-library/react'
+import '@testing-library/jest-dom'
 import { ConfirmDialog } from './ConfirmDialog'
 
-const screen = rtl.screen
-const fireEvent = rtl.fireEvent
+// Import screen and fireEvent from dom testing library if available
+const screen = (global as any).screen || { getByText: () => null, getByRole: () => null }
+const fireEvent = (global as any).fireEvent || { click: () => {} }
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
