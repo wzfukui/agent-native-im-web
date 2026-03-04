@@ -1,7 +1,11 @@
 import React from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import * as rtl from '@testing-library/react'
 import { ErrorBoundary } from './ErrorBoundary'
+
+const screen = rtl.screen
+const fireEvent = rtl.fireEvent
 
 // Mock i18n module
 vi.mock('@/i18n', () => ({

@@ -1,6 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import * as rtl from '@testing-library/react'
 import { ConfirmDialog } from './ConfirmDialog'
+
+const screen = rtl.screen
+const fireEvent = rtl.fireEvent
 
 // Mock i18next
 vi.mock('react-i18next', () => ({
