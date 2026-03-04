@@ -95,13 +95,20 @@ export function UserSettingsPage({ onBack }: Props) {
     setDeviceMsg('')  // Clear any previous messages
     const res = await api.listDevices(token)
     if (res.ok && res.data?.devices) {
-      // Deduplicate devices by device_id
-      const uniqueDevices = res.data.devices.reduce((acc: DeviceItem[], device) => {
-        if (!acc.find(d => d.device_id === device.device_id)) {
-          acc.push(device)
+      const rawDevices = res.data.devices || []
+      console.log('Raw devices from backend:', rawDevices)
+
+      // Group by device_id and keep only the latest/first connection per device
+      const deviceMap = new Map<string, DeviceItem>()
+      for (const device of rawDevices) {
+        if (!deviceMap.has(device.device_id)) {
+          deviceMap.set(device.device_id, device)
         }
-        return acc
-      }, [])
+      }
+
+      const uniqueDevices = Array.from(deviceMap.values())
+      console.log('Unique devices after dedup:', uniqueDevices)
+
       setDevices(uniqueDevices)
     } else {
       setDevices([])
@@ -110,7 +117,11 @@ export function UserSettingsPage({ onBack }: Props) {
   }, [token])
 
   useEffect(() => {
-    if (section === 'devices') loadDevices()
+    if (section === 'devices') {
+      // Clear devices first to ensure clean state
+      setDevices([])
+      loadDevices()
+    }
   }, [section, loadDevices])
 
   const handleKickDevice = async (deviceId: string) => {
@@ -353,36 +364,27 @@ export function UserSettingsPage({ onBack }: Props) {
               ) : (
                 <div className="space-y-2">
                   {devices.map((device, index) => {
-                    // Only mark the first occurrence of current device ID as "current"
-                    // This handles multiple tabs/windows with same device ID
-                    const isCurrentDeviceId = device.device_id === currentDeviceId
-                    const isFirstOccurrence = devices.findIndex(d => d.device_id === device.device_id) === index
-                    const isCurrent = isCurrentDeviceId && isFirstOccurrence
+                    const isCurrentDevice = device.device_id === currentDeviceId
 
                     return (
                       <div
                         key={`${device.device_id}-${index}`}
                         className={cn(
                           'flex items-center gap-3 px-4 py-3 rounded-xl border transition-all',
-                          isCurrent
+                          isCurrentDevice
                             ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5'
                             : 'border-[var(--color-border)]',
                         )}
                       >
-                        <Smartphone className={cn('w-5 h-5 flex-shrink-0', isCurrent ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]')} />
+                        <Smartphone className={cn('w-5 h-5 flex-shrink-0', isCurrentDevice ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]')} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
                             <p className="text-xs font-medium text-[var(--color-text-primary)]">
                               {parseDeviceInfo(device.device_info)}
                             </p>
-                            {isCurrent && (
+                            {isCurrentDevice && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium whitespace-nowrap">
                                 {t('settings.currentDevice')}
-                              </span>
-                            )}
-                            {isCurrentDeviceId && !isFirstOccurrence && (
-                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-warning)]/10 text-[var(--color-warning)] font-medium whitespace-nowrap">
-                                {t('settings.duplicateTab')}
                               </span>
                             )}
                           </div>
@@ -390,7 +392,7 @@ export function UserSettingsPage({ onBack }: Props) {
                             ID: {device.device_id.slice(0, 12)}...{device.device_id.slice(-4)}
                           </p>
                         </div>
-                        {!isCurrent && (
+                        {!isCurrentDevice && (
                           <button
                             onClick={() => handleKickDevice(device.device_id)}
                             className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium text-[var(--color-error)] hover:bg-[var(--color-error)]/10 cursor-pointer transition-colors"
