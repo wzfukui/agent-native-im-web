@@ -159,12 +159,12 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
         {/* Full credential card (just created) */}
         {showFullCreds && createdCredentials && (
           <div className="px-4 py-3 border-b border-[var(--color-border)]">
-            <div className="rounded-lg bg-[var(--color-success)]/8 border border-[var(--color-success)]/20 overflow-hidden">
+            <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 overflow-hidden">
               <div className="flex items-center justify-between px-3 pt-3 pb-1.5">
                 <div className="flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-[var(--color-success)]" />
-                  <span className="text-xs font-medium text-[var(--color-success)]">
-                    {entityDisplayName(createdCredentials.entity)} {t('bot.created')}
+                  <Key className="w-3.5 h-3.5 text-amber-500" />
+                  <span className="text-xs font-medium text-amber-500">
+                    {entityDisplayName(createdCredentials.entity)} {t('bot.created')} - Bootstrap Key (需批准)
                   </span>
                 </div>
                 <button
@@ -190,15 +190,15 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
                   </button>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase w-10 flex-shrink-0">Token</span>
+                  <span className="text-[9px] font-medium text-amber-500 uppercase flex-shrink-0">Bootstrap Key (临时)</span>
                   <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
                     {createdCredentials.key}
                   </code>
                   <button
-                    onClick={() => handleCopy(createdCredentials.key, 'token')}
+                    onClick={() => handleCopy(createdCredentials.key, 'bootstrap')}
                     className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
                   >
-                    {copied === 'token' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
+                    {copied === 'bootstrap' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
                   </button>
                 </div>
               </div>
@@ -209,17 +209,21 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
                   onClick={() => {
                     const integrationInfo = `# Agent Integration Configuration
 API Endpoint: ${window.location.origin}/api/v1
-Token: ${createdCredentials.key}
+Bootstrap Key (临时): ${createdCredentials.key}
+
+# ⚠️ 重要说明
+此为 Bootstrap Key，仅用于首次 WebSocket 连接。
+Bot 连接后需要用户批准，才能获得永久 Token (aim_ 前缀)。
 
 # Environment Variables (.env)
 IM_SERVER=${window.location.origin}
-BOT_TOKEN=${createdCredentials.key}
+BOOTSTRAP_KEY=${createdCredentials.key}
 
 # Integration Documentation
 ${createdCredentials.doc}`
                     handleCopy(integrationInfo, 'integration')
                   }}
-                  className="w-full py-2 rounded-lg bg-gradient-to-r from-[var(--color-success)] to-[var(--color-bot)] hover:opacity-90 text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-opacity shadow-sm"
+                  className="w-full py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-90 text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-opacity shadow-sm"
                 >
                   {copied === 'integration' ? (
                     <>
