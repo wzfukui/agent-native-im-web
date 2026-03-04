@@ -201,7 +201,10 @@ export default function App() {
         case 'message.new': {
           const message = msg.data as Message
           if (message) {
+            // The addMessage function already checks for duplicates by ID
+            // Just add the message - if it's already there, it won't be added again
             addMessage(message)
+
             const currentActiveId = useConversationsStore.getState().activeId
             const isActive = message.conversation_id === currentActiveId
             const isSelf = message.sender_id === entity?.id

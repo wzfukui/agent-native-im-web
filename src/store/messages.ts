@@ -47,7 +47,23 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   addMessage: (msg) =>
     set((s) => {
       const existing = s.byConv[msg.conversation_id] || []
+
+      // Check for duplicate by ID
       if (existing.some((m) => m.id === msg.id)) return s
+
+      // Check if there's an optimistic message that matches this real message
+      // This handles the case where WebSocket message arrives before API response
+      const optimisticMatches = Object.values(s.optimistic).filter(
+        opt => opt.conversation_id === msg.conversation_id &&
+               opt.sender_id === msg.sender_id &&
+               // Check if timestamps are within 5 seconds of each other
+               Math.abs(new Date(opt.created_at).getTime() - new Date(msg.created_at).getTime()) < 5000
+      )
+
+      // If we found a matching optimistic message, don't add the WebSocket message
+      // The API response will handle replacing the optimistic message
+      if (optimisticMatches.length > 0) return s
+
       return {
         byConv: { ...s.byConv, [msg.conversation_id]: [...existing, msg] },
       }

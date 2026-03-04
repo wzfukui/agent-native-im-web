@@ -165,22 +165,33 @@ export function UserSettingsPage({ onBack }: Props) {
           </button>
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mt-2">{t('settings.title')}</h2>
         </div>
-        <nav className="flex-1 py-2">
-          {navItems.map(({ id, icon: Icon, label }) => (
+        <nav className="flex-1 py-2 flex flex-col">
+          <div className="flex-1">
+            {navItems.map(({ id, icon: Icon, label }) => (
+              <button
+                key={id}
+                onClick={() => setSection(id)}
+                className={cn(
+                  'w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium cursor-pointer transition-colors',
+                  section === id
+                    ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-r-2 border-[var(--color-accent)]'
+                    : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
+                )}
+              >
+                <Icon className="w-4 h-4" />
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="border-t border-[var(--color-border)] mt-2 pt-2">
             <button
-              key={id}
-              onClick={() => setSection(id)}
-              className={cn(
-                'w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium cursor-pointer transition-colors',
-                section === id
-                  ? 'bg-[var(--color-accent)]/10 text-[var(--color-accent)] border-r-2 border-[var(--color-accent)]'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)]'
-              )}
+              onClick={logout}
+              className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-medium cursor-pointer transition-colors text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10"
             >
-              <Icon className="w-4 h-4" />
-              {label}
+              <LogOut className="w-4 h-4" />
+              {t('sidebar.signOut')}
             </button>
-          ))}
+          </div>
         </nav>
       </div>
 
@@ -213,23 +224,14 @@ export function UserSettingsPage({ onBack }: Props) {
                 />
               </div>
 
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={saving || !editName.trim()}
-                  className="h-9 px-4 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                  {t('common.save')}
-                </button>
-                <button
-                  onClick={logout}
-                  className="h-9 px-4 rounded-lg bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)]/20 text-[var(--color-danger)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  {t('sidebar.signOut')}
-                </button>
-              </div>
+              <button
+                onClick={handleSaveProfile}
+                disabled={saving || !editName.trim()}
+                className="h-9 px-4 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                {t('common.save')}
+              </button>
               {saveMsg && <p className="text-xs text-[var(--color-success)]">{saveMsg}</p>}
             </div>
           )}
