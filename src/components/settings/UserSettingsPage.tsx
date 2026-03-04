@@ -92,9 +92,13 @@ export function UserSettingsPage({ onBack }: Props) {
 
   const loadDevices = useCallback(async () => {
     setDevicesLoading(true)
+    setDeviceMsg('')  // Clear any previous messages
     const res = await api.listDevices(token)
     if (res.ok && res.data?.devices) {
-      setDevices(res.data.devices)
+      // Replace the entire list, not append
+      setDevices(res.data.devices || [])
+    } else {
+      setDevices([])
     }
     setDevicesLoading(false)
   }, [token])
@@ -114,26 +118,56 @@ export function UserSettingsPage({ onBack }: Props) {
 
   const handleKickOthers = async () => {
     const others = devices.filter((d) => d.device_id !== currentDeviceId)
+    if (others.length === 0) {
+      setDeviceMsg(t('settings.noOtherDevices'))
+      setTimeout(() => setDeviceMsg(''), 2000)
+      return
+    }
+
+    setDevicesLoading(true)
     let failed = 0
     for (const d of others) {
       const res = await api.kickDevice(token, d.device_id)
       if (!res.ok) failed++
     }
+
     if (failed > 0) {
       setDeviceMsg(t('settings.deviceDisconnectedPartial', { failed }))
     } else {
-      setDeviceMsg(t('settings.deviceDisconnected'))
+      setDeviceMsg(t('settings.allDevicesDisconnected'))
     }
-    setTimeout(() => setDeviceMsg(''), 2000)
-    loadDevices()
+    setTimeout(() => setDeviceMsg(''), 3000)
+
+    // Reload the device list after kicking
+    await loadDevices()
   }
 
   const parseDeviceInfo = (info: string) => {
     if (!info) return t('settings.unknownDevice')
-    // Extract browser + OS from User-Agent
-    const match = info.match(/(Chrome|Firefox|Safari|Edge|Opera)\/[\d.]+/)
-    const os = info.match(/(Windows|Mac OS|Linux|Android|iOS)/)
-    return [match?.[0], os?.[0]].filter(Boolean).join(' / ') || info.slice(0, 40)
+
+    // Extract browser name and version
+    const browserMatch = info.match(/(Chrome|Firefox|Safari|Edge|Opera|Brave)\/(\d+)\.[\d.]+/)
+    const browser = browserMatch ? `${browserMatch[1]}/${browserMatch[2]}` : null
+
+    // Extract OS with better patterns
+    let os = null
+    if (info.includes('Mac OS')) os = 'Mac OS'
+    else if (info.includes('Windows NT')) os = 'Windows'
+    else if (info.includes('Linux')) os = 'Linux'
+    else if (info.includes('Android')) os = 'Android'
+    else if (info.includes('iPhone') || info.includes('iPad')) os = 'iOS'
+
+    // Extract mobile device info if present
+    const mobileMatch = info.match(/(iPhone|iPad|Android)/)
+    const mobile = mobileMatch ? mobileMatch[1] : null
+
+    // Build display string
+    const parts = []
+    if (browser) parts.push(browser)
+    if (os) parts.push(os)
+    if (mobile && !os?.includes(mobile)) parts.push(mobile)
+
+    return parts.length > 0 ? parts.join(' / ') : info.slice(0, 50)
   }
 
   const navItems: { id: Section; icon: typeof User; label: string }[] = [
@@ -326,16 +360,18 @@ export function UserSettingsPage({ onBack }: Props) {
                       >
                         <Smartphone className={cn('w-5 h-5 flex-shrink-0', isCurrent ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]')} />
                         <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
-                            {parseDeviceInfo(device.device_info)}
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-medium text-[var(--color-text-primary)]">
+                              {parseDeviceInfo(device.device_info)}
+                            </p>
                             {isCurrent && (
-                              <span className="ml-2 text-[10px] text-[var(--color-accent)] font-normal">
-                                {t('settings.thisDevice')}
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium whitespace-nowrap">
+                                {t('settings.currentDevice')}
                               </span>
                             )}
-                          </p>
-                          <p className="text-[10px] text-[var(--color-text-muted)] font-mono truncate">
-                            {device.device_id.slice(0, 8)}...
+                          </div>
+                          <p className="text-[10px] text-[var(--color-text-muted)] font-mono mt-1" title={device.device_id}>
+                            ID: {device.device_id.slice(0, 12)}...{device.device_id.slice(-4)}
                           </p>
                         </div>
                         {!isCurrent && (
