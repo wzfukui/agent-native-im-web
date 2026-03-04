@@ -95,8 +95,14 @@ export function UserSettingsPage({ onBack }: Props) {
     setDeviceMsg('')  // Clear any previous messages
     const res = await api.listDevices(token)
     if (res.ok && res.data?.devices) {
-      // Replace the entire list, not append
-      setDevices(res.data.devices || [])
+      // Deduplicate devices by device_id
+      const uniqueDevices = res.data.devices.reduce((acc: DeviceItem[], device) => {
+        if (!acc.find(d => d.device_id === device.device_id)) {
+          acc.push(device)
+        }
+        return acc
+      }, [])
+      setDevices(uniqueDevices)
     } else {
       setDevices([])
     }
@@ -346,11 +352,16 @@ export function UserSettingsPage({ onBack }: Props) {
                 <p className="text-xs text-[var(--color-text-muted)]">{t('settings.noDevices')}</p>
               ) : (
                 <div className="space-y-2">
-                  {devices.map((device) => {
-                    const isCurrent = device.device_id === currentDeviceId
+                  {devices.map((device, index) => {
+                    // Only mark the first occurrence of current device ID as "current"
+                    // This handles multiple tabs/windows with same device ID
+                    const isCurrentDeviceId = device.device_id === currentDeviceId
+                    const isFirstOccurrence = devices.findIndex(d => d.device_id === device.device_id) === index
+                    const isCurrent = isCurrentDeviceId && isFirstOccurrence
+
                     return (
                       <div
-                        key={device.device_id}
+                        key={`${device.device_id}-${index}`}
                         className={cn(
                           'flex items-center gap-3 px-4 py-3 rounded-xl border transition-all',
                           isCurrent
@@ -367,6 +378,11 @@ export function UserSettingsPage({ onBack }: Props) {
                             {isCurrent && (
                               <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium whitespace-nowrap">
                                 {t('settings.currentDevice')}
+                              </span>
+                            )}
+                            {isCurrentDeviceId && !isFirstOccurrence && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-warning)]/10 text-[var(--color-warning)] font-medium whitespace-nowrap">
+                                {t('settings.duplicateTab')}
                               </span>
                             )}
                           </div>

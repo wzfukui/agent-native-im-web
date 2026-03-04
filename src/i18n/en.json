@@ -108,6 +108,7 @@
     "devicesDesc": "Manage your connected devices",
     "thisDevice": "This device",
     "currentDevice": "Current",
+    "duplicateTab": "Other Tab",
     "disconnectDevice": "Disconnect",
     "disconnectOthers": "Disconnect all other devices",
     "noDevices": "No connected devices",
