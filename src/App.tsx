@@ -25,6 +25,7 @@ import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
 import { setGlobalErrorHandler, getErrorMessage, type ParsedError } from '@/lib/errors'
@@ -33,7 +34,7 @@ export default function App() {
   const { t } = useTranslation()
   const { token, entity, setAuth, logout } = useAuthStore()
   const { conversations, activeId, setConversations, setActive, addConversation, updateConversation, removeConversation, mutedIds } = useConversationsStore()
-  const { addMessage, revokeMessage, startStream, updateStream, endStream } = useMessagesStore()
+  const { addMessage, revokeMessage, updateMessageReactions, startStream, updateStream, endStream } = useMessagesStore()
   const { setOnline, setWsConnected } = usePresenceStore()
 
   const [loginError, setLoginError] = useState('')
@@ -45,7 +46,7 @@ export default function App() {
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
   const wsRef = useRef<AnimpWebSocket | null>(null)
   const [botEntities, setBotEntities] = useState<Entity[]>([])
-  const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number }>>>(new Map())
+  const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number; isProcessing?: boolean; phase?: string }>>>(new Map())
   const [showSettings, setShowSettings] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
   const [leaveConfirmId, setLeaveConfirmId] = useState<number | null>(null)
@@ -231,6 +232,12 @@ export default function App() {
           break
         }
 
+        case 'message.reaction_updated': {
+          const data = msg.data as { message_id: number; conversation_id: number; reactions: { emoji: string; count: number; entity_ids: number[] }[] }
+          if (data) updateMessageReactions(data.conversation_id, data.message_id, data.reactions)
+          break
+        }
+
         case 'conversation.updated': {
           const convData = msg.data as {
             conversation_id?: number
@@ -291,14 +298,16 @@ export default function App() {
         }
 
         case 'typing': {
-          const typData = msg.data as { conversation_id?: number; entity_id?: number; entity_name?: string }
+          const typData = msg.data as { conversation_id?: number; entity_id?: number; entity_name?: string; is_processing?: boolean; phase?: string }
           if (typData?.conversation_id && typData?.entity_id && typData.entity_id !== entity?.id) {
             setTypingMap((prev) => {
               const next = new Map(prev)
               const convTyping = new Map(next.get(typData.conversation_id!) || [])
               convTyping.set(typData.entity_id!, {
                 name: typData.entity_name || `User ${typData.entity_id}`,
-                expiresAt: Date.now() + 4000,
+                expiresAt: Date.now() + (typData.is_processing ? 30000 : 4000),
+                isProcessing: typData.is_processing,
+                phase: typData.phase,
               })
               next.set(typData.conversation_id!, convTyping)
               return next
@@ -482,7 +491,9 @@ export default function App() {
 
   // ─── Main layout ───────────────────────────────────────────────
   return (
-    <div className="h-full flex">
+    <div className="h-full flex flex-col">
+      <ConnectionStatusBar ws={wsRef.current} />
+      <div className="flex-1 flex min-h-0">
       {/* Icon sidebar */}
       <Sidebar
         botMode={viewMode === 'bots'}
@@ -641,6 +652,7 @@ export default function App() {
       />
 
       <ErrorToast errors={errorToasts} onDismiss={dismissError} />
+      </div>
     </div>
   )
 }

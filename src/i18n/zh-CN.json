@@ -136,6 +136,16 @@
     "dropFiles": "拖放文件到此处发送",
     "loadEarlier": "加载更早的消息"
   },
+  "chat": {
+    "reply": "回复",
+    "replyTo": "回复 {{name}}",
+    "processing": "处理中...",
+    "thinking": "思考中...",
+    "searching": "搜索中...",
+    "generating": "生成中...",
+    "react": "表态",
+    "addReaction": "添加表情"
+  },
   "admin": {
     "dashboard": "仪表盘",
     "users": "用户",
@@ -282,5 +292,9 @@
     "messages": "消息数",
     "tokens": "Token (估算)",
     "clearMemory": "清除所有记忆"
+  },
+  "connection": {
+    "disconnected": "连接已断开，正在重连...",
+    "reconnected": "已重新连接"
   }
 }

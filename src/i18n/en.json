@@ -136,6 +136,16 @@
     "dropFiles": "Drop files here to send",
     "loadEarlier": "Load earlier messages"
   },
+  "chat": {
+    "reply": "Reply",
+    "replyTo": "Replying to {{name}}",
+    "processing": "processing...",
+    "thinking": "thinking...",
+    "searching": "searching...",
+    "generating": "generating...",
+    "react": "React",
+    "addReaction": "Add reaction"
+  },
   "admin": {
     "dashboard": "Dashboard",
     "users": "Users",
@@ -282,5 +292,9 @@
     "messages": "Messages",
     "tokens": "Tokens (approx)",
     "clearMemory": "Clear all memories"
+  },
+  "connection": {
+    "disconnected": "Connection lost, reconnecting...",
+    "reconnected": "Reconnected"
   }
 }

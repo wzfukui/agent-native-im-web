@@ -28,6 +28,9 @@ export class AnimpWebSocket {
   // Reconnect callback
   private reconnectCallback: (() => void) | null = null
 
+  // Connection change callbacks
+  private connectionChangeHandlers: Set<(connected: boolean) => void> = new Set()
+
   // Network event handlers (stored for cleanup)
   private handleOnline = () => this.onNetworkOnline()
   private handleOffline = () => this.onNetworkOffline()
@@ -73,6 +76,12 @@ export class AnimpWebSocket {
     this.reconnectCallback = callback
   }
 
+  /** Register a callback for connection state changes. */
+  onConnectionChange(handler: (connected: boolean) => void) {
+    this.connectionChangeHandlers.add(handler)
+    return () => { this.connectionChangeHandlers.delete(handler) }
+  }
+
   connect() {
     this.intentionalClose = false
     window.addEventListener('online', this.handleOnline)
@@ -97,6 +106,7 @@ export class AnimpWebSocket {
       this.reconnectDelay = 1000
       this.startPing()
       this.flushQueue()
+      this.connectionChangeHandlers.forEach((h) => h(true))
       this.handlers.forEach((h) => h({ type: 'entity.online', data: { self: true } } as WSMessage))
       if (isReconnect && this.reconnectCallback) {
         this.reconnectCallback()
@@ -117,6 +127,7 @@ export class AnimpWebSocket {
     this.ws.onclose = () => {
       this._connected = false
       this.stopPing()
+      this.connectionChangeHandlers.forEach((h) => h(false))
       this.handlers.forEach((h) => h({ type: 'entity.offline', data: { self: true } } as WSMessage))
       if (!this.intentionalClose) this.scheduleReconnect()
     }

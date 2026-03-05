@@ -12,9 +12,11 @@ interface Props {
   onLoadMore?: () => void
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
+  onReply?: (msg: Message) => void
+  onReact?: (msgId: number, emoji: string) => void
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore, onInteractionReply, onRevoke }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore, onInteractionReply, onRevoke, onReply, onReact }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -92,6 +94,8 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
             replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
             onInteractionReply={onInteractionReply}
             onRevoke={onRevoke}
+            onReply={onReply}
+            onReact={onReact}
           />
         ))}
       </div>

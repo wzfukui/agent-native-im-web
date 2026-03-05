@@ -84,6 +84,12 @@ export interface Attachment {
   content?: string
 }
 
+export interface ReactionSummary {
+  emoji: string
+  count: number
+  entity_ids: number[]
+}
+
 export interface Message {
   id: number
   conversation_id: number
@@ -96,6 +102,7 @@ export interface Message {
   attachments?: Attachment[]
   mentions?: number[]
   reply_to?: number
+  reactions?: ReactionSummary[]
   revoked_at?: string
   created_at: string
 }
@@ -106,6 +113,7 @@ export type WSEventType =
   | 'message.revoked'
   | 'message.updated'
   | 'message.interaction_response'
+  | 'message.reaction_updated'
   | 'conversation.updated'
   | 'conversation.memory_updated'
   | 'conversation.change_request'

@@ -21,7 +21,7 @@ interface Props {
   onBack?: () => void
   onCancelStream?: (streamId: string, conversationId: number) => void
   onTyping?: (conversationId: number) => void
-  typingEntities?: Map<number, { name: string; expiresAt: number }>
+  typingEntities?: Map<number, { name: string; expiresAt: number; isProcessing?: boolean; phase?: string }>
   onToggleSettings?: () => void
   onToggleTasks?: () => void
   isArchived?: boolean
@@ -38,6 +38,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const prependMessages = useMessagesStore((s) => s.prependMessages)
   const addMessage = useMessagesStore((s) => s.addMessage)
   const revokeMessage = useMessagesStore((s) => s.revokeMessage)
+  const updateMessageReactions = useMessagesStore((s) => s.updateMessageReactions)
   const addOptimisticMessage = useMessagesStore((s) => s.addOptimisticMessage)
   const replaceOptimisticMessage = useMessagesStore((s) => s.replaceOptimisticMessage)
   const removeOptimisticMessage = useMessagesStore((s) => s.removeOptimisticMessage)
@@ -47,6 +48,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const [searchResults, setSearchResults] = useState<Message[] | null>(null)
   const [searchLoading, setSearchLoading] = useState(false)
   const [showMembers, setShowMembers] = useState(false)
+  const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [dragging, setDragging] = useState(false)
   const dragCountRef = useRef(0)
   const updateConversation = useConversationsStore((s) => s.updateConversation)
@@ -61,17 +63,29 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const myParticipant = conversation.participants?.find((p) => p.entity_id === myEntity.id)
   const isObserver = myParticipant?.role === 'observer'
 
-  // Typing indicator text
-  const typingText = useMemo(() => {
-    if (!typingEntities || typingEntities.size === 0) return ''
+  // Typing/processing indicator
+  const typingInfo = useMemo(() => {
+    if (!typingEntities || typingEntities.size === 0) return null
     const now = Date.now()
-    const names: string[] = []
+    const typingNames: string[] = []
+    let processingEntry: { name: string; phase?: string } | null = null
     typingEntities.forEach((v, eid) => {
-      if (eid !== myEntity.id && v.expiresAt > now) names.push(v.name)
+      if (eid !== myEntity.id && v.expiresAt > now) {
+        if (v.isProcessing) {
+          processingEntry = { name: v.name, phase: v.phase }
+        } else {
+          typingNames.push(v.name)
+        }
+      }
     })
-    if (names.length === 0) return ''
-    if (names.length === 1) return t('message.isTyping', { name: names[0] })
-    return t('message.areTyping', { names: names.slice(0, 2).join(', ') })
+    if (processingEntry) {
+      const phaseKey = (processingEntry as { phase?: string }).phase
+      const phaseText = phaseKey ? t(`chat.${phaseKey}`, { defaultValue: t('chat.processing') }) : t('chat.processing')
+      return { text: `${(processingEntry as { name: string }).name} ${phaseText}`, isProcessing: true }
+    }
+    if (typingNames.length === 0) return null
+    if (typingNames.length === 1) return { text: t('message.isTyping', { name: typingNames[0] }), isProcessing: false }
+    return { text: t('message.areTyping', { names: typingNames.slice(0, 2).join(', ') }), isProcessing: false }
   }, [typingEntities, myEntity.id])
 
   // Active streams for this conversation
@@ -80,11 +94,12 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     [streams, conversation.id],
   )
 
-  // Reset search state on conversation switch
+  // Reset search and reply state on conversation switch
   useEffect(() => {
     setSearching(false)
     setSearchQuery('')
     setSearchResults(null)
+    setReplyTo(null)
   }, [conversation.id])
 
   // Load messages
@@ -148,6 +163,10 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
   // Send message
   const handleSend = useCallback(async (text: string, files?: File[], mentions?: number[]) => {
+    // Capture reply target before clearing
+    const currentReplyTo = replyTo
+    setReplyTo(null)
+
     // Generate a temporary ID for optimistic message
     const tempId = `temp-${Date.now()}-${Math.random()}`
 
@@ -166,6 +185,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       created_at: new Date().toISOString(),
       attachments: [],
       mentions,
+      reply_to: currentReplyTo?.id,
     }
 
     // Add optimistic message immediately
@@ -209,6 +229,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         },
         attachments: attachments.length > 0 ? attachments : undefined,
         mentions,
+        reply_to: currentReplyTo?.id,
       })
 
       if (res.ok && res.data) {
@@ -222,7 +243,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       // Remove optimistic message on error
       removeOptimisticMessage(tempId, conversation.id)
     }
-  }, [token, conversation.id, myEntity, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage])
+  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage])
 
   // Revoke message
   const handleRevoke = useCallback(async (msgId: number) => {
@@ -232,6 +253,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       revokeMessage(conversation.id, msgId)
     }
   }, [token, conversation.id, isArchived])
+
+  const handleReact = useCallback(async (msgId: number, emoji: string) => {
+    const res = await api.toggleReaction(token, msgId, emoji)
+    if (res.ok && res.data) {
+      updateMessageReactions(conversation.id, msgId, res.data.reactions)
+    }
+  }, [token, conversation.id])
 
   // Send audio message
   const handleAudioSend = useCallback(async (blob: Blob, duration: number) => {
@@ -429,6 +457,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           onLoadMore={searchResults !== null ? undefined : handleLoadMore}
           onInteractionReply={handleInteractionReply}
           onRevoke={isArchived ? undefined : handleRevoke}
+          onReply={isArchived ? undefined : (msg) => setReplyTo(msg)}
+          onReact={isArchived ? undefined : handleReact}
         />
       )}
 
@@ -443,10 +473,20 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         />
       )}
 
-      {/* Typing indicator */}
-      {typingText && (
-        <div className="px-4 py-1 text-[11px] text-[var(--color-text-muted)] italic">
-          {typingText}
+      {/* Typing / Processing indicator */}
+      {typingInfo && (
+        <div className={cn(
+          'px-4 py-1 text-[11px] italic flex items-center gap-1.5',
+          typingInfo.isProcessing ? 'text-[var(--color-bot)]' : 'text-[var(--color-text-muted)]',
+        )}>
+          {typingInfo.isProcessing && (
+            <span className="flex gap-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" style={{ animationDelay: '0.2s' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" style={{ animationDelay: '0.4s' }} />
+            </span>
+          )}
+          {typingInfo.text}
         </div>
       )}
 
@@ -458,6 +498,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         placeholder={t('conversation.typeMessage')}
         participants={conversation.participants}
         isObserver={isObserver || isArchived}
+        replyTo={replyTo}
+        onCancelReply={() => setReplyTo(null)}
       />
     </div>
   )

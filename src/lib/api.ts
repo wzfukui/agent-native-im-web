@@ -207,6 +207,12 @@ export const joinViaInvite = (token: string, code: string) =>
 export const deleteInviteLink = (token: string, id: number) =>
   request('DELETE', `/api/v1/invites/${id}`, token)
 
+// Reactions
+export const toggleReaction = (token: string, msgId: number, emoji: string) =>
+  request<{ message_id: number; reactions: { emoji: string; count: number; entity_ids: number[] }[] }>(
+    'POST', `/api/v1/messages/${msgId}/reactions`, token, { emoji },
+  )
+
 // Message edit
 export const editMessage = (token: string, msgId: number, text: string) =>
   request<Message>('PUT', `/api/v1/messages/${msgId}`, token, { layers: { summary: text } })

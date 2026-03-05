@@ -8,9 +8,10 @@ import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import type { Message } from '@/lib/types'
+import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply,
 } from 'lucide-react'
 
 function AudioPlayer({ url, duration: totalDuration }: { url?: string; duration?: number }) {
@@ -89,10 +90,12 @@ interface Props {
   replyMessage?: Message
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
+  onReply?: (msg: Message) => void
+  onReact?: (msgId: number, emoji: string) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, showSender = true }: Props) {
   const { t } = useTranslation()
   const [showThinking, setShowThinking] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
@@ -104,6 +107,8 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   // Can revoke within 2 minutes
   const canRevoke = isSelf && !isRevoked && onRevoke &&
     (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000
+
+  const canReply = !isRevoked && onReply
 
   // Revoked message
   if (isRevoked) {
@@ -315,17 +320,40 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
             )}
           </div>
 
-          {/* Revoke button */}
-          {canRevoke && (
-            <button
-              onClick={() => onRevoke!(message.id)}
-              className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer transition-all flex-shrink-0"
-              title={t('message.revoke')}
-            >
-              <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
-            </button>
-          )}
+          {/* Action buttons */}
+          <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all flex-shrink-0', isSelf ? 'flex-row-reverse' : '')}>
+            {canReply && (
+              <button
+                onClick={() => onReply!(message)}
+                className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
+                title={t('chat.reply')}
+              >
+                <Reply className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
+              </button>
+            )}
+            {canRevoke && (
+              <button
+                onClick={() => onRevoke!(message.id)}
+                className="w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer"
+                title={t('message.revoke')}
+              >
+                <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Reactions */}
+        {onReact && myEntityId != null && (message.reactions?.length || 0) > 0 && (
+          <div className="px-0.5">
+            <ReactionBar
+              reactions={message.reactions!}
+              myEntityId={myEntityId}
+              isSelf={isSelf}
+              onReact={(emoji) => onReact(message.id, emoji)}
+            />
+          </div>
+        )}
 
         {/* Thinking toggle */}
         {layers.thinking && (

@@ -1,10 +1,10 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic } from 'lucide-react'
+import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic, CornerUpLeft } from 'lucide-react'
 import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAudioRecorder } from '@/lib/use-audio-recorder'
-import type { Participant } from '@/lib/types'
+import type { Participant, Message } from '@/lib/types'
 
 interface Props {
   onSend: (text: string, attachments?: File[], mentions?: number[]) => void
@@ -15,9 +15,11 @@ interface Props {
   placeholder?: string
   participants?: Participant[]
   isObserver?: boolean
+  replyTo?: Message | null
+  onCancelReply?: () => void
 }
 
-export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver }: Props) {
+export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, replyTo, onCancelReply }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
@@ -52,6 +54,11 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, d
   useEffect(() => {
     setMentionIndex(0)
   }, [mentionCandidates.length])
+
+  // Focus textarea when reply is set
+  useEffect(() => {
+    if (replyTo) textareaRef.current?.focus()
+  }, [replyTo])
 
   // Typing indicator (throttle 3s)
   const lastTypingRef = useRef(0)
@@ -220,6 +227,27 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, d
               </div>
             </button>
           ))}
+        </div>
+      )}
+
+      {/* Reply preview bar */}
+      {replyTo && (
+        <div className="flex items-center gap-2 mb-2 px-3 py-2 rounded-lg bg-[var(--color-bg-tertiary)] border-l-2 border-[var(--color-accent)]">
+          <CornerUpLeft className="w-3.5 h-3.5 text-[var(--color-accent)] flex-shrink-0" />
+          <div className="flex-1 min-w-0">
+            <span className="text-[11px] font-medium text-[var(--color-accent)]">
+              {t('chat.replyTo', { name: entityDisplayName(replyTo.sender) })}
+            </span>
+            <p className="text-[11px] text-[var(--color-text-muted)] truncate">
+              {(replyTo.layers?.summary || '').slice(0, 80)}
+            </p>
+          </div>
+          <button
+            onClick={onCancelReply}
+            className="w-5 h-5 rounded flex items-center justify-center hover:bg-[var(--color-bg-hover)] cursor-pointer flex-shrink-0"
+          >
+            <X className="w-3 h-3 text-[var(--color-text-muted)]" />
+          </button>
         </div>
       )}
 

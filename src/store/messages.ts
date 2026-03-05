@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { Message, ActiveStream, MessageLayers } from '@/lib/types'
+import type { Message, ActiveStream, MessageLayers, ReactionSummary } from '@/lib/types'
 
 interface MessagesState {
   // convId -> messages (newest last)
@@ -19,6 +19,9 @@ interface MessagesState {
   addOptimisticMessage: (tempId: string, msg: Message) => void
   replaceOptimisticMessage: (tempId: string, msg: Message) => void
   removeOptimisticMessage: (tempId: string, convId: number) => void
+
+  // reactions
+  updateMessageReactions: (convId: number, msgId: number, reactions: ReactionSummary[]) => void
 
   // streaming
   startStream: (streamId: string, convId: number, senderId: number, layers: MessageLayers) => void
@@ -120,6 +123,16 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         byConv: { ...s.byConv, [convId]: updatedMessages },
       }
     }),
+
+  updateMessageReactions: (convId, msgId, reactions) =>
+    set((s) => ({
+      byConv: {
+        ...s.byConv,
+        [convId]: (s.byConv[convId] || []).map((m) =>
+          m.id === msgId ? { ...m, reactions } : m
+        ),
+      },
+    })),
 
   startStream: (streamId, convId, senderId, layers) =>
     set((s) => ({
