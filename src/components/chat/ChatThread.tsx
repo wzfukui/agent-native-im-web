@@ -100,9 +100,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (messages.length === 0) return
     const lastMsg = messages[messages.length - 1]
     if (lastMsg.sender_id !== myEntity.id) {
-      api.markAsRead(token, conversation.id, lastMsg.id)
+      api.markAsRead(token, conversation.id, lastMsg.id).then((res) => {
+        if (res.ok) {
+          updateConversation(conversation.id, { unread_count: 0 })
+        }
+      })
+    } else {
+      updateConversation(conversation.id, { unread_count: 0 })
     }
-    updateConversation(conversation.id, { unread_count: 0 })
   }, [messages.length, conversation.id])
 
   // Load more
