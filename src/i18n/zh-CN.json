@@ -69,6 +69,8 @@
   "settings": {
     "title": "设置",
     "name": "名称",
+    "conversationId": "会话 ID",
+    "idCopied": "ID 已复制！",
     "description": "描述",
     "noDescription": "暂无描述",
     "notifications": "通知",

@@ -106,18 +106,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   useEffect(() => {
     if (messages.length === 0) return
     const lastMsg = messages[messages.length - 1]
-    if (lastMsg.sender_id !== myEntity.id) {
-      const timer = setTimeout(() => {
-        api.markAsRead(token, conversation.id, lastMsg.id).then((res) => {
-          if (res.ok) {
-            updateConversation(conversation.id, { unread_count: 0 })
-          }
-        })
-      }, 300)
-      return () => clearTimeout(timer)
-    } else {
-      updateConversation(conversation.id, { unread_count: 0 })
-    }
+    const timer = setTimeout(() => {
+      api.markAsRead(token, conversation.id, lastMsg.id).then((res) => {
+        if (res.ok) {
+          updateConversation(conversation.id, { unread_count: 0 })
+        }
+      })
+    }, 300)
+    return () => clearTimeout(timer)
   }, [messages.length, conversation.id])
 
   // Load more

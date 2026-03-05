@@ -13,7 +13,7 @@ import type { Conversation } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
   X, UserMinus, Bell, BellOff, Crown, Shield, Eye,
-  Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2,
+  Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2, Copy,
 } from 'lucide-react'
 
 interface Props {
@@ -40,6 +40,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   const [loading, setLoading] = useState(false)
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
+  const [idCopied, setIdCopied] = useState(false)
 
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
@@ -148,6 +149,31 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
               )}
             </div>
           )}
+        </div>
+
+        {/* Conversation ID */}
+        <div className="px-4 py-2 border-b border-[var(--color-border)]">
+          <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.conversationId')}</label>
+          <div className="flex items-center gap-2 mt-1">
+            <code className="text-xs text-[var(--color-text-secondary)] font-mono bg-[var(--color-bg-tertiary)] px-2 py-0.5 rounded">
+              {conversation.id}
+            </code>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(String(conversation.id))
+                setIdCopied(true)
+                setTimeout(() => setIdCopied(false), 2000)
+              }}
+              className="p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-colors"
+              title={t('settings.conversationId')}
+            >
+              {idCopied
+                ? <Check className="w-3 h-3 text-[var(--color-success)]" />
+                : <Copy className="w-3 h-3 text-[var(--color-text-muted)]" />
+              }
+            </button>
+            {idCopied && <span className="text-[10px] text-[var(--color-success)]">{t('settings.idCopied')}</span>}
+          </div>
         </div>
 
         {/* Description */}

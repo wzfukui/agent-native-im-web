@@ -69,6 +69,8 @@
   "settings": {
     "title": "Settings",
     "name": "Name",
+    "conversationId": "Conversation ID",
+    "idCopied": "ID copied!",
     "description": "Description",
     "noDescription": "No description",
     "notifications": "Notifications",
