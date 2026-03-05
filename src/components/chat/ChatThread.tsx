@@ -80,6 +80,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     [streams, conversation.id],
   )
 
+  // Reset search state on conversation switch
+  useEffect(() => {
+    setSearching(false)
+    setSearchQuery('')
+    setSearchResults(null)
+  }, [conversation.id])
+
   // Load messages
   useEffect(() => {
     let cancelled = false
@@ -95,16 +102,19 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     return () => { cancelled = true }
   }, [conversation.id, token])
 
-  // Mark as read when viewing messages
+  // Mark as read when viewing messages (debounced to avoid excessive API calls)
   useEffect(() => {
     if (messages.length === 0) return
     const lastMsg = messages[messages.length - 1]
     if (lastMsg.sender_id !== myEntity.id) {
-      api.markAsRead(token, conversation.id, lastMsg.id).then((res) => {
-        if (res.ok) {
-          updateConversation(conversation.id, { unread_count: 0 })
-        }
-      })
+      const timer = setTimeout(() => {
+        api.markAsRead(token, conversation.id, lastMsg.id).then((res) => {
+          if (res.ok) {
+            updateConversation(conversation.id, { unread_count: 0 })
+          }
+        })
+      }, 300)
+      return () => clearTimeout(timer)
     } else {
       updateConversation(conversation.id, { unread_count: 0 })
     }
@@ -170,6 +180,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
       // Upload files first
       if (files && files.length > 0) {
+        let uploadFailed = false
         for (const file of files) {
           const res = await api.uploadFile(token, file)
           if (res.ok && res.data) {
@@ -180,7 +191,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
               mime_type: file.type,
               size: file.size,
             })
+          } else {
+            uploadFailed = true
           }
+        }
+        // If some files failed and there's no text, abort the send
+        if (uploadFailed && attachments.length === 0 && !text.trim()) {
+          removeOptimisticMessage(tempId, conversation.id)
+          return
         }
       }
 

@@ -45,12 +45,13 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
       const res = await api.updateConversation(token, conv.id, { title: editTitle.trim() })
       if (res.ok && res.data) {
         onUpdate?.(conv.id, editTitle.trim())
+        setIsEditing(false)
       }
+      // If failed, keep edit mode open so user doesn't lose input
     } catch (e) {
       console.error('Failed to update conversation:', e)
     } finally {
       setSaving(false)
-      setIsEditing(false)
     }
   }
 
@@ -195,8 +196,8 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         </div>
 
         {!muted && (conv.unread_count || 0) > 0 && (
-          <span className="w-5 h-5 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-            {conv.unread_count}
+          <span className="min-w-5 h-5 px-1.5 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
+            {(conv.unread_count || 0) > 99 ? '99+' : conv.unread_count}
           </span>
         )}
         {muted && (conv.unread_count || 0) > 0 && (
