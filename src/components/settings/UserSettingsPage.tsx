@@ -5,13 +5,14 @@ import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { AvatarPicker } from '@/components/entity/AvatarPicker'
 import { cn } from '@/lib/utils'
+import { buildInfo } from '@/lib/build-info'
 import * as api from '@/lib/api'
 import {
   User, Lock, Palette, Globe, ChevronLeft,
-  Check, Loader2, Eye, EyeOff, Smartphone, LogOut,
+  Check, Loader2, Eye, EyeOff, Smartphone, LogOut, Info, Copy,
 } from 'lucide-react'
 
-type Section = 'profile' | 'security' | 'devices' | 'theme' | 'language'
+type Section = 'profile' | 'security' | 'devices' | 'theme' | 'language' | 'about'
 
 interface Props {
   onBack: () => void
@@ -39,6 +40,7 @@ export function UserSettingsPage({ onBack }: Props) {
   const [showNew, setShowNew] = useState(false)
   const [passError, setPassError] = useState('')
   const [passSuccess, setPassSuccess] = useState('')
+  const [aboutCopied, setAboutCopied] = useState(false)
 
   const handleSaveProfile = async () => {
     if (!editName.trim() || !entity) return
@@ -193,6 +195,7 @@ export function UserSettingsPage({ onBack }: Props) {
     { id: 'devices', icon: Smartphone, label: t('settings.devices') },
     { id: 'theme', icon: Palette, label: t('settings.theme') },
     { id: 'language', icon: Globe, label: t('settings.language') },
+    { id: 'about', icon: Info, label: t('settings.about') },
   ]
 
   const themes: { id: Theme; label: string; colors: string }[] = [
@@ -477,6 +480,54 @@ export function UserSettingsPage({ onBack }: Props) {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {section === 'about' && (
+            <div className="space-y-6">
+              <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.about')}</h3>
+              <p className="text-xs text-[var(--color-text-muted)]">{t('settings.aboutDesc')}</p>
+
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--color-text-muted)]">{t('settings.appName')}</span>
+                  <span className="text-xs font-medium text-[var(--color-text-primary)]">Agent-Native IM</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--color-text-muted)]">{t('settings.version')}</span>
+                  <code className="text-xs text-[var(--color-text-primary)]">{buildInfo.version}</code>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--color-text-muted)]">{t('settings.commit')}</span>
+                  <code className="text-xs text-[var(--color-text-primary)]">{buildInfo.commit}</code>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-[var(--color-text-muted)]">{t('settings.buildTime')}</span>
+                  <span className="text-xs text-[var(--color-text-primary)]">{new Date(buildInfo.buildTime).toLocaleString()}</span>
+                </div>
+              </div>
+
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText([
+                      `app=Agent-Native IM`,
+                      `version=${buildInfo.version}`,
+                      `commit=${buildInfo.commit}`,
+                      `build_time=${buildInfo.buildTime}`,
+                    ].join('\n'))
+                    setAboutCopied(true)
+                    setTimeout(() => setAboutCopied(false), 2000)
+                  } catch {
+                    setAboutCopied(false)
+                  }
+                }}
+                className="h-9 px-4 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                {t('settings.copyVersionInfo')}
+              </button>
+              {aboutCopied && <p className="text-xs text-[var(--color-success)]">{t('common.copied')}</p>}
             </div>
           )}
         </div>
