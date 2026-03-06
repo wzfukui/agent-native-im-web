@@ -202,6 +202,13 @@ export const getEntitySelfCheck = (token: string, id: number) =>
 export const getEntityDiagnostics = (token: string, id: number) =>
   request<EntityDiagnostics>('GET', `/api/v1/entities/${id}/diagnostics`, token)
 
+export const regenerateEntityToken = (token: string, id: number) =>
+  request<{ message: string; entity: Entity; api_key: string; disconnected: number }>(
+    'POST',
+    `/api/v1/entities/${id}/regenerate-token`,
+    token,
+  )
+
 export const batchPresence = (token: string, entityIds: number[]) =>
   request<{ presence: Record<string, boolean> }>('POST', '/api/v1/presence/batch', token, { entity_ids: entityIds })
 

@@ -6,9 +6,10 @@ import type { AnimpWebSocket } from '@/lib/ws-client'
 interface Props {
   ws: AnimpWebSocket | null
   authIssue?: boolean
+  outboxCount?: number
 }
 
-export function ConnectionStatusBar({ ws, authIssue }: Props) {
+export function ConnectionStatusBar({ ws, authIssue, outboxCount = 0 }: Props) {
   const { t } = useTranslation()
   const [connected, setConnected] = useState(true)
   const [showReconnected, setShowReconnected] = useState(false)
@@ -68,6 +69,11 @@ export function ConnectionStatusBar({ ws, authIssue }: Props) {
             : issue === 'auth'
               ? t('connection.authExpired')
               : t('connection.disconnected')}
+          {outboxCount > 0 && (
+            <span className="ml-2 opacity-90">
+              {t('connection.queuedMessages', { count: outboxCount })}
+            </span>
+          )}
         </>
       )}
     </div>

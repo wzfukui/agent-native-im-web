@@ -212,7 +212,14 @@
     "disabledSection": "Disabled",
     "avatar": "Avatar",
     "uploadAvatar": "Upload image",
-    "changeAvatar": "Change avatar"
+    "changeAvatar": "Change avatar",
+    "agentAccessPack": "Agent Access Pack",
+    "regenerateToGetToken": "Regenerate token to copy",
+    "copyAgentAccess": "Copy Access Text",
+    "copyAgentUrl": "Copy Access URL",
+    "downloadQuickstart": "Download Quickstart",
+    "regenerateToken": "Regenerate Token",
+    "copyOpsSnapshot": "Copy Ops Snapshot"
   },
   "task": {
     "title": "Tasks",
@@ -309,6 +316,7 @@
     "disconnected": "Connection lost, reconnecting...",
     "reconnected": "Reconnected",
     "offlineMode": "Offline mode: changes will sync when network is back",
-    "authExpired": "Session check in progress..."
+    "authExpired": "Session check in progress...",
+    "queuedMessages": "{{count}} queued"
   }
 }

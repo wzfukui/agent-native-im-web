@@ -212,7 +212,14 @@
     "disabledSection": "已停用",
     "avatar": "头像",
     "uploadAvatar": "上传图片",
-    "changeAvatar": "更换头像"
+    "changeAvatar": "更换头像",
+    "agentAccessPack": "Agent 接入包",
+    "regenerateToGetToken": "先重新生成 Token",
+    "copyAgentAccess": "复制接入文本",
+    "copyAgentUrl": "复制接入 URL",
+    "downloadQuickstart": "下载 Quickstart",
+    "regenerateToken": "重新生成 Token",
+    "copyOpsSnapshot": "复制运维快照"
   },
   "task": {
     "title": "任务",
@@ -309,6 +316,7 @@
     "disconnected": "连接已断开，正在重连...",
     "reconnected": "已重新连接",
     "offlineMode": "离线模式：网络恢复后自动同步",
-    "authExpired": "会话检查中..."
+    "authExpired": "会话检查中...",
+    "queuedMessages": "待同步 {{count}} 条"
   }
 }

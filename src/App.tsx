@@ -59,6 +59,7 @@ export default function App() {
   const [botListRefresh, setBotListRefresh] = useState(0)
   const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
   const [authHandshakeIssue, setAuthHandshakeIssue] = useState(false)
+  const [outboxCount, setOutboxCount] = useState(0)
 
   // ─── Global error handler ────────────────────────────────────
   const pushError = useCallback((parsed: ParsedError) => {
@@ -131,7 +132,13 @@ export default function App() {
   useEffect(() => {
     if (!token || !entity || entity.entity_type !== 'user') return
 
+    const refreshOutboxCount = async () => {
+      const queued = await listOutboxMessages()
+      setOutboxCount(queued.length)
+    }
+
     const flushOutbox = async () => {
+      await refreshOutboxCount()
       if (!navigator.onLine) return
       if (flushingOutboxRef.current) return
       flushingOutboxRef.current = true
@@ -156,6 +163,7 @@ export default function App() {
           if (res.ok && res.data) {
             optimistic.replaceOptimisticMessage(item.temp_id, res.data)
             await deleteOutboxMessage(item.id)
+            await refreshOutboxCount()
           } else {
             optimistic.setOptimisticState(item.temp_id, navigator.onLine ? 'failed' : 'queued')
             // Stop on first failure to avoid busy-looping while server is unavailable.
@@ -170,9 +178,11 @@ export default function App() {
     void flushOutbox()
     const onOnline = () => { void flushOutbox() }
     const timer = setInterval(() => { void flushOutbox() }, 15000)
+    const counterTimer = setInterval(() => { void refreshOutboxCount() }, 5000)
     window.addEventListener('online', onOnline)
     return () => {
       clearInterval(timer)
+      clearInterval(counterTimer)
       window.removeEventListener('online', onOnline)
     }
   }, [token, entity])
@@ -665,7 +675,7 @@ export default function App() {
   // ─── Main layout ───────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
-      <ConnectionStatusBar ws={wsClient} authIssue={authHandshakeIssue} />
+      <ConnectionStatusBar ws={wsClient} authIssue={authHandshakeIssue} outboxCount={outboxCount} />
       <div className="flex-1 flex min-h-0">
       {/* Icon sidebar */}
       <Sidebar

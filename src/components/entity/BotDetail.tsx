@@ -14,8 +14,8 @@ import { generateBotQuickstart } from '@/lib/bot-quickstart'
 import {
   Bot, ArrowLeft, Wifi, WifiOff, Sparkles, FileText, User,
   MessageSquare, Users, ChevronRight, ChevronDown, ChevronUp, Loader2,
-  Trash2, Hash, Calendar, Tag, Key, Copy, Check, Clock, AlertCircle, Shield,
-  PowerOff, RotateCcw, Download, Activity,
+  Hash, Calendar, Tag, Key, Copy, Check, Clock, AlertCircle,
+  PowerOff, RotateCcw, Download, Activity, RefreshCw, Link,
 } from 'lucide-react'
 
 interface Props {
@@ -42,10 +42,12 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [confirmDisable, setConfirmDisable] = useState(false)
   const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)
   const [selfCheck, setSelfCheck] = useState<{ ready: boolean; recommendation: string[]; has_api_key: boolean; has_bootstrap: boolean } | null>(null)
-  const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; hub: { total_ws_connections: number } } | null>(null)
+  const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; disconnect_count: number; last_seen?: string; hub: { total_ws_connections: number } } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
   const [docExpanded, setDocExpanded] = useState(false)
+  const [rotatingToken, setRotatingToken] = useState(false)
+  const [rotatedToken, setRotatedToken] = useState<string | null>(null)
 
   // Load conversations
   useEffect(() => {
@@ -55,6 +57,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setActiveTab('direct')
     setConfirmDisable(false)
     setDocExpanded(false)
+    setRotatingToken(false)
+    setRotatedToken(null)
 
     api.listConversations(token).then((res) => {
       if (cancelled) return
@@ -105,10 +109,10 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   }
 
   const downloadQuickstart = () => {
-    if (!bot || !createdCredentials || createdCredentials.entity.id !== bot.id) return
+    if (!bot || !accessToken) return
     const quickstart = generateBotQuickstart({
-      botName: createdCredentials.entity.display_name || createdCredentials.entity.name,
-      botToken: createdCredentials.key,
+      botName: bot.display_name || bot.name,
+      botToken: accessToken,
       apiUrl: `${window.location.origin}/api/v1`,
       webUrl: window.location.origin,
     })
@@ -116,9 +120,21 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${createdCredentials.entity.name || 'agent'}-quickstart.md`
+    a.download = `${bot.name || 'agent'}-quickstart.md`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const handleRegenerateToken = async () => {
+    if (!bot || rotatingToken) return
+    setRotatingToken(true)
+    const res = await api.regenerateEntityToken(token, bot.id)
+    if (res.ok && res.data?.api_key) {
+      setRotatedToken(res.data.api_key)
+      handleCopy(res.data.api_key, 'rotated-token')
+      onRefresh?.()
+    }
+    setRotatingToken(false)
   }
 
   // Empty state
@@ -151,6 +167,34 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const showFullCreds = createdCredentials && createdCredentials.entity.id === bot.id
   // Show pending connection card if has bootstrap but no API key (not yet approved)
   const showPendingCreds = !showFullCreds && credStatus?.has_bootstrap && !credStatus?.has_api_key && !isOnline
+  const accessToken = rotatedToken || (showFullCreds ? createdCredentials?.key : null)
+  const wsUrlWithToken = accessToken
+    ? `${window.location.origin.replace('https://', 'wss://').replace('http://', 'ws://')}/api/v1/ws?token=${encodeURIComponent(accessToken)}`
+    : null
+  const accessText = accessToken ? [
+    `AGENT_IM_BASE=${window.location.origin}/api/v1`,
+    `AGENT_IM_TOKEN=${accessToken}`,
+    `AGENT_IM_WS=${wsUrlWithToken}`,
+    '',
+    '# Quick check',
+    `curl ${window.location.origin}/api/v1/me -H "Authorization: Bearer ${accessToken}"`,
+  ].join('\n') : ''
+  const accessUrl = accessToken
+    ? `aim-agent://connect?base=${encodeURIComponent(`${window.location.origin}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
+    : ''
+  const diagnosticsSnapshot = [
+    `entity=${bot.id} (${bot.name})`,
+    `status=${bot.status}`,
+    `online=${diagnostics?.online ?? false}`,
+    `connections=${diagnostics?.connections ?? 0}`,
+    `hub_ws_total=${diagnostics?.hub?.total_ws_connections ?? 0}`,
+    `last_seen=${lastSeen || 'n/a'}`,
+    `disconnect_count=${diagnostics?.disconnect_count ?? 0}`,
+    `api_key=${selfCheck?.has_api_key ?? false}`,
+    `bootstrap=${selfCheck?.has_bootstrap ?? false}`,
+    `ready=${selfCheck?.ready ?? false}`,
+    `recommendation=${(selfCheck?.recommendation || []).join(' | ') || 'none'}`,
+  ].join('\n')
 
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg-primary)]">
@@ -337,6 +381,23 @@ ${createdCredentials.doc}`
                   ))}
                 </div>
               )}
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleCopy(diagnosticsSnapshot, 'diag-snapshot')}
+                  className="flex-1 py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer"
+                >
+                  {copied === 'diag-snapshot' ? t('common.copied') : t('bot.copyOpsSnapshot')}
+                </button>
+                <button
+                  onClick={handleRegenerateToken}
+                  disabled={rotatingToken || isDisabled}
+                  className="flex-1 py-1.5 rounded-md bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[10px] text-[var(--color-accent)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                >
+                  {rotatingToken ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Key className="w-3 h-3" />}
+                  {t('bot.regenerateToken')}
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -361,11 +422,47 @@ ${createdCredentials.doc}`
                 </div>
               )}
               <p className="text-[9px] text-[var(--color-text-muted)] italic">{t('bot.keyLostHint')}</p>
-              {/* Only show approval button if we detect a pending request (future enhancement) */}
-              {/* For now, approval should be done via API or when bot actually attempts connection */}
             </div>
           </div>
         )}
+
+        {/* Agent access pack */}
+        <div className="px-4 py-3 border-b border-[var(--color-border)]">
+          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
+            <div className="flex items-center gap-1.5">
+              <Key className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+              <span className="text-xs font-medium text-[var(--color-text-primary)]">{t('bot.agentAccessPack')}</span>
+              {!accessToken && (
+                <span className="ml-auto text-[10px] text-amber-500">{t('bot.regenerateToGetToken')}</span>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleCopy(accessText, 'agent-access-text')}
+                disabled={!accessToken}
+                className="flex-1 py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {copied === 'agent-access-text' ? t('common.copied') : t('bot.copyAgentAccess')}
+              </button>
+              <button
+                onClick={() => handleCopy(accessUrl, 'agent-access-url')}
+                disabled={!accessToken}
+                className="flex-1 py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+              >
+                <Link className="w-3 h-3" />
+                {copied === 'agent-access-url' ? t('common.copied') : t('bot.copyAgentUrl')}
+              </button>
+            </div>
+            <button
+              onClick={downloadQuickstart}
+              disabled={!accessToken}
+              className="w-full py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
+            >
+              <Download className="w-3 h-3" />
+              {t('bot.downloadQuickstart')}
+            </button>
+          </div>
+        </div>
 
         {/* Agent info card */}
         <div className="px-4 py-3 border-b border-[var(--color-border)]">

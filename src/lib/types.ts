@@ -127,6 +127,8 @@ export interface EntityDiagnostics {
   status: EntityStatus
   online: boolean
   connections: number
+  disconnect_count: number
+  last_seen?: string
   devices: { device_id: string; device_info: string; entity_id: number }[]
   credentials: { has_bootstrap: boolean; has_api_key: boolean }
   hub: { total_ws_connections: number }
