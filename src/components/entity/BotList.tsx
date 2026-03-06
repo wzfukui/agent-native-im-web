@@ -58,7 +58,7 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
     const isOnline = online.has(entity.id)
     const isActive = entity.id === selectedId
     const meta = entity.metadata as Record<string, unknown> | undefined
-    const tags = (meta?.tags as string[]) || []
+    const tags = Array.isArray(meta?.tags) ? (meta.tags as string[]) : []
     return (
       <button
         key={entity.id}
