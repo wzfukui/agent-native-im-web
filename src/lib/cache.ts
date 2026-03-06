@@ -12,6 +12,10 @@ export interface OutboxMessage {
   mentions?: number[]
   reply_to?: number
   created_at: string
+  attempts?: number
+  last_error?: string
+  last_attempt_at?: string
+  sync_state?: 'queued' | 'sending' | 'failed'
 }
 
 function openDB(): Promise<IDBDatabase> {
@@ -33,10 +37,14 @@ function openDB(): Promise<IDBDatabase> {
         outbox.createIndex('conversation_id', 'conversation_id', { unique: false })
         outbox.createIndex('created_at', 'created_at', { unique: false })
         outbox.createIndex('temp_id', 'temp_id', { unique: true })
+        outbox.createIndex('sync_state', 'sync_state', { unique: false })
       } else {
         const outbox = req.transaction?.objectStore('outbox')
         if (outbox && !outbox.indexNames.contains('temp_id')) {
           outbox.createIndex('temp_id', 'temp_id', { unique: true })
+        }
+        if (outbox && !outbox.indexNames.contains('sync_state')) {
+          outbox.createIndex('sync_state', 'sync_state', { unique: false })
         }
       }
     }
@@ -137,7 +145,11 @@ export async function enqueueOutboxMessage(msg: OutboxMessage): Promise<number |
           resolve(existing.id)
           return
         }
-        const addReq = store.add(msg)
+        const addReq = store.add({
+          ...msg,
+          attempts: msg.attempts || 0,
+          sync_state: msg.sync_state || 'queued',
+        } as OutboxMessage)
         addReq.onsuccess = () => resolve(Number(addReq.result))
         addReq.onerror = () => resolve(null)
       }
@@ -179,6 +191,18 @@ export async function deleteOutboxMessage(id: number): Promise<void> {
   try {
     const store = await tx('outbox', 'readwrite')
     store.delete(id)
+  } catch {}
+}
+
+export async function updateOutboxMessage(id: number, patch: Partial<OutboxMessage>): Promise<void> {
+  try {
+    const store = await tx('outbox', 'readwrite')
+    const getReq = store.get(id)
+    getReq.onsuccess = () => {
+      const current = getReq.result as OutboxMessage | undefined
+      if (!current) return
+      store.put({ ...current, ...patch } as OutboxMessage)
+    }
   } catch {}
 }
 

@@ -134,6 +134,9 @@
     "commit": "Commit",
     "buildTime": "构建时间",
     "copyVersionInfo": "复制版本信息",
+    "integrationCheck": "Agent 接入自检",
+    "integrationCheckDesc": "复制脚本后可快速验证 Bot Token 的 API 鉴权与 WebSocket 握手。",
+    "copyIntegrationCheck": "复制自检脚本",
     "removeMemberConfirm": "确定要将 {{name}} 从此会话中移除吗？",
     "roleAdmin": "管理员",
     "roleMember": "成员",
@@ -226,7 +229,18 @@
     "copyAgentUrl": "复制接入 URL",
     "downloadQuickstart": "下载 Quickstart",
     "regenerateToken": "重新生成 Token",
+    "regenerateConfirm": "现在重新生成 Token 吗？旧 API Key 会失效，并断开当前连接会话。",
+    "regenerateResult": "Token 已轮换。断开会话数：{{count}}",
     "copyOpsSnapshot": "复制运维快照"
+  },
+  "error": {
+    "guidance": {
+      "auth": "鉴权可能已过期，请重新登录后重试。",
+      "network": "网络可能不稳定，请检查连接后重试。",
+      "permission": "权限不足，请确认你的角色或资源归属。",
+      "server": "服务端出现错误，请稍后重试或携带请求ID联系管理员。",
+      "unknown": "发生未知错误，请复制诊断信息并反馈。"
+    }
   },
   "task": {
     "title": "任务",
@@ -325,6 +339,11 @@
     "reconnected": "已重新连接",
     "offlineMode": "离线模式：网络恢复后自动同步",
     "authExpired": "会话检查中...",
-    "queuedMessages": "待同步 {{count}} 条"
+    "queuedMessages": "待同步 {{count}} 条",
+    "failedMessages": "失败 {{count}} 条",
+    "lastSyncAt": "最近同步 {{time}}",
+    "lastError": "最近错误：{{error}}",
+    "retryNow": "立即重试",
+    "syncFailed": "离线队列同步失败"
   }
 }

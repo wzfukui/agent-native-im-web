@@ -5,6 +5,8 @@ let _errorHandler: ((error: ParsedError) => void) | null = null
 export interface ParsedError {
   message: string
   detail?: APIErrorDetail
+  category?: 'auth' | 'network' | 'permission' | 'server' | 'unknown'
+  guidanceKey?: string
 }
 
 /**
@@ -15,14 +17,16 @@ export function extractError(res: APIResponse): ParsedError {
   if (!res.error) return { message: 'Unknown error' }
 
   if (typeof res.error === 'string') {
-    return { message: res.error }
+    return classify({
+      message: res.error,
+    })
   }
 
   // Structured error
-  return {
+  return classify({
     message: res.error.message,
     detail: res.error,
-  }
+  })
 }
 
 /**
@@ -53,4 +57,25 @@ export function reportApiError(res: APIResponse) {
   if (!res.ok) {
     reportError(extractError(res))
   }
+}
+
+function classify(parsed: ParsedError): ParsedError {
+  const detail = parsed.detail
+  const status = detail?.status
+  const code = detail?.code || ''
+  const msg = parsed.message.toLowerCase()
+
+  if (status === 401 || code.startsWith('AUTH_')) {
+    return { ...parsed, category: 'auth', guidanceKey: 'error.guidance.auth' }
+  }
+  if (status === 403 || code.startsWith('PERM_')) {
+    return { ...parsed, category: 'permission', guidanceKey: 'error.guidance.permission' }
+  }
+  if (status && status >= 500) {
+    return { ...parsed, category: 'server', guidanceKey: 'error.guidance.server' }
+  }
+  if (msg.includes('network') || msg.includes('failed to fetch') || msg.includes('timeout')) {
+    return { ...parsed, category: 'network', guidanceKey: 'error.guidance.network' }
+  }
+  return { ...parsed, category: 'unknown', guidanceKey: 'error.guidance.unknown' }
 }

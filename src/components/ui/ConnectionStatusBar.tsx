@@ -7,9 +7,21 @@ interface Props {
   ws: AnimpWebSocket | null
   authIssue?: boolean
   outboxCount?: number
+  outboxFailedCount?: number
+  lastSyncAt?: string | null
+  lastError?: string | null
+  onRetryNow?: () => void
 }
 
-export function ConnectionStatusBar({ ws, authIssue, outboxCount = 0 }: Props) {
+export function ConnectionStatusBar({
+  ws,
+  authIssue,
+  outboxCount = 0,
+  outboxFailedCount = 0,
+  lastSyncAt,
+  lastError,
+  onRetryNow,
+}: Props) {
   const { t } = useTranslation()
   const [connected, setConnected] = useState(true)
   const [showReconnected, setShowReconnected] = useState(false)
@@ -69,11 +81,18 @@ export function ConnectionStatusBar({ ws, authIssue, outboxCount = 0 }: Props) {
             : issue === 'auth'
               ? t('connection.authExpired')
               : t('connection.disconnected')}
-          {outboxCount > 0 && (
-            <span className="ml-2 opacity-90">
-              {t('connection.queuedMessages', { count: outboxCount })}
-            </span>
+          {outboxCount > 0 && <span className="ml-2 opacity-90">{t('connection.queuedMessages', { count: outboxCount })}</span>}
+          {outboxFailedCount > 0 && <span className="opacity-90">{t('connection.failedMessages', { count: outboxFailedCount })}</span>}
+          {lastSyncAt && <span className="opacity-75">{t('connection.lastSyncAt', { time: new Date(lastSyncAt).toLocaleTimeString() })}</span>}
+          {onRetryNow && outboxCount > 0 && (
+            <button
+              onClick={onRetryNow}
+              className="ml-1 px-2 py-0.5 rounded bg-yellow-500/20 hover:bg-yellow-500/30 text-[10px] cursor-pointer"
+            >
+              {t('connection.retryNow')}
+            </button>
           )}
+          {lastError && <span className="opacity-75 truncate max-w-[260px]">{t('connection.lastError', { error: lastError })}</span>}
         </>
       )}
     </div>

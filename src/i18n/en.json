@@ -134,6 +134,9 @@
     "commit": "Commit",
     "buildTime": "Build time",
     "copyVersionInfo": "Copy version info",
+    "integrationCheck": "Agent integration self-check",
+    "integrationCheckDesc": "Copy this script to quickly verify API auth and WebSocket handshake for a bot token.",
+    "copyIntegrationCheck": "Copy self-check script",
     "removeMemberConfirm": "Remove {{name}} from this conversation?",
     "roleAdmin": "Admin",
     "roleMember": "Member",
@@ -226,7 +229,18 @@
     "copyAgentUrl": "Copy Access URL",
     "downloadQuickstart": "Download Quickstart",
     "regenerateToken": "Regenerate Token",
+    "regenerateConfirm": "Regenerate token now? Existing API keys will be revoked and connected sessions will be disconnected.",
+    "regenerateResult": "Token rotated. Disconnected sessions: {{count}}",
     "copyOpsSnapshot": "Copy Ops Snapshot"
+  },
+  "error": {
+    "guidance": {
+      "auth": "Authentication may have expired. Try signing in again.",
+      "network": "Network appears unstable. Check connectivity and retry.",
+      "permission": "Permission denied. Verify your role or ownership.",
+      "server": "Server error occurred. Retry later or contact admin with Request ID.",
+      "unknown": "Unexpected error. Copy diagnostics and share with support."
+    }
   },
   "task": {
     "title": "Tasks",
@@ -325,6 +339,11 @@
     "reconnected": "Reconnected",
     "offlineMode": "Offline mode: changes will sync when network is back",
     "authExpired": "Session check in progress...",
-    "queuedMessages": "{{count}} queued"
+    "queuedMessages": "{{count}} queued",
+    "failedMessages": "{{count}} failed",
+    "lastSyncAt": "last sync {{time}}",
+    "lastError": "last error: {{error}}",
+    "retryNow": "Retry now",
+    "syncFailed": "Outbox sync failed"
   }
 }
