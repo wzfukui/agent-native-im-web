@@ -30,6 +30,7 @@ export class AnimpWebSocket {
 
   // Connection change callbacks
   private connectionChangeHandlers: Set<(connected: boolean) => void> = new Set()
+  private authFailureHandlers: Set<() => void> = new Set()
 
   // Network event handlers (stored for cleanup)
   private handleOnline = () => this.onNetworkOnline()
@@ -82,6 +83,13 @@ export class AnimpWebSocket {
     return () => { this.connectionChangeHandlers.delete(handler) }
   }
 
+  // Fires when a connection attempt fails before WebSocket open.
+  // This often indicates an auth failure (e.g. expired JWT during handshake).
+  onAuthFailure(handler: () => void) {
+    this.authFailureHandlers.add(handler)
+    return () => { this.authFailureHandlers.delete(handler) }
+  }
+
   connect() {
     this.intentionalClose = false
     window.addEventListener('online', this.handleOnline)
@@ -98,8 +106,10 @@ export class AnimpWebSocket {
     const deviceInfo = (navigator.userAgent || '').substring(0, 100)
     const wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}&device_id=${encodeURIComponent(this.deviceId)}&device_info=${encodeURIComponent(deviceInfo)}`
     this.ws = new WebSocket(wsUrl)
+    let opened = false
 
     this.ws.onopen = () => {
+      opened = true
       const isReconnect = this.wasConnected
       this._connected = true
       this.wasConnected = true
@@ -129,6 +139,9 @@ export class AnimpWebSocket {
       this.stopPing()
       this.connectionChangeHandlers.forEach((h) => h(false))
       this.handlers.forEach((h) => h({ type: 'entity.offline', data: { self: true } } as WSMessage))
+      if (!opened && !this.intentionalClose) {
+        this.authFailureHandlers.forEach((h) => h())
+      }
       if (!this.intentionalClose) this.scheduleReconnect()
     }
 

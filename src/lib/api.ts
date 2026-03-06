@@ -3,8 +3,10 @@ import type {
   MessagesResponse, SearchResponse, Message, AdminStats,
   Task, ConversationMemory, ChangeRequest,
 } from './types'
+import { getSessionHooks } from './auth-session'
 
 let baseUrl = ''
+let refreshInFlight: Promise<string | null> | null = null
 
 export function setBaseUrl(url: string) {
   baseUrl = url.replace(/\/+$/, '')
@@ -14,18 +16,86 @@ function authHeaders(token: string): Record<string, string> {
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
-async function request<T>(method: string, path: string, token?: string, body?: unknown): Promise<APIResponse<T>> {
+async function parseAPIResponse<T>(res: Response): Promise<APIResponse<T>> {
+  try {
+    return await res.json()
+  } catch {
+    return { ok: false, error: `HTTP ${res.status}` } as APIResponse<T>
+  }
+}
+
+async function fetchWithAuthRetry<T>(
+  method: string,
+  path: string,
+  token: string,
+  body?: unknown,
+  retry = true,
+): Promise<APIResponse<T>> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  if (token) headers.Authorization = `Bearer ${token}`
+  headers.Authorization = `Bearer ${token}`
+
   const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers,
     body: body ? JSON.stringify(body) : undefined,
   })
+
+  if (res.status === 401 && retry && path !== '/api/v1/auth/refresh') {
+    const nextToken = await tryRefreshToken(token)
+    if (nextToken) {
+      return fetchWithAuthRetry(method, path, nextToken, body, false)
+    }
+  }
+
+  return parseAPIResponse<T>(res)
+}
+
+async function request<T>(method: string, path: string, token?: string, body?: unknown): Promise<APIResponse<T>> {
+  if (token) {
+    return fetchWithAuthRetry<T>(method, path, token, body)
+  }
+
+  const res = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return parseAPIResponse<T>(res)
+}
+
+async function tryRefreshToken(oldToken: string): Promise<string | null> {
+  if (refreshInFlight) return refreshInFlight
+
+  refreshInFlight = (async () => {
+    try {
+      const res = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
+        method: 'POST',
+        headers: authHeaders(oldToken),
+      })
+      const payload = await parseAPIResponse<{ token: string }>(res)
+      if (res.ok && payload.ok && payload.data?.token) {
+        const newToken = payload.data.token
+        const hooks = getSessionHooks()
+        hooks?.setToken(newToken)
+        return newToken
+      }
+
+      // Only auth failures should force logout.
+      if (res.status === 401 || res.status === 403) {
+        getSessionHooks()?.onAuthFailure()
+      }
+
+      return null
+    } catch {
+      // Network/server issues: keep session and let caller retry later.
+      return null
+    }
+  })()
+
   try {
-    return await res.json()
-  } catch {
-    return { ok: false, error: `HTTP ${res.status}` } as APIResponse<T>
+    return await refreshInFlight
+  } finally {
+    refreshInFlight = null
   }
 }
 
@@ -155,16 +225,22 @@ export const adminListConversations = (token: string, limit = 50, offset = 0) =>
 export async function uploadFile(token: string, file: File): Promise<APIResponse<{ url: string }>> {
   const form = new FormData()
   form.append('file', file)
-  const res = await fetch(`${baseUrl}/api/v1/files/upload`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: form,
-  })
-  try {
-    return await res.json()
-  } catch {
-    return { ok: false, error: `HTTP ${res.status}` } as APIResponse<{ url: string }>
+  const doUpload = async (accessToken: string) => {
+    return fetch(`${baseUrl}/api/v1/files/upload`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}` },
+      body: form,
+    })
   }
+
+  let res = await doUpload(token)
+  if (res.status === 401) {
+    const nextToken = await tryRefreshToken(token)
+    if (nextToken) {
+      res = await doUpload(nextToken)
+    }
+  }
+  return parseAPIResponse<{ url: string }>(res)
 }
 
 // Push notifications

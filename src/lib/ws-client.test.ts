@@ -193,6 +193,28 @@ describe('AnimpWebSocket', () => {
     expect(reconnectCb).toHaveBeenCalledTimes(1)
   })
 
+  it('onAuthFailure fires when connection closes before open', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    const authFailure = vi.fn()
+    ws.onAuthFailure(authFailure)
+    ws.connect()
+
+    // Close before open: handshake/authorization failure scenario
+    mockWsInstance.simulateClose()
+    expect(authFailure).toHaveBeenCalledTimes(1)
+  })
+
+  it('onAuthFailure does not fire after a successful open', () => {
+    const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
+    const authFailure = vi.fn()
+    ws.onAuthFailure(authFailure)
+    ws.connect()
+    mockWsInstance.simulateOpen()
+
+    mockWsInstance.simulateClose()
+    expect(authFailure).not.toHaveBeenCalled()
+  })
+
   it('client-side ping sends ping message every 25s', () => {
     const ws = new AnimpWebSocket('ws://localhost/ws', 'token')
     ws.connect()

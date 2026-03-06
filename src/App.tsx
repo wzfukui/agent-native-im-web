@@ -29,10 +29,11 @@ import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
 import { setGlobalErrorHandler, getErrorMessage, type ParsedError } from '@/lib/errors'
+import { setSessionHooks } from '@/lib/auth-session'
 
 export default function App() {
   const { t } = useTranslation()
-  const { token, entity, setAuth, logout } = useAuthStore()
+  const { token, entity, setAuth, setToken, logout } = useAuthStore()
   const { conversations, activeId, setConversations, setActive, addConversation, updateConversation, removeConversation, mutedIds } = useConversationsStore()
   const { addMessage, revokeMessage, updateMessageReactions, startStream, updateStream, endStream } = useMessagesStore()
   const { setOnline, setWsConnected } = usePresenceStore()
@@ -45,6 +46,8 @@ export default function App() {
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
   const wsRef = useRef<AnimpWebSocket | null>(null)
+  const [wsClient, setWsClient] = useState<AnimpWebSocket | null>(null)
+  const lastWSRefreshAttemptRef = useRef(0)
   const [botEntities, setBotEntities] = useState<Entity[]>([])
   const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number; isProcessing?: boolean; phase?: string }>>>(new Map())
   const [showSettings, setShowSettings] = useState(false)
@@ -72,6 +75,54 @@ export default function App() {
   useEffect(() => {
     setGlobalErrorHandler(pushError)
   }, [pushError])
+
+  const decodeJwtExp = useCallback((jwtToken: string): number | null => {
+    const parts = jwtToken.split('.')
+    if (parts.length < 2) return null
+    try {
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+      const payload = JSON.parse(atob(padded))
+      return typeof payload.exp === 'number' ? payload.exp : null
+    } catch {
+      return null
+    }
+  }, [])
+
+  // ─── API token refresh hooks ──────────────────────────────────
+  useEffect(() => {
+    setSessionHooks({
+      getToken: () => useAuthStore.getState().token,
+      setToken: (nextToken: string) => setToken(nextToken),
+      onAuthFailure: () => logout(),
+    })
+  }, [setToken, logout])
+
+  // ─── Proactive token refresh (avoid expiry-triggered disconnects) ───
+  useEffect(() => {
+    if (!token || !entity || entity.entity_type !== 'user') return
+
+    const refreshIfNeeded = async () => {
+      const exp = decodeJwtExp(useAuthStore.getState().token || '')
+      if (!exp) return
+      const nowSec = Math.floor(Date.now() / 1000)
+      // Refresh when remaining lifetime <= 30 minutes.
+      if (exp - nowSec <= 1800) {
+        const currentToken = useAuthStore.getState().token
+        if (!currentToken) return
+        const res = await api.refreshToken(currentToken)
+        if (res.ok && res.data?.token) {
+          setToken(res.data.token)
+        } else {
+          logout()
+        }
+      }
+    }
+
+    const timer = setInterval(refreshIfNeeded, 5 * 60 * 1000)
+    refreshIfNeeded()
+    return () => clearInterval(timer)
+  }, [token, entity, setToken, logout, decodeJwtExp])
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -177,6 +228,7 @@ export default function App() {
 
     const ws = new AnimpWebSocket(wsUrl, token)
     wsRef.current = ws
+    setWsClient(ws)
 
     const unsub = ws.onMessage((msg: WSMessage) => {
       switch (msg.type) {
@@ -357,14 +409,44 @@ export default function App() {
       loadConversations()
     })
 
+    const unsubAuthFailure = ws.onAuthFailure(async () => {
+      if (entity.entity_type !== 'user') return
+      if (!navigator.onLine) return
+
+      const now = Date.now()
+      if (now - lastWSRefreshAttemptRef.current < 15000) return
+      lastWSRefreshAttemptRef.current = now
+
+      const currentToken = useAuthStore.getState().token
+      if (!currentToken) return
+      const exp = decodeJwtExp(currentToken)
+      const nowSec = Math.floor(now / 1000)
+      // If token is still far from expiry, this is likely transient network/server issue.
+      if (exp && exp-nowSec > 300) return
+
+      const res = await api.refreshToken(currentToken)
+      if (res.ok && res.data?.token) {
+        setToken(res.data.token)
+      } else if (typeof res.error === 'string' && (
+        res.error.toLowerCase().includes('invalid token') ||
+        res.error.toLowerCase().includes('missing authorization') ||
+        res.error.toLowerCase().includes('disabled') ||
+        res.error.toLowerCase().includes('forbidden')
+      )) {
+        logout()
+      }
+    })
+
     ws.connect()
 
     return () => {
       unsub()
+      unsubAuthFailure()
       ws.disconnect()
       wsRef.current = null
+      setWsClient(null)
     }
-  }, [token, entity?.id])
+  }, [token, entity, setToken, logout, decodeJwtExp])
 
   // ─── Typing indicator ─────────────────────────────────────────
   const handleTyping = useCallback((conversationId: number) => {
@@ -527,7 +609,7 @@ export default function App() {
   // ─── Main layout ───────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
-      <ConnectionStatusBar ws={wsRef.current} />
+      <ConnectionStatusBar ws={wsClient} />
       <div className="flex-1 flex min-h-0">
       {/* Icon sidebar */}
       <Sidebar
