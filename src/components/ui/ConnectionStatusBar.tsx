@@ -5,12 +5,14 @@ import type { AnimpWebSocket } from '@/lib/ws-client'
 
 interface Props {
   ws: AnimpWebSocket | null
+  authIssue?: boolean
 }
 
-export function ConnectionStatusBar({ ws }: Props) {
+export function ConnectionStatusBar({ ws, authIssue }: Props) {
   const { t } = useTranslation()
   const [connected, setConnected] = useState(true)
   const [showReconnected, setShowReconnected] = useState(false)
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const wasDisconnected = useRef(false)
 
   useEffect(() => {
@@ -29,17 +31,31 @@ export function ConnectionStatusBar({ ws }: Props) {
     return unsub
   }, [ws])
 
-  if (connected && !showReconnected) return null
+  useEffect(() => {
+    const onOnline = () => setIsOffline(false)
+    const onOffline = () => setIsOffline(true)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [])
+
+  const issue = isOffline ? 'offline' : authIssue ? 'auth' : !connected ? 'server' : null
+  if (!issue && !(connected && showReconnected)) return null
 
   return (
     <div
       className={`flex items-center justify-center gap-2 px-4 py-1.5 text-xs font-medium transition-all ${
-        connected
+        !issue
           ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-          : 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
+          : issue === 'auth'
+            ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400'
+            : 'bg-yellow-500/15 text-yellow-600 dark:text-yellow-400'
       }`}
     >
-      {connected ? (
+      {!issue ? (
         <>
           <Wifi className="w-3.5 h-3.5" />
           {t('connection.reconnected')}
@@ -47,7 +63,11 @@ export function ConnectionStatusBar({ ws }: Props) {
       ) : (
         <>
           <WifiOff className="w-3.5 h-3.5" />
-          {t('connection.disconnected')}
+          {issue === 'offline'
+            ? t('connection.offlineMode')
+            : issue === 'auth'
+              ? t('connection.authExpired')
+              : t('connection.disconnected')}
         </>
       )}
     </div>

@@ -142,7 +142,11 @@
     "replyTo": "Replying to message #{{id}}",
     "mentioned": "mentioned",
     "dropFiles": "Drop files here to send",
-    "loadEarlier": "Load earlier messages"
+    "loadEarlier": "Load earlier messages",
+    "sending": "Sending...",
+    "queuedOffline": "Queued for offline sync",
+    "deliveryFailed": "Delivery failed",
+    "retryNow": "Retry now"
   },
   "chat": {
     "reply": "Reply",
@@ -303,6 +307,8 @@
   },
   "connection": {
     "disconnected": "Connection lost, reconnecting...",
-    "reconnected": "Reconnected"
+    "reconnected": "Reconnected",
+    "offlineMode": "Offline mode: changes will sync when network is back",
+    "authExpired": "Session check in progress..."
   }
 }

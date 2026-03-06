@@ -142,7 +142,11 @@
     "replyTo": "回复消息 #{{id}}",
     "mentioned": "被提及",
     "dropFiles": "拖放文件到此处发送",
-    "loadEarlier": "加载更早的消息"
+    "loadEarlier": "加载更早的消息",
+    "sending": "发送中...",
+    "queuedOffline": "已加入离线队列",
+    "deliveryFailed": "发送失败",
+    "retryNow": "立即重试"
   },
   "chat": {
     "reply": "回复",
@@ -303,6 +307,8 @@
   },
   "connection": {
     "disconnected": "连接已断开，正在重连...",
-    "reconnected": "已重新连接"
+    "reconnected": "已重新连接",
+    "offlineMode": "离线模式：网络恢复后自动同步",
+    "authExpired": "会话检查中..."
   }
 }

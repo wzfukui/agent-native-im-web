@@ -10,11 +10,12 @@ import { entityDisplayName, cn } from '@/lib/utils'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { generateBotQuickstart } from '@/lib/bot-quickstart'
 import {
   Bot, ArrowLeft, Wifi, WifiOff, Sparkles, FileText, User,
   MessageSquare, Users, ChevronRight, ChevronDown, ChevronUp, Loader2,
   Trash2, Hash, Calendar, Tag, Key, Copy, Check, Clock, AlertCircle, Shield,
-  PowerOff, RotateCcw,
+  PowerOff, RotateCcw, Download, Activity,
 } from 'lucide-react'
 
 interface Props {
@@ -40,6 +41,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
   const [confirmDisable, setConfirmDisable] = useState(false)
   const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)
+  const [selfCheck, setSelfCheck] = useState<{ ready: boolean; recommendation: string[]; has_api_key: boolean; has_bootstrap: boolean } | null>(null)
+  const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; hub: { total_ws_connections: number } } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
   const [docExpanded, setDocExpanded] = useState(false)
@@ -74,10 +77,18 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     if (!bot) return
     let cancelled = false
     setCredStatus(null)
+    setSelfCheck(null)
+    setDiagnostics(null)
     setLastSeen(null)
 
     api.getEntityCredentials(token, bot.id).then((res) => {
       if (!cancelled && res.ok && res.data) setCredStatus(res.data)
+    }).catch(() => {})
+    api.getEntitySelfCheck(token, bot.id).then((res) => {
+      if (!cancelled && res.ok && res.data) setSelfCheck(res.data)
+    }).catch(() => {})
+    api.getEntityDiagnostics(token, bot.id).then((res) => {
+      if (!cancelled && res.ok && res.data) setDiagnostics(res.data)
     }).catch(() => {})
 
     api.getEntityStatus(token, bot.id).then((res) => {
@@ -91,6 +102,23 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     navigator.clipboard.writeText(text).catch(() => {})
     setCopied(label)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const downloadQuickstart = () => {
+    if (!bot || !createdCredentials || createdCredentials.entity.id !== bot.id) return
+    const quickstart = generateBotQuickstart({
+      botName: createdCredentials.entity.display_name || createdCredentials.entity.name,
+      botToken: createdCredentials.key,
+      apiUrl: `${window.location.origin}/api/v1`,
+      webUrl: window.location.origin,
+    })
+    const blob = new Blob([quickstart], { type: 'text/markdown;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${createdCredentials.entity.name || 'agent'}-quickstart.md`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   // Empty state
@@ -239,6 +267,16 @@ ${createdCredentials.doc}`
                 </button>
               </div>
 
+              <div className="px-3 pb-1">
+                <button
+                  onClick={downloadQuickstart}
+                  className="w-full py-2 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors border border-[var(--color-border)]"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download Quickstart</span>
+                </button>
+              </div>
+
               {/* Collapsible doc preview */}
               <div className="px-3 pb-2">
                 <button
@@ -254,6 +292,51 @@ ${createdCredentials.doc}`
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Self-check and diagnostics */}
+        {(selfCheck || diagnostics) && (
+          <div className="px-4 py-3 border-b border-[var(--color-border)]">
+            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
+              <div className="flex items-center gap-1.5">
+                <Activity className="w-3.5 h-3.5 text-[var(--color-accent)]" />
+                <span className="text-xs font-medium text-[var(--color-text-primary)]">Agent Self-check</span>
+                <span className={cn(
+                  'ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium',
+                  selfCheck?.ready ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]' : 'bg-amber-500/15 text-amber-500',
+                )}>
+                  {selfCheck?.ready ? 'READY' : 'ACTION NEEDED'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-[10px]">
+                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
+                  <p className="text-[var(--color-text-muted)]">API Key</p>
+                  <p className="text-[var(--color-text-secondary)]">{selfCheck?.has_api_key ? 'Configured' : 'Missing'}</p>
+                </div>
+                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
+                  <p className="text-[var(--color-text-muted)]">Bootstrap</p>
+                  <p className="text-[var(--color-text-secondary)]">{selfCheck?.has_bootstrap ? 'Present' : 'Revoked'}</p>
+                </div>
+                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
+                  <p className="text-[var(--color-text-muted)]">Connections</p>
+                  <p className="text-[var(--color-text-secondary)]">{diagnostics?.connections ?? 0}</p>
+                </div>
+                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
+                  <p className="text-[var(--color-text-muted)]">Hub WS</p>
+                  <p className="text-[var(--color-text-secondary)]">{diagnostics?.hub?.total_ws_connections ?? 0}</p>
+                </div>
+              </div>
+
+              {(selfCheck?.recommendation || []).length > 0 && (
+                <div className="rounded-md bg-amber-500/8 border border-amber-500/20 p-2">
+                  {(selfCheck?.recommendation || []).map((item, i) => (
+                    <p key={i} className="text-[10px] text-[var(--color-text-secondary)] leading-relaxed">• {item}</p>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}

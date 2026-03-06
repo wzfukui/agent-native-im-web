@@ -58,6 +58,7 @@ export default function App() {
   const [createdCredentials, setCreatedCredentials] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
   const [botListRefresh, setBotListRefresh] = useState(0)
   const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
+  const [authHandshakeIssue, setAuthHandshakeIssue] = useState(false)
 
   // ─── Global error handler ────────────────────────────────────
   const pushError = useCallback((parsed: ParsedError) => {
@@ -141,6 +142,7 @@ export default function App() {
         const optimistic = useMessagesStore.getState()
         for (const item of queued) {
           if (!item.id) continue
+          optimistic.setOptimisticState(item.temp_id, 'sending')
           const res = await api.sendMessage(token, {
             conversation_id: item.conversation_id,
             content_type: item.content_type || 'text',
@@ -155,6 +157,7 @@ export default function App() {
             optimistic.replaceOptimisticMessage(item.temp_id, res.data)
             await deleteOutboxMessage(item.id)
           } else {
+            optimistic.setOptimisticState(item.temp_id, navigator.onLine ? 'failed' : 'queued')
             // Stop on first failure to avoid busy-looping while server is unavailable.
             break
           }
@@ -286,6 +289,7 @@ export default function App() {
           const onData = msg.data as { self?: boolean; entity_id?: number }
           if (onData?.self) {
             setWsConnected(true)
+            setAuthHandshakeIssue(false)
           } else if (onData?.entity_id) {
             setOnline(onData.entity_id, true)
           }
@@ -463,6 +467,7 @@ export default function App() {
       if (entity.entity_type !== 'user') return
       if (!navigator.onLine) return
 
+      setAuthHandshakeIssue(true)
       const now = Date.now()
       if (now - lastWSRefreshAttemptRef.current < 15000) return
       lastWSRefreshAttemptRef.current = now
@@ -477,6 +482,7 @@ export default function App() {
       const res = await api.refreshToken(currentToken)
       if (res.ok && res.data?.token) {
         setToken(res.data.token)
+        setAuthHandshakeIssue(false)
       } else if (typeof res.error === 'string' && (
         res.error.toLowerCase().includes('invalid token') ||
         res.error.toLowerCase().includes('missing authorization') ||
@@ -659,7 +665,7 @@ export default function App() {
   // ─── Main layout ───────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
-      <ConnectionStatusBar ws={wsClient} />
+      <ConnectionStatusBar ws={wsClient} authIssue={authHandshakeIssue} />
       <div className="flex-1 flex min-h-0">
       {/* Icon sidebar */}
       <Sidebar

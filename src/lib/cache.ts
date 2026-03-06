@@ -1,7 +1,7 @@
 import type { Conversation, Message, Entity } from './types'
 
 const DB_NAME = 'aim_cache'
-const DB_VERSION = 2
+const DB_VERSION = 3
 
 export interface OutboxMessage {
   id?: number
@@ -32,6 +32,12 @@ function openDB(): Promise<IDBDatabase> {
         const outbox = db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true })
         outbox.createIndex('conversation_id', 'conversation_id', { unique: false })
         outbox.createIndex('created_at', 'created_at', { unique: false })
+        outbox.createIndex('temp_id', 'temp_id', { unique: true })
+      } else {
+        const outbox = req.transaction?.objectStore('outbox')
+        if (outbox && !outbox.indexNames.contains('temp_id')) {
+          outbox.createIndex('temp_id', 'temp_id', { unique: true })
+        }
       }
     }
     req.onsuccess = () => resolve(req.result)
@@ -123,9 +129,19 @@ export async function enqueueOutboxMessage(msg: OutboxMessage): Promise<number |
   try {
     const store = await tx('outbox', 'readwrite')
     return new Promise((resolve) => {
-      const req = store.add(msg)
-      req.onsuccess = () => resolve(Number(req.result))
-      req.onerror = () => resolve(null)
+      const idx = store.index('temp_id')
+      const getReq = idx.get(msg.temp_id)
+      getReq.onsuccess = () => {
+        const existing = getReq.result as OutboxMessage | undefined
+        if (existing?.id) {
+          resolve(existing.id)
+          return
+        }
+        const addReq = store.add(msg)
+        addReq.onsuccess = () => resolve(Number(addReq.result))
+        addReq.onerror = () => resolve(null)
+      }
+      getReq.onerror = () => resolve(null)
     })
   } catch {
     return null
@@ -164,4 +180,17 @@ export async function deleteOutboxMessage(id: number): Promise<void> {
     const store = await tx('outbox', 'readwrite')
     store.delete(id)
   } catch {}
+}
+
+export async function getOutboxMessageByTempId(tempId: string): Promise<OutboxMessage | null> {
+  try {
+    const store = await tx('outbox', 'readonly')
+    return new Promise((resolve) => {
+      const req = store.index('temp_id').get(tempId)
+      req.onsuccess = () => resolve((req.result as OutboxMessage) || null)
+      req.onerror = () => resolve(null)
+    })
+  } catch {
+    return null
+  }
 }

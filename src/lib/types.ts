@@ -95,6 +95,8 @@ export interface Message {
   id: number
   conversation_id: number
   sender_id: number
+  temp_id?: string
+  client_state?: 'sending' | 'queued' | 'failed'
   sender_type?: string
   sender?: Entity
   stream_id?: string
@@ -106,6 +108,28 @@ export interface Message {
   reactions?: ReactionSummary[]
   revoked_at?: string
   created_at: string
+}
+
+export interface EntitySelfCheck {
+  entity_id: number
+  entity_name: string
+  status: EntityStatus
+  online: boolean
+  ready: boolean
+  has_bootstrap: boolean
+  has_api_key: boolean
+  recommendation: string[]
+}
+
+export interface EntityDiagnostics {
+  entity_id: number
+  entity_name: string
+  status: EntityStatus
+  online: boolean
+  connections: number
+  devices: { device_id: string; device_info: string; entity_id: number }[]
+  credentials: { has_bootstrap: boolean; has_api_key: boolean }
+  hub: { total_ws_connections: number }
 }
 
 // ─── WebSocket Events ────────────────────────────────────────────

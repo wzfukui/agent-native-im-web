@@ -15,9 +15,10 @@ interface Props {
   onRevoke?: (msgId: number) => void
   onReply?: (msg: Message) => void
   onReact?: (msgId: number, emoji: string) => void
+  onRetryOutbox?: (tempId: string) => void
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, onLoadMore, onInteractionReply, onRevoke, onReply, onReact }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -114,6 +115,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 onRevoke={onRevoke}
                 onReply={onReply}
                 onReact={onReact}
+                onRetryOutbox={onRetryOutbox}
               />
             </div>
           )

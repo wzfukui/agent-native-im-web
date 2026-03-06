@@ -19,6 +19,7 @@ interface MessagesState {
   addOptimisticMessage: (tempId: string, msg: Message) => void
   replaceOptimisticMessage: (tempId: string, msg: Message) => void
   removeOptimisticMessage: (tempId: string, convId: number) => void
+  setOptimisticState: (tempId: string, state: 'sending' | 'queued' | 'failed') => void
 
   // reactions
   updateMessageReactions: (convId: number, msgId: number, reactions: ReactionSummary[]) => void
@@ -85,9 +86,10 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   addOptimisticMessage: (tempId, msg) =>
     set((s) => {
       const existing = s.byConv[msg.conversation_id] || []
+      const optimisticMsg = { ...msg, temp_id: tempId, client_state: 'sending' as const }
       return {
-        optimistic: { ...s.optimistic, [tempId]: msg },
-        byConv: { ...s.byConv, [msg.conversation_id]: [...existing, msg] },
+        optimistic: { ...s.optimistic, [tempId]: optimisticMsg },
+        byConv: { ...s.byConv, [msg.conversation_id]: [...existing, optimisticMsg] },
       }
     }),
 
@@ -121,6 +123,23 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       return {
         optimistic: restOptimistic,
         byConv: { ...s.byConv, [convId]: updatedMessages },
+      }
+    }),
+
+  setOptimisticState: (tempId, state) =>
+    set((s) => {
+      const optimisticMsg = s.optimistic[tempId]
+      if (!optimisticMsg) return s
+
+      const convId = optimisticMsg.conversation_id
+      const messages = s.byConv[convId] || []
+      const updatedMsg = { ...optimisticMsg, client_state: state }
+      return {
+        optimistic: { ...s.optimistic, [tempId]: updatedMsg },
+        byConv: {
+          ...s.byConv,
+          [convId]: messages.map((m) => (m.id === optimisticMsg.id ? updatedMsg : m)),
+        },
       }
     }),
 

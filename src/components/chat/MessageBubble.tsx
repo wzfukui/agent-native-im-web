@@ -11,7 +11,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, RefreshCw, CloudOff, AlertTriangle,
 } from 'lucide-react'
 
 function AudioPlayer({ url, duration: totalDuration }: { url?: string; duration?: number }) {
@@ -92,10 +92,11 @@ interface Props {
   onRevoke?: (msgId: number) => void
   onReply?: (msg: Message) => void
   onReact?: (msgId: number, emoji: string) => void
+  onRetryOutbox?: (tempId: string) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, showSender = true }: Props) {
   const { t } = useTranslation()
   const [showThinking, setShowThinking] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
@@ -111,6 +112,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
 
   const canReply = !isRevoked && onReply
   const canReact = !isRevoked && onReact
+  const canRetryOutbox = isSelf && !!message.temp_id && message.client_state !== 'sending' && !!onRetryOutbox
 
   // Revoked message
   if (isRevoked) {
@@ -383,6 +385,46 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
               isSelf={isSelf}
               onReact={(emoji) => onReact(message.id, emoji)}
             />
+          </div>
+        )}
+
+        {/* Local delivery status for optimistic/offline messages */}
+        {isSelf && message.temp_id && message.client_state && (
+          <div className="px-1 flex items-center gap-1.5 text-[10px] text-[var(--color-text-muted)]">
+            {message.client_state === 'sending' && (
+              <>
+                <RefreshCw className="w-3 h-3 animate-spin" />
+                <span>{t('message.sending')}</span>
+              </>
+            )}
+            {message.client_state === 'queued' && (
+              <>
+                <CloudOff className="w-3 h-3" />
+                <span>{t('message.queuedOffline')}</span>
+                {canRetryOutbox && (
+                  <button
+                    onClick={() => onRetryOutbox!(message.temp_id!)}
+                    className="ml-1 underline hover:text-[var(--color-accent)] cursor-pointer"
+                  >
+                    {t('message.retryNow')}
+                  </button>
+                )}
+              </>
+            )}
+            {message.client_state === 'failed' && (
+              <>
+                <AlertTriangle className="w-3 h-3 text-amber-500" />
+                <span>{t('message.deliveryFailed')}</span>
+                {canRetryOutbox && (
+                  <button
+                    onClick={() => onRetryOutbox!(message.temp_id!)}
+                    className="ml-1 underline hover:text-[var(--color-accent)] cursor-pointer"
+                  >
+                    {t('message.retryNow')}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         )}
 

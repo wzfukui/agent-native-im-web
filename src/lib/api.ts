@@ -1,7 +1,7 @@
 import type {
   APIResponse, LoginResponse, Entity, Conversation,
   MessagesResponse, SearchResponse, Message, AdminStats,
-  Task, ConversationMemory, ChangeRequest,
+  Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics,
 } from './types'
 import { getSessionHooks } from './auth-session'
 
@@ -195,6 +195,12 @@ export const getEntityCredentials = (token: string, id: number) =>
   request<{ entity_id: number; has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string }>(
     'GET', `/api/v1/entities/${id}/credentials`, token,
   )
+
+export const getEntitySelfCheck = (token: string, id: number) =>
+  request<EntitySelfCheck>('GET', `/api/v1/entities/${id}/self-check`, token)
+
+export const getEntityDiagnostics = (token: string, id: number) =>
+  request<EntityDiagnostics>('GET', `/api/v1/entities/${id}/diagnostics`, token)
 
 export const batchPresence = (token: string, entityIds: number[]) =>
   request<{ presence: Record<string, boolean> }>('POST', '/api/v1/presence/batch', token, { entity_ids: entityIds })

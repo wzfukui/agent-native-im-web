@@ -46,7 +46,13 @@ export class AnimpWebSocket {
 
   private getOrCreateDeviceId(): string {
     const key = 'aim_device_id'
-    let id = localStorage.getItem(key)
+    const storage = typeof localStorage !== 'undefined' &&
+      typeof localStorage.getItem === 'function' &&
+      typeof localStorage.setItem === 'function'
+      ? localStorage
+      : null
+
+    let id = storage?.getItem(key) || null
     if (!id) {
       // crypto.randomUUID() only works in secure contexts (HTTPS/localhost)
       // Fallback to crypto.getRandomValues() which works everywhere
@@ -60,7 +66,7 @@ export class AnimpWebSocket {
         const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
         id = `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`
       }
-      localStorage.setItem(key, id)
+      storage?.setItem(key, id)
     }
     return id
   }

@@ -12,7 +12,7 @@ import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { cacheMessages, getCachedMessages, enqueueOutboxMessage } from '@/lib/cache'
+import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage } from '@/lib/cache'
 import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
@@ -43,6 +43,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const addOptimisticMessage = useMessagesStore((s) => s.addOptimisticMessage)
   const replaceOptimisticMessage = useMessagesStore((s) => s.replaceOptimisticMessage)
   const removeOptimisticMessage = useMessagesStore((s) => s.removeOptimisticMessage)
+  const setOptimisticState = useMessagesStore((s) => s.setOptimisticState)
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -237,8 +238,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     // Add optimistic message immediately
     addOptimisticMessage(tempId, optimisticMsg)
 
-    const queueForOffline = async () => {
-      await enqueueOutboxMessage({
+    const queueForOffline = async (state: 'queued' | 'failed') => {
+      const queuedId = await enqueueOutboxMessage({
         temp_id: tempId,
         conversation_id: conversation.id,
         content_type: 'text',
@@ -247,10 +248,11 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         reply_to: currentReplyTo?.id,
         created_at: new Date().toISOString(),
       })
+      setOptimisticState(tempId, queuedId ? state : 'failed')
     }
 
     if (!navigator.onLine) {
-      await queueForOffline()
+      await queueForOffline('queued')
       return
     }
 
@@ -302,17 +304,44 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         if (files && files.length > 0) {
           removeOptimisticMessage(tempId, conversation.id)
         } else {
-          await queueForOffline()
+          await queueForOffline('failed')
         }
       }
     } catch (error) {
       if (files && files.length > 0) {
         removeOptimisticMessage(tempId, conversation.id)
       } else {
-        await queueForOffline()
+        await queueForOffline('failed')
       }
     }
-  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage])
+  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage, setOptimisticState])
+
+  const handleRetryOutbox = useCallback(async (tempId: string) => {
+    const item = await getOutboxMessageByTempId(tempId)
+    if (!item || !item.id) return
+    if (!navigator.onLine) {
+      setOptimisticState(tempId, 'queued')
+      return
+    }
+
+    setOptimisticState(tempId, 'sending')
+    const res = await api.sendMessage(token, {
+      conversation_id: item.conversation_id,
+      content_type: item.content_type || 'text',
+      layers: {
+        summary: item.text.length > 100 ? item.text.slice(0, 100) + '...' : item.text,
+        data: { body: item.text },
+      },
+      mentions: item.mentions,
+      reply_to: item.reply_to,
+    })
+    if (res.ok && res.data) {
+      replaceOptimisticMessage(tempId, res.data)
+      await deleteOutboxMessage(item.id)
+    } else {
+      setOptimisticState(tempId, 'failed')
+    }
+  }, [token, replaceOptimisticMessage, setOptimisticState])
 
   // Revoke message
   const handleRevoke = useCallback(async (msgId: number) => {
@@ -529,6 +558,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           onRevoke={isArchived ? undefined : handleRevoke}
           onReply={isArchived ? undefined : (msg) => setReplyTo(msg)}
           onReact={isArchived ? undefined : handleReact}
+          onRetryOutbox={isArchived ? undefined : handleRetryOutbox}
         />
       )}
 
