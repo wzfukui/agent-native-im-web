@@ -87,4 +87,15 @@ describe('api auth refresh', () => {
     expect(setToken).not.toHaveBeenCalled()
     expect(onAuthFailure).not.toHaveBeenCalled()
   })
+
+  it('calls public conversation endpoint by public id', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true, data: { id: 1, title: 'demo' } }))
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await api.getConversationByPublicId('token', 'abc-123')
+    expect(res.ok).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/conversations/public/abc-123')
+  })
 })

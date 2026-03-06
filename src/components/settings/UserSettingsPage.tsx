@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
-import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { AvatarPicker } from '@/components/entity/AvatarPicker'
 import { cn } from '@/lib/utils'
 import { buildInfo } from '@/lib/build-info'
@@ -41,6 +40,7 @@ export function UserSettingsPage({ onBack }: Props) {
   const [passError, setPassError] = useState('')
   const [passSuccess, setPassSuccess] = useState('')
   const [aboutCopied, setAboutCopied] = useState(false)
+  const [checkCopied, setCheckCopied] = useState(false)
 
   const handleSaveProfile = async () => {
     if (!editName.trim() || !entity) return
@@ -204,6 +204,28 @@ export function UserSettingsPage({ onBack }: Props) {
     { id: 'light', label: t('settings.themeLight'), colors: 'from-gray-100 to-white' },
     { id: 'green', label: t('settings.themeGreen'), colors: 'from-emerald-900 to-gray-900' },
   ]
+  const agentCheckScript = [
+    '# Quick agent connectivity check',
+    `BASE_URL="${window.location.origin}/api/v1"`,
+    'BOT_TOKEN="replace_with_bot_token"',
+    '',
+    'echo "[1/3] API auth"',
+    'curl -fsS "$BASE_URL/me" -H "Authorization: Bearer $BOT_TOKEN" | head -c 200 && echo',
+    '',
+    'echo "[2/3] WS handshake"',
+    `python3 - <<'PY'
+import asyncio, json, os, websockets
+base = os.environ["BASE_URL"].replace("https://","wss://").replace("http://","ws://")
+token = os.environ["BOT_TOKEN"]
+async def main():
+    async with websockets.connect(f"{base.replace('/api/v1','')}/api/v1/ws?token={token}") as ws:
+        msg = await asyncio.wait_for(ws.recv(), timeout=5)
+        print(msg[:300])
+asyncio.run(main())
+PY`,
+    '',
+    'echo "[3/3] ready"',
+  ].join('\n')
 
   return (
     <div className="flex-1 flex h-full">
@@ -528,6 +550,30 @@ export function UserSettingsPage({ onBack }: Props) {
                 {t('settings.copyVersionInfo')}
               </button>
               {aboutCopied && <p className="text-xs text-[var(--color-success)]">{t('common.copied')}</p>}
+
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-4 space-y-3">
+                <h4 className="text-xs font-semibold text-[var(--color-text-primary)]">{t('settings.integrationCheck')}</h4>
+                <p className="text-[11px] text-[var(--color-text-muted)]">{t('settings.integrationCheckDesc')}</p>
+                <pre className="text-[10px] leading-relaxed overflow-x-auto rounded bg-[var(--color-bg-primary)] border border-[var(--color-border)] p-2 text-[var(--color-text-secondary)]">
+                  {agentCheckScript}
+                </pre>
+                <button
+                  onClick={async () => {
+                    try {
+                      await navigator.clipboard.writeText(agentCheckScript)
+                      setCheckCopied(true)
+                      setTimeout(() => setCheckCopied(false), 2000)
+                    } catch {
+                      setCheckCopied(false)
+                    }
+                  }}
+                  className="h-8 px-3 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[11px] text-[var(--color-text-secondary)] inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                >
+                  <Copy className="w-3.5 h-3.5" />
+                  {t('settings.copyIntegrationCheck')}
+                </button>
+                {checkCopied && <p className="text-xs text-[var(--color-success)]">{t('common.copied')}</p>}
+              </div>
             </div>
           )}
         </div>

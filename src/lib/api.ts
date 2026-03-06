@@ -4,6 +4,7 @@ import type {
   Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics,
 } from './types'
 import { getSessionHooks } from './auth-session'
+import { reportApiError } from './errors'
 
 let baseUrl = ''
 let refreshInFlight: Promise<string | null> | null = null
@@ -18,9 +19,13 @@ function authHeaders(token: string): Record<string, string> {
 
 async function parseAPIResponse<T>(res: Response): Promise<APIResponse<T>> {
   try {
-    return await res.json()
+    const parsed = await res.json()
+    if (!parsed.ok) reportApiError(parsed)
+    return parsed
   } catch {
-    return { ok: false, error: `HTTP ${res.status}` } as APIResponse<T>
+    const fallback = { ok: false, error: `HTTP ${res.status}` } as APIResponse<T>
+    reportApiError(fallback)
+    return fallback
   }
 }
 
@@ -118,6 +123,9 @@ export const listConversations = (token: string, archived = false) =>
 
 export const getConversation = (token: string, id: number) =>
   request<Conversation>('GET', `/api/v1/conversations/${id}`, token)
+
+export const getConversationByPublicId = (token: string, publicId: string) =>
+  request<Conversation>('GET', `/api/v1/conversations/public/${encodeURIComponent(publicId)}`, token)
 
 export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
   request<Conversation>('POST', '/api/v1/conversations', token, data)

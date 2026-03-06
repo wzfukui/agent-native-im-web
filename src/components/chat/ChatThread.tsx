@@ -12,7 +12,7 @@ import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage } from '@/lib/cache'
+import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
 import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
@@ -247,6 +247,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         mentions,
         reply_to: currentReplyTo?.id,
         created_at: new Date().toISOString(),
+        attempts: 0,
+        sync_state: state,
       })
       setOptimisticState(tempId, queuedId ? state : 'failed')
     }
@@ -325,6 +327,12 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     }
 
     setOptimisticState(tempId, 'sending')
+    await updateOutboxMessage(item.id, {
+      sync_state: 'sending',
+      attempts: (item.attempts || 0) + 1,
+      last_attempt_at: new Date().toISOString(),
+      last_error: '',
+    })
     const res = await api.sendMessage(token, {
       conversation_id: item.conversation_id,
       content_type: item.content_type || 'text',
@@ -340,6 +348,11 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       await deleteOutboxMessage(item.id)
     } else {
       setOptimisticState(tempId, 'failed')
+      await updateOutboxMessage(item.id, {
+        sync_state: 'failed',
+        last_attempt_at: new Date().toISOString(),
+        last_error: typeof res.error === 'string' ? res.error : (res.error?.message || 'send failed'),
+      })
     }
   }, [token, replaceOptimisticMessage, setOptimisticState])
 

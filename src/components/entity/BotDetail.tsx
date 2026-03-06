@@ -49,6 +49,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [rotatingToken, setRotatingToken] = useState(false)
   const [rotatedToken, setRotatedToken] = useState<string | null>(null)
   const [opError, setOpError] = useState<string | null>(null)
+  const [opInfo, setOpInfo] = useState<string | null>(null)
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false)
 
   // Load conversations
   useEffect(() => {
@@ -61,6 +63,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setRotatingToken(false)
     setRotatedToken(null)
     setOpError(null)
+    setOpInfo(null)
 
     api.listConversations(token).then((res) => {
       if (cancelled) return
@@ -140,6 +143,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     if (res.ok && res.data?.api_key) {
       setRotatedToken(res.data.api_key)
       handleCopy(res.data.api_key, 'rotated-token')
+      setOpInfo(t('bot.regenerateResult', { count: res.data.disconnected ?? 0 }))
       onRefresh?.()
     } else {
       const detail = typeof res.error === 'string'
@@ -400,6 +404,11 @@ ${createdCredentials.doc}`
                   {opError}
                 </div>
               )}
+              {opInfo && (
+                <div className="rounded-md bg-emerald-500/8 border border-emerald-500/20 p-2 text-[10px] text-emerald-400">
+                  {opInfo}
+                </div>
+              )}
 
               <div className="flex gap-2">
                 <button
@@ -409,7 +418,7 @@ ${createdCredentials.doc}`
                   {copied === 'diag-snapshot' ? t('common.copied') : t('bot.copyOpsSnapshot')}
                 </button>
                 <button
-                  onClick={handleRegenerateToken}
+                  onClick={() => setConfirmRegenerate(true)}
                   disabled={rotatingToken || isDisabled}
                   className="flex-1 py-1.5 rounded-md bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[10px] text-[var(--color-accent)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
                 >
@@ -716,6 +725,14 @@ ${createdCredentials.doc}`
         confirmLabel={t('bot.disableAgent')}
         onConfirm={() => { setConfirmDisable(false); onDisable(bot.id) }}
         onCancel={() => setConfirmDisable(false)}
+      />
+      <ConfirmDialog
+        open={confirmRegenerate}
+        title={t('bot.regenerateToken')}
+        message={t('bot.regenerateConfirm')}
+        confirmLabel={t('bot.regenerateToken')}
+        onConfirm={() => { setConfirmRegenerate(false); handleRegenerateToken() }}
+        onCancel={() => setConfirmRegenerate(false)}
       />
     </div>
   )

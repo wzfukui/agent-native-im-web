@@ -8,6 +8,8 @@ export interface ErrorToastData {
   message: string
   detail?: APIErrorDetail
   timestamp: number
+  category?: 'auth' | 'network' | 'permission' | 'server' | 'unknown'
+  guidanceKey?: string
 }
 
 interface ErrorToastProps {
@@ -59,6 +61,7 @@ function ErrorToastItem({ error, onDismiss }: { error: ErrorToastData; onDismiss
   }, [error])
 
   const detail = error.detail
+  const guidance = error.guidanceKey ? t(error.guidanceKey) : ''
 
   return (
     <div
@@ -69,6 +72,7 @@ function ErrorToastItem({ error, onDismiss }: { error: ErrorToastData; onDismiss
         <AlertCircle size={18} className="text-red-400 mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
           <p className="text-sm text-red-100 font-medium leading-snug">{error.message}</p>
+          {guidance && <p className="text-[11px] text-red-200/80 mt-1">{guidance}</p>}
           {detail && (
             <div className="flex items-center gap-2 mt-1.5 text-[10px] text-red-400/80 font-mono">
               <span className="bg-red-900/50 px-1.5 py-0.5 rounded">{detail.code}</span>

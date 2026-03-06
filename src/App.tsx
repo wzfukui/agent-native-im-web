@@ -24,7 +24,7 @@ import type { WSMessage, Message, Entity, Task, Conversation } from '@/lib/types
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
-import { listOutboxMessages, deleteOutboxMessage } from '@/lib/cache'
+import { listOutboxMessages, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -60,6 +60,9 @@ export default function App() {
   const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
   const [authHandshakeIssue, setAuthHandshakeIssue] = useState(false)
   const [outboxCount, setOutboxCount] = useState(0)
+  const [outboxFailedCount, setOutboxFailedCount] = useState(0)
+  const [outboxLastSyncAt, setOutboxLastSyncAt] = useState<string | null>(null)
+  const [outboxLastError, setOutboxLastError] = useState<string | null>(null)
 
   // ─── Global error handler ────────────────────────────────────
   const pushError = useCallback((parsed: ParsedError) => {
@@ -67,6 +70,8 @@ export default function App() {
       id: `err_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       message: parsed.message,
       detail: parsed.detail,
+      category: parsed.category,
+      guidanceKey: parsed.guidanceKey,
       timestamp: Date.now(),
     }
     setErrorToasts((prev) => [...prev.slice(-4), toast]) // keep max 5
@@ -135,6 +140,11 @@ export default function App() {
     const refreshOutboxCount = async () => {
       const queued = await listOutboxMessages()
       setOutboxCount(queued.length)
+      setOutboxFailedCount(queued.filter((m) => m.sync_state === 'failed').length)
+      const latestErr = queued
+        .filter((m) => !!m.last_error)
+        .sort((a, b) => (b.last_attempt_at || '').localeCompare(a.last_attempt_at || ''))[0]
+      setOutboxLastError(latestErr?.last_error || null)
     }
 
     const flushOutbox = async () => {
@@ -150,6 +160,12 @@ export default function App() {
         for (const item of queued) {
           if (!item.id) continue
           optimistic.setOptimisticState(item.temp_id, 'sending')
+          await updateOutboxMessage(item.id, {
+            sync_state: 'sending',
+            attempts: (item.attempts || 0) + 1,
+            last_attempt_at: new Date().toISOString(),
+            last_error: '',
+          })
           const res = await api.sendMessage(token, {
             conversation_id: item.conversation_id,
             content_type: item.content_type || 'text',
@@ -163,9 +179,19 @@ export default function App() {
           if (res.ok && res.data) {
             optimistic.replaceOptimisticMessage(item.temp_id, res.data)
             await deleteOutboxMessage(item.id)
+            setOutboxLastSyncAt(new Date().toISOString())
             await refreshOutboxCount()
           } else {
             optimistic.setOptimisticState(item.temp_id, navigator.onLine ? 'failed' : 'queued')
+            const detail = typeof res.error === 'string'
+              ? res.error
+              : (res.error?.message || t('connection.syncFailed'))
+            await updateOutboxMessage(item.id, {
+              sync_state: navigator.onLine ? 'failed' : 'queued',
+              last_error: detail,
+              last_attempt_at: new Date().toISOString(),
+            })
+            setOutboxLastError(detail)
             // Stop on first failure to avoid busy-looping while server is unavailable.
             break
           }
@@ -185,7 +211,7 @@ export default function App() {
       clearInterval(counterTimer)
       window.removeEventListener('online', onOnline)
     }
-  }, [token, entity])
+  }, [token, entity, t])
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
@@ -280,6 +306,54 @@ export default function App() {
   useEffect(() => {
     document.title = totalUnread > 0 ? `(${totalUnread}) Agent-Native IM` : 'Agent-Native IM'
   }, [totalUnread])
+
+  const retryOutboxNow = useCallback(async () => {
+    if (!token) return
+    if (!navigator.onLine) return
+    const queued = await listOutboxMessages()
+    if (queued.length === 0) return
+    const optimistic = useMessagesStore.getState()
+    for (const item of queued) {
+      if (!item.id) continue
+      optimistic.setOptimisticState(item.temp_id, 'sending')
+      await updateOutboxMessage(item.id, {
+        sync_state: 'sending',
+        attempts: (item.attempts || 0) + 1,
+        last_attempt_at: new Date().toISOString(),
+        last_error: '',
+      })
+      const res = await api.sendMessage(token, {
+        conversation_id: item.conversation_id,
+        content_type: item.content_type || 'text',
+        layers: {
+          summary: item.text.length > 100 ? item.text.slice(0, 100) + '...' : item.text,
+          data: { body: item.text },
+        },
+        mentions: item.mentions,
+        reply_to: item.reply_to,
+      })
+      if (res.ok && res.data) {
+        optimistic.replaceOptimisticMessage(item.temp_id, res.data)
+        await deleteOutboxMessage(item.id)
+        setOutboxLastSyncAt(new Date().toISOString())
+      } else {
+        const detail = typeof res.error === 'string'
+          ? res.error
+          : (res.error?.message || t('connection.syncFailed'))
+        optimistic.setOptimisticState(item.temp_id, 'failed')
+        await updateOutboxMessage(item.id, {
+          sync_state: 'failed',
+          last_error: detail,
+          last_attempt_at: new Date().toISOString(),
+        })
+        setOutboxLastError(detail)
+        break
+      }
+    }
+    const refreshed = await listOutboxMessages()
+    setOutboxCount(refreshed.length)
+    setOutboxFailedCount(refreshed.filter((m) => m.sync_state === 'failed').length)
+  }, [token, t])
 
   // ─── WebSocket connection ──────────────────────────────────────
   useEffect(() => {
@@ -675,7 +749,15 @@ export default function App() {
   // ─── Main layout ───────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
-      <ConnectionStatusBar ws={wsClient} authIssue={authHandshakeIssue} outboxCount={outboxCount} />
+      <ConnectionStatusBar
+        ws={wsClient}
+        authIssue={authHandshakeIssue}
+        outboxCount={outboxCount}
+        outboxFailedCount={outboxFailedCount}
+        lastSyncAt={outboxLastSyncAt}
+        lastError={outboxLastError}
+        onRetryNow={retryOutboxNow}
+      />
       <div className="flex-1 flex min-h-0">
       {/* Icon sidebar */}
       <Sidebar
