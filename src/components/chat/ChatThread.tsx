@@ -12,6 +12,7 @@ import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, cn } from '@/lib/utils'
+import { cacheMessages, getCachedMessages, enqueueOutboxMessage } from '@/lib/cache'
 import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
@@ -132,10 +133,15 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     setInitialLastRead(undefined)
     const load = async () => {
       setLoading(true)
+      const cached = await getCachedMessages(conversation.id)
+      if (!cancelled && cached.length > 0) {
+        setMessages(conversation.id, cached, true)
+      }
       const res = await api.listMessages(token, conversation.id)
       if (!cancelled && res.ok && res.data) {
         const msgs = (res.data.messages || []).reverse()
         setMessages(conversation.id, msgs, res.data.has_more)
+        void cacheMessages(conversation.id, msgs)
         // Capture last-read position for new message divider
         const unread = conversation.unread_count ?? 0
         if (unread > 0 && msgs.length > unread) {
@@ -147,6 +153,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     load()
     return () => { cancelled = true }
   }, [conversation.id, token])
+
+  // Persist in-memory messages for offline read
+  useEffect(() => {
+    if (messages.length > 0) {
+      void cacheMessages(conversation.id, messages)
+    }
+  }, [conversation.id, messages])
 
   // Mark as read when viewing messages (debounced to avoid excessive API calls)
   useEffect(() => {
@@ -224,6 +237,23 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     // Add optimistic message immediately
     addOptimisticMessage(tempId, optimisticMsg)
 
+    const queueForOffline = async () => {
+      await enqueueOutboxMessage({
+        temp_id: tempId,
+        conversation_id: conversation.id,
+        content_type: 'text',
+        text,
+        mentions,
+        reply_to: currentReplyTo?.id,
+        created_at: new Date().toISOString(),
+      })
+    }
+
+    if (!navigator.onLine) {
+      await queueForOffline()
+      return
+    }
+
     try {
       let attachments: { type: string; url: string; filename: string; mime_type: string; size: number }[] = []
 
@@ -269,12 +299,18 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         // Replace optimistic message with real message
         replaceOptimisticMessage(tempId, res.data)
       } else {
-        // Remove optimistic message on error
-        removeOptimisticMessage(tempId, conversation.id)
+        if (files && files.length > 0) {
+          removeOptimisticMessage(tempId, conversation.id)
+        } else {
+          await queueForOffline()
+        }
       }
     } catch (error) {
-      // Remove optimistic message on error
-      removeOptimisticMessage(tempId, conversation.id)
+      if (files && files.length > 0) {
+        removeOptimisticMessage(tempId, conversation.id)
+      } else {
+        await queueForOffline()
+      }
     }
   }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage])
 

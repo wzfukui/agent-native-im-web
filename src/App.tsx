@@ -24,6 +24,7 @@ import type { WSMessage, Message, Entity, Task, Conversation } from '@/lib/types
 import { Zap } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
+import { listOutboxMessages, deleteOutboxMessage } from '@/lib/cache'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -48,6 +49,7 @@ export default function App() {
   const wsRef = useRef<AnimpWebSocket | null>(null)
   const [wsClient, setWsClient] = useState<AnimpWebSocket | null>(null)
   const lastWSRefreshAttemptRef = useRef(0)
+  const flushingOutboxRef = useRef(false)
   const [botEntities, setBotEntities] = useState<Entity[]>([])
   const [typingMap, setTypingMap] = useState<Map<number, Map<number, { name: string; expiresAt: number; isProcessing?: boolean; phase?: string }>>>(new Map())
   const [showSettings, setShowSettings] = useState(false)
@@ -123,6 +125,54 @@ export default function App() {
     refreshIfNeeded()
     return () => clearInterval(timer)
   }, [token, entity, setToken, logout, decodeJwtExp])
+
+  // ─── Flush offline outbox when back online ────────────────────
+  useEffect(() => {
+    if (!token || !entity || entity.entity_type !== 'user') return
+
+    const flushOutbox = async () => {
+      if (!navigator.onLine) return
+      if (flushingOutboxRef.current) return
+      flushingOutboxRef.current = true
+      const queued = await listOutboxMessages()
+      try {
+        if (queued.length === 0) return
+
+        const optimistic = useMessagesStore.getState()
+        for (const item of queued) {
+          if (!item.id) continue
+          const res = await api.sendMessage(token, {
+            conversation_id: item.conversation_id,
+            content_type: item.content_type || 'text',
+            layers: {
+              summary: item.text.length > 100 ? item.text.slice(0, 100) + '...' : item.text,
+              data: { body: item.text },
+            },
+            mentions: item.mentions,
+            reply_to: item.reply_to,
+          })
+          if (res.ok && res.data) {
+            optimistic.replaceOptimisticMessage(item.temp_id, res.data)
+            await deleteOutboxMessage(item.id)
+          } else {
+            // Stop on first failure to avoid busy-looping while server is unavailable.
+            break
+          }
+        }
+      } finally {
+        flushingOutboxRef.current = false
+      }
+    }
+
+    void flushOutbox()
+    const onOnline = () => { void flushOutbox() }
+    const timer = setInterval(() => { void flushOutbox() }, 15000)
+    window.addEventListener('online', onOnline)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('online', onOnline)
+    }
+  }, [token, entity])
 
   // ─── Load bot entities for BotDetail ──────────────────────────
   const loadBotEntities = useCallback(async () => {
