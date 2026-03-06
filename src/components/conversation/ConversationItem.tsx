@@ -4,7 +4,7 @@ import { cn, entityDisplayName, formatTime, truncate } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useConversationsStore } from '@/store/conversations'
 import type { Conversation } from '@/lib/types'
-import { Users, Pencil, Check, X, VolumeX, LogOut, Archive } from 'lucide-react'
+import { Users, Pencil, Check, X, VolumeX, LogOut, Archive, Pin, PinOff } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 
@@ -17,10 +17,12 @@ interface Props {
   onLeave?: (id: number) => void
   onArchive?: (id: number) => void
   onUnarchive?: (id: number) => void
+  onPin?: (id: number) => void
+  onUnpin?: (id: number) => void
   isArchived?: boolean
 }
 
-export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, onLeave, onArchive, onUnarchive, isArchived }: Props) {
+export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, onLeave, onArchive, onUnarchive, onPin, onUnpin, isArchived }: Props) {
   const { t } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(conv.title || '')
@@ -166,6 +168,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
                 active ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-primary)]/90',
               )}>
                 {title}
+                {myParticipant?.pinned_at && <Pin className="w-3 h-3 text-[var(--color-accent)] flex-shrink-0" />}
                 {muted && <VolumeX className="w-3 h-3 text-[var(--color-text-muted)] flex-shrink-0" />}
               </span>
             )}
@@ -212,6 +215,23 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
           className="fixed z-50 min-w-[160px] py-1 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl shadow-xl shadow-black/20"
           style={{ left: menuPos.x, top: menuPos.y }}
         >
+          {!isArchived && (myParticipant?.pinned_at ? (
+            <button
+              onClick={() => { setShowMenu(false); onUnpin?.(conv.id) }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
+            >
+              <PinOff className="w-3.5 h-3.5" />
+              {t('conversation.unpin')}
+            </button>
+          ) : (
+            <button
+              onClick={() => { setShowMenu(false); onPin?.(conv.id) }}
+              className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
+            >
+              <Pin className="w-3.5 h-3.5" />
+              {t('conversation.pin')}
+            </button>
+          ))}
           <button
             onClick={() => { toggleMute(conv.id); setShowMenu(false) }}
             className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"

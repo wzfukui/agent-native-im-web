@@ -57,6 +57,8 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
   const renderBotItem = (entity: Entity, isDisabled: boolean) => {
     const isOnline = online.has(entity.id)
     const isActive = entity.id === selectedId
+    const meta = entity.metadata as Record<string, unknown> | undefined
+    const tags = (meta?.tags as string[]) || []
     return (
       <button
         key={entity.id}
@@ -83,6 +85,18 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
               <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>
             )}
           </p>
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-0.5 mt-0.5">
+              {tags.slice(0, 3).map((tag, i) => (
+                <span key={i} className="px-1 py-px rounded bg-[var(--color-bot)]/8 text-[var(--color-bot)] text-[9px]">
+                  {tag}
+                </span>
+              ))}
+              {tags.length > 3 && (
+                <span className="text-[9px] text-[var(--color-text-muted)]">+{tags.length - 3}</span>
+              )}
+            </div>
+          )}
         </div>
       </button>
     )

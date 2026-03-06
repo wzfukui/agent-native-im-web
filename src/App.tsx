@@ -297,6 +297,12 @@ export default function App() {
           break
         }
 
+        case 'entity.config': {
+          // Subscription config push — currently informational for frontend
+          // Could be used to show subscription mode indicators in the UI
+          break
+        }
+
         case 'typing': {
           const typData = msg.data as { conversation_id?: number; entity_id?: number; entity_name?: string; is_processing?: boolean; phase?: string }
           if (typData?.conversation_id && typData?.entity_id && typData.entity_id !== entity?.id) {
@@ -458,6 +464,35 @@ export default function App() {
     }
   }, [token, loadConversations])
 
+  const handlePinConversation = useCallback(async (convId: number) => {
+    if (!token || !entity) return
+    const res = await api.pinConversation(token, convId)
+    if (res.ok) {
+      // Update local participant data with pinned_at
+      const conv = conversations.find((c) => c.id === convId)
+      if (conv) {
+        const updated = { ...conv, participants: conv.participants?.map((p) =>
+          p.entity_id === entity.id ? { ...p, pinned_at: new Date().toISOString() } : p
+        )}
+        updateConversation(convId, updated)
+      }
+    }
+  }, [token, entity, conversations])
+
+  const handleUnpinConversation = useCallback(async (convId: number) => {
+    if (!token || !entity) return
+    const res = await api.unpinConversation(token, convId)
+    if (res.ok) {
+      const conv = conversations.find((c) => c.id === convId)
+      if (conv) {
+        const updated = { ...conv, participants: conv.participants?.map((p) =>
+          p.entity_id === entity.id ? { ...p, pinned_at: undefined } : p
+        )}
+        updateConversation(convId, updated)
+      }
+    }
+  }, [token, entity, conversations])
+
   // ─── Archived conversation view ─────────────────────────────────
   const [archivedConv, setArchivedConv] = useState<Conversation | null>(null)
 
@@ -539,6 +574,8 @@ export default function App() {
                 onLeave={handleLeaveConversation}
                 onArchive={handleArchiveConversation}
                 onUnarchive={handleUnarchiveConversation}
+                onPin={handlePinConversation}
+                onUnpin={handleUnpinConversation}
                 archiveRefresh={archiveRefresh}
               />
             ) : (
@@ -601,10 +638,36 @@ export default function App() {
                   <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-bot)]/10 flex items-center justify-center">
                     <Zap className="w-10 h-10 text-[var(--color-accent)] opacity-40" />
                   </div>
-                  <div className="text-center">
-                    <p className="text-base font-medium text-[var(--color-text-secondary)]">Agent-Native IM</p>
-                    <p className="text-xs mt-1">{t('app.selectConversation')}</p>
-                  </div>
+                  {conversations.length === 0 ? (
+                    <div className="text-center space-y-4">
+                      <p className="text-base font-medium text-[var(--color-text-secondary)]">{t('app.welcomeTitle')}</p>
+                      <div className="space-y-3">
+                        <div className="flex flex-col items-center gap-1">
+                          <p className="text-xs">{t('app.welcomeStep1')}</p>
+                          <button
+                            onClick={() => setViewMode('bots')}
+                            className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] cursor-pointer"
+                          >
+                            {t('app.welcomeStep1Action')} →
+                          </button>
+                        </div>
+                        <div className="flex flex-col items-center gap-1">
+                          <p className="text-xs">{t('app.welcomeStep2')}</p>
+                          <button
+                            onClick={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+                            className="text-xs text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] cursor-pointer"
+                          >
+                            {t('app.welcomeStep2Action')} →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-base font-medium text-[var(--color-text-secondary)]">Agent-Native IM</p>
+                      <p className="text-xs mt-1">{t('app.selectConversation')}</p>
+                    </div>
+                  )}
                 </div>
               )
             ) : (

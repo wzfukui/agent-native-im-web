@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Plus, MessageSquare, Archive, ChevronDown, ChevronRight } from 'lucide-react'
 import { ConversationItem } from './ConversationItem'
@@ -16,10 +16,12 @@ interface Props {
   onLeave?: (id: number) => void
   onArchive?: (id: number) => void
   onUnarchive?: (id: number) => void
+  onPin?: (id: number) => void
+  onUnpin?: (id: number) => void
   archiveRefresh?: number
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation, onLeave, onArchive, onUnarchive, archiveRefresh }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, archiveRefresh }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
@@ -40,15 +42,29 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
     if (archivedOpen) loadArchived()
   }, [archivedOpen, loadArchived, archiveRefresh])
 
+  // Sort conversations: pinned first, then by last message time (newest first)
+  const sorted = useMemo(() => {
+    return [...conversations].sort((a, b) => {
+      const pinnedA = a.participants?.find((p) => p.entity_id === myEntityId)?.pinned_at
+      const pinnedB = b.participants?.find((p) => p.entity_id === myEntityId)?.pinned_at
+      // Pinned conversations come first
+      if (pinnedA && !pinnedB) return -1
+      if (!pinnedA && pinnedB) return 1
+      const timeA = a.last_message?.created_at || a.updated_at || a.created_at
+      const timeB = b.last_message?.created_at || b.updated_at || b.created_at
+      return new Date(timeB).getTime() - new Date(timeA).getTime()
+    })
+  }, [conversations, myEntityId])
+
   const filtered = search
-    ? conversations.filter((c) =>
+    ? sorted.filter((c) =>
         c.title?.toLowerCase().includes(search.toLowerCase()) ||
         c.participants?.some((p) =>
           p.entity?.display_name?.toLowerCase().includes(search.toLowerCase()) ||
           p.entity?.name?.toLowerCase().includes(search.toLowerCase())
         )
       )
-    : conversations
+    : sorted
 
   return (
     <div className="flex flex-col h-full">
@@ -94,6 +110,8 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
               onUpdate={onUpdateConversation}
               onLeave={onLeave}
               onArchive={onArchive}
+              onPin={onPin}
+              onUnpin={onUnpin}
             />
           ))
         )}

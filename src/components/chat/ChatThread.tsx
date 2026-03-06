@@ -50,6 +50,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const [showMembers, setShowMembers] = useState(false)
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [initialLastRead, setInitialLastRead] = useState<number | undefined>(undefined)
   const dragCountRef = useRef(0)
   const updateConversation = useConversationsStore((s) => s.updateConversation)
   const online = usePresenceStore((s) => s.online)
@@ -94,22 +95,52 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     [streams, conversation.id],
   )
 
+  // Save draft before switching away, restore on switch
+  const prevConvIdRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    // Restore draft for new conversation
+    try {
+      const raw = localStorage.getItem(`draft:${conversation.id}`)
+      if (raw) {
+        const draft = JSON.parse(raw)
+        if (draft.replyTo) setReplyTo(draft.replyTo)
+      }
+    } catch {}
+
+    return () => {
+      // Will be saved by MessageComposer's own draft logic
+    }
+  }, [conversation.id])
+
   // Reset search and reply state on conversation switch
   useEffect(() => {
-    setSearching(false)
-    setSearchQuery('')
-    setSearchResults(null)
-    setReplyTo(null)
+    if (prevConvIdRef.current !== null && prevConvIdRef.current !== conversation.id) {
+      setSearching(false)
+      setSearchQuery('')
+      setSearchResults(null)
+      // replyTo is restored from draft above, only reset if no draft
+      const raw = localStorage.getItem(`draft:${conversation.id}`)
+      if (!raw) setReplyTo(null)
+    }
+    prevConvIdRef.current = conversation.id
   }, [conversation.id])
 
   // Load messages
   useEffect(() => {
     let cancelled = false
+    setInitialLastRead(undefined)
     const load = async () => {
       setLoading(true)
       const res = await api.listMessages(token, conversation.id)
       if (!cancelled && res.ok && res.data) {
-        setMessages(conversation.id, (res.data.messages || []).reverse(), res.data.has_more)
+        const msgs = (res.data.messages || []).reverse()
+        setMessages(conversation.id, msgs, res.data.has_more)
+        // Capture last-read position for new message divider
+        const unread = conversation.unread_count ?? 0
+        if (unread > 0 && msgs.length > unread) {
+          setInitialLastRead(msgs[msgs.length - 1 - unread].id)
+        }
       }
       setLoading(false)
     }
@@ -166,6 +197,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     // Capture reply target before clearing
     const currentReplyTo = replyTo
     setReplyTo(null)
+    // Clear draft on send
+    localStorage.removeItem(`draft:${conversation.id}`)
 
     // Generate a temporary ID for optimistic message
     const tempId = `temp-${Date.now()}-${Math.random()}`
@@ -454,6 +487,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           myEntityId={myEntity.id}
           loading={searchResults !== null ? searchLoading : loading}
           hasMore={searchResults !== null ? false : hasMore}
+          lastReadMessageId={searchResults ? undefined : initialLastRead}
           onLoadMore={searchResults !== null ? undefined : handleLoadMore}
           onInteractionReply={handleInteractionReply}
           onRevoke={isArchived ? undefined : handleRevoke}
@@ -492,6 +526,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
       {/* Composer */}
       <MessageComposer
+        conversationId={conversation.id}
         onSend={handleSend}
         onAudioSend={handleAudioSend}
         onTyping={onTyping ? () => onTyping(conversation.id) : undefined}

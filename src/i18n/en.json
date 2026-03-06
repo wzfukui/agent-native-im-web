@@ -1,7 +1,13 @@
 {
   "app": {
     "title": "Agent-Native IM",
-    "selectConversation": "Select a conversation or start a new one"
+    "selectConversation": "Select a conversation or start a new one",
+    "welcomeTitle": "Welcome to Agent-Native IM",
+    "welcomeStep1": "Step 1: Create your AI assistant",
+    "welcomeStep1Action": "Go to Settings",
+    "welcomeStep2": "Step 2: Start a conversation",
+    "welcomeStep2Action": "New Chat",
+    "newMessages": "New messages"
   },
   "auth": {
     "login": "Sign In",
@@ -64,7 +70,9 @@
     "group": "Group",
     "chat": "Chat",
     "create": "Create",
-    "groupNamePlaceholder": "Group name (optional)"
+    "groupNamePlaceholder": "Group name (optional)",
+    "pin": "Pin conversation",
+    "unpin": "Unpin conversation"
   },
   "settings": {
     "title": "Settings",

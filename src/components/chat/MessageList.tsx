@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageBubble } from './MessageBubble'
 import { Loader2 } from 'lucide-react'
@@ -9,6 +9,7 @@ interface Props {
   myEntityId: number
   loading?: boolean
   hasMore?: boolean
+  lastReadMessageId?: number
   onLoadMore?: () => void
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
@@ -16,7 +17,7 @@ interface Props {
   onReact?: (msgId: number, emoji: string) => void
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore, onInteractionReply, onRevoke, onReply, onReact }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, onLoadMore, onInteractionReply, onRevoke, onReply, onReact }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -84,20 +85,39 @@ export function MessageList({ messages, myEntityId, loading, hasMore, onLoadMore
 
       {/* Messages */}
       <div className="space-y-2.5">
-        {messages.map((msg, i) => (
-          <MessageBubble
-            key={msg.id}
-            message={msg}
-            isSelf={msg.sender_id === myEntityId}
-            myEntityId={myEntityId}
-            showSender={shouldShowSender(msg, i)}
-            replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
-            onInteractionReply={onInteractionReply}
-            onRevoke={onRevoke}
-            onReply={onReply}
-            onReact={onReact}
-          />
-        ))}
+        {messages.map((msg, i) => {
+          // Show new message divider after lastReadMessageId
+          const showDivider = lastReadMessageId != null &&
+            i > 0 &&
+            messages[i - 1].id === lastReadMessageId &&
+            msg.id !== lastReadMessageId &&
+            msg.sender_id !== myEntityId
+
+          return (
+            <div key={msg.id}>
+              {showDivider && (
+                <div className="flex items-center gap-3 py-2">
+                  <div className="flex-1 h-px bg-[var(--color-accent)]/30" />
+                  <span className="text-[10px] text-[var(--color-accent)] font-medium flex-shrink-0">
+                    {t('app.newMessages')}
+                  </span>
+                  <div className="flex-1 h-px bg-[var(--color-accent)]/30" />
+                </div>
+              )}
+              <MessageBubble
+                message={msg}
+                isSelf={msg.sender_id === myEntityId}
+                myEntityId={myEntityId}
+                showSender={shouldShowSender(msg, i)}
+                replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
+                onInteractionReply={onInteractionReply}
+                onRevoke={onRevoke}
+                onReply={onReply}
+                onReact={onReact}
+              />
+            </div>
+          )
+        })}
       </div>
 
       <div ref={endRef} />

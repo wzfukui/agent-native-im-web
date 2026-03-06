@@ -11,7 +11,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus,
 } from 'lucide-react'
 
 function AudioPlayer({ url, duration: totalDuration }: { url?: string; duration?: number }) {
@@ -99,6 +99,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   const { t } = useTranslation()
   const [showThinking, setShowThinking] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
+  const [showQuickReact, setShowQuickReact] = useState(false)
   const layers = message.layers || {}
   const isRevoked = !!message.revoked_at
   const isBot = message.sender_type === 'bot' || message.sender_type === 'service'
@@ -109,6 +110,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000
 
   const canReply = !isRevoked && onReply
+  const canReact = !isRevoked && onReact
 
   // Revoked message
   if (isRevoked) {
@@ -321,7 +323,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           </div>
 
           {/* Action buttons */}
-          <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all flex-shrink-0', isSelf ? 'flex-row-reverse' : '')}>
+          <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all flex-shrink-0 relative', isSelf ? 'flex-row-reverse' : '')}>
             {canReply && (
               <button
                 onClick={() => onReply!(message)}
@@ -329,6 +331,15 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 title={t('chat.reply')}
               >
                 <Reply className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
+              </button>
+            )}
+            {canReact && (
+              <button
+                onClick={() => setShowQuickReact(!showQuickReact)}
+                className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
+                title={t('chat.addReaction')}
+              >
+                <SmilePlus className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
               </button>
             )}
             {canRevoke && (
@@ -339,6 +350,26 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
               >
                 <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
               </button>
+            )}
+            {/* Quick emoji picker */}
+            {showQuickReact && (
+              <>
+                <div className="fixed inset-0 z-10" onClick={() => setShowQuickReact(false)} />
+                <div className={cn(
+                  'absolute z-20 bottom-full mb-1 flex items-center gap-0.5 px-2 py-1.5 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg',
+                  isSelf ? 'right-0' : 'left-0',
+                )}>
+                  {['👍', '❤️', '😂', '🎉', '🤔', '👀'].map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => { onReact!(message.id, emoji); setShowQuickReact(false) }}
+                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-base cursor-pointer"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </div>
         </div>

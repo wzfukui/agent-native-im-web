@@ -28,6 +28,7 @@ export interface Participant {
   subscription_mode: SubscriptionMode
   context_window?: number
   joined_at: string
+  pinned_at?: string
   entity?: Entity
 }
 
@@ -127,6 +128,7 @@ export type WSEventType =
   | 'entity.online'
   | 'entity.offline'
   | 'entity.status_update'
+  | 'entity.config'
   | 'typing'
   | 'pong'
 

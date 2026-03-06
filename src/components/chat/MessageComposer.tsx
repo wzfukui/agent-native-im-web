@@ -7,6 +7,7 @@ import { useAudioRecorder } from '@/lib/use-audio-recorder'
 import type { Participant, Message } from '@/lib/types'
 
 interface Props {
+  conversationId?: number
   onSend: (text: string, attachments?: File[], mentions?: number[]) => void
   onAudioSend?: (blob: Blob, duration: number) => void
   onFileUpload?: (file: File) => Promise<string | null>
@@ -19,13 +20,46 @@ interface Props {
   onCancelReply?: () => void
 }
 
-export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, replyTo, onCancelReply }: Props) {
+export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, replyTo, onCancelReply }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
   const [mentionIds, setMentionIds] = useState<number[]>([])
   const { state: recState, duration: recDuration, start: recStart, stop: recStop, cancel: recCancel } = useAudioRecorder()
+  const prevConvIdRef = useRef<number | undefined>(undefined)
+
+  // Draft save/restore per conversation
+  useEffect(() => {
+    if (!conversationId) return
+    // Save previous conversation's draft
+    if (prevConvIdRef.current !== undefined && prevConvIdRef.current !== conversationId) {
+      const prevText = text.trim()
+      if (prevText) {
+        localStorage.setItem(`draft:${prevConvIdRef.current}`, JSON.stringify({
+          text: prevText,
+          replyTo: replyTo ? { id: replyTo.id, sender: replyTo.sender, layers: replyTo.layers } : null,
+        }))
+      } else {
+        localStorage.removeItem(`draft:${prevConvIdRef.current}`)
+      }
+    }
+    // Restore new conversation's draft
+    try {
+      const raw = localStorage.getItem(`draft:${conversationId}`)
+      if (raw) {
+        const draft = JSON.parse(raw)
+        setText(draft.text || '')
+      } else {
+        setText('')
+      }
+    } catch {
+      setText('')
+    }
+    setFiles([])
+    setMentionIds([])
+    prevConvIdRef.current = conversationId
+  }, [conversationId])
 
   // @mention autocomplete state
   const [mentionQuery, setMentionQuery] = useState<string | null>(null)
@@ -100,8 +134,9 @@ export function MessageComposer({ onSend, onAudioSend, onFileUpload, onTyping, d
     setFiles([])
     setMentionIds([])
     setMentionQuery(null)
+    if (conversationId) localStorage.removeItem(`draft:${conversationId}`)
     textareaRef.current?.focus()
-  }, [text, files, mentionIds, onSend])
+  }, [text, files, mentionIds, onSend, conversationId])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Handle mention autocomplete navigation

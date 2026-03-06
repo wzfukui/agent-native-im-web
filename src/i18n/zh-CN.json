@@ -1,7 +1,13 @@
 {
   "app": {
     "title": "Agent-Native IM",
-    "selectConversation": "选择一个会话或创建新会话"
+    "selectConversation": "选择一个会话或创建新会话",
+    "welcomeTitle": "欢迎使用 Agent-Native IM",
+    "welcomeStep1": "第一步：创建你的 AI 助手",
+    "welcomeStep1Action": "前往设置",
+    "welcomeStep2": "第二步：开始一段对话",
+    "welcomeStep2Action": "新建会话",
+    "newMessages": "以下是新消息"
   },
   "auth": {
     "login": "登录",
@@ -64,7 +70,9 @@
     "group": "群组",
     "chat": "聊天",
     "create": "创建",
-    "groupNamePlaceholder": "群组名称（可选）"
+    "groupNamePlaceholder": "群组名称（可选）",
+    "pin": "置顶会话",
+    "unpin": "取消置顶"
   },
   "settings": {
     "title": "设置",

@@ -187,6 +187,12 @@ export const archiveConversation = (token: string, convId: number) =>
 export const unarchiveConversation = (token: string, convId: number) =>
   request('POST', `/api/v1/conversations/${convId}/unarchive`, token)
 
+export const pinConversation = (token: string, convId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/pin`, token)
+
+export const unpinConversation = (token: string, convId: number) =>
+  request('POST', `/api/v1/conversations/${convId}/unpin`, token)
+
 // Interaction response
 export const respondToInteraction = (token: string, msgId: number, value: string) =>
   request('POST', `/api/v1/messages/${msgId}/respond`, token, { value })
