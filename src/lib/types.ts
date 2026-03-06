@@ -34,6 +34,7 @@ export interface Participant {
 
 export interface Conversation {
   id: number
+  public_id?: string
   conv_type: ConvType
   title: string
   description: string
@@ -128,6 +129,7 @@ export interface EntityDiagnostics {
   online: boolean
   connections: number
   disconnect_count: number
+  forced_disconnect_count?: number
   last_seen?: string
   devices: { device_id: string; device_info: string; entity_id: number }[]
   credentials: { has_bootstrap: boolean; has_api_key: boolean }

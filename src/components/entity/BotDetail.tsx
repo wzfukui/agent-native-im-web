@@ -42,12 +42,13 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [confirmDisable, setConfirmDisable] = useState(false)
   const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)
   const [selfCheck, setSelfCheck] = useState<{ ready: boolean; recommendation: string[]; has_api_key: boolean; has_bootstrap: boolean } | null>(null)
-  const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; disconnect_count: number; last_seen?: string; hub: { total_ws_connections: number } } | null>(null)
+  const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; disconnect_count: number; forced_disconnect_count?: number; last_seen?: string; hub: { total_ws_connections: number } } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
   const [docExpanded, setDocExpanded] = useState(false)
   const [rotatingToken, setRotatingToken] = useState(false)
   const [rotatedToken, setRotatedToken] = useState<string | null>(null)
+  const [opError, setOpError] = useState<string | null>(null)
 
   // Load conversations
   useEffect(() => {
@@ -59,6 +60,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setDocExpanded(false)
     setRotatingToken(false)
     setRotatedToken(null)
+    setOpError(null)
 
     api.listConversations(token).then((res) => {
       if (cancelled) return
@@ -102,8 +104,13 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     return () => { cancelled = true }
   }, [bot?.id, token])
 
-  const handleCopy = (text: string, label: string) => {
-    navigator.clipboard.writeText(text).catch(() => {})
+  const handleCopy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+    } catch {
+      setOpError(t('common.copyFailed'))
+      return
+    }
     setCopied(label)
     setTimeout(() => setCopied(false), 2000)
   }
@@ -128,11 +135,17 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const handleRegenerateToken = async () => {
     if (!bot || rotatingToken) return
     setRotatingToken(true)
+    setOpError(null)
     const res = await api.regenerateEntityToken(token, bot.id)
     if (res.ok && res.data?.api_key) {
       setRotatedToken(res.data.api_key)
       handleCopy(res.data.api_key, 'rotated-token')
       onRefresh?.()
+    } else {
+      const detail = typeof res.error === 'string'
+        ? res.error
+        : (res.error?.message || t('common.errorUnexpected'))
+      setOpError(detail)
     }
     setRotatingToken(false)
   }
@@ -190,6 +203,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     `hub_ws_total=${diagnostics?.hub?.total_ws_connections ?? 0}`,
     `last_seen=${lastSeen || 'n/a'}`,
     `disconnect_count=${diagnostics?.disconnect_count ?? 0}`,
+    `forced_disconnect_count=${diagnostics?.forced_disconnect_count ?? 0}`,
     `api_key=${selfCheck?.has_api_key ?? false}`,
     `bootstrap=${selfCheck?.has_bootstrap ?? false}`,
     `ready=${selfCheck?.ready ?? false}`,
@@ -379,6 +393,11 @@ ${createdCredentials.doc}`
                   {(selfCheck?.recommendation || []).map((item, i) => (
                     <p key={i} className="text-[10px] text-[var(--color-text-secondary)] leading-relaxed">• {item}</p>
                   ))}
+                </div>
+              )}
+              {opError && (
+                <div className="rounded-md bg-red-500/8 border border-red-500/20 p-2 text-[10px] text-red-400">
+                  {opError}
                 </div>
               )}
 

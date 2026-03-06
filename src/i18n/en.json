@@ -297,6 +297,7 @@
     "errorUnexpected": "An unexpected error occurred",
     "reload": "Reload",
     "copyDiagnostic": "Copy Diagnostic Info",
+    "copyFailed": "Copy failed",
     "copied": "Copied!",
     "errorCode": "Error Code",
     "requestId": "Request ID",

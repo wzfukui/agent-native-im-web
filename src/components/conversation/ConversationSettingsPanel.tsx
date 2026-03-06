@@ -41,6 +41,9 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   const [confirmLeave, setConfirmLeave] = useState(false)
   const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
   const [idCopied, setIdCopied] = useState(false)
+  const [idCopyError, setIdCopyError] = useState<string | null>(null)
+  const publicId = (conversation.metadata as Record<string, unknown> | undefined)?.public_id
+  const displayConversationId = (typeof publicId === 'string' && publicId) || conversation.public_id || String(conversation.id)
 
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
@@ -156,13 +159,19 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
           <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.conversationId')}</label>
           <div className="flex items-center gap-2 mt-1">
             <code className="text-xs text-[var(--color-text-secondary)] font-mono bg-[var(--color-bg-tertiary)] px-2 py-0.5 rounded">
-              {conversation.id}
+              {displayConversationId}
             </code>
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(String(conversation.id))
-                setIdCopied(true)
-                setTimeout(() => setIdCopied(false), 2000)
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(displayConversationId)
+                  setIdCopyError(null)
+                  setIdCopied(true)
+                  setTimeout(() => setIdCopied(false), 2000)
+                } catch {
+                  setIdCopied(false)
+                  setIdCopyError(t('common.copyFailed'))
+                }
               }}
               className="p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-colors"
               title={t('settings.conversationId')}
@@ -173,6 +182,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
               }
             </button>
             {idCopied && <span className="text-[10px] text-[var(--color-success)]">{t('settings.idCopied')}</span>}
+            {idCopyError && <span className="text-[10px] text-red-400">{idCopyError}</span>}
           </div>
         </div>
 
