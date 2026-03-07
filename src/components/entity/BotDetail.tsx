@@ -254,7 +254,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
                 <div className="flex items-center gap-1.5">
                   <Key className="w-3.5 h-3.5 text-amber-500" />
                   <span className="text-xs font-medium text-amber-500">
-                    {entityDisplayName(createdCredentials.entity)} {t('bot.created')} - Bootstrap Key (需批准)
+                    {entityDisplayName(createdCredentials.entity)} {t('bot.created')} - Bootstrap Key ({t('bot.awaitingApproval')})
                   </span>
                 </div>
                 <button

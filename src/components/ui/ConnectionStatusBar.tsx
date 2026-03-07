@@ -31,17 +31,21 @@ export function ConnectionStatusBar({
   useEffect(() => {
     if (!ws) return
     setConnected(ws.connected)
+    let hideTimer: ReturnType<typeof setTimeout> | null = null
 
     const unsub = ws.onConnectionChange((isConnected) => {
       setConnected(isConnected)
       if (isConnected && wasDisconnected.current) {
         setShowReconnected(true)
-        setTimeout(() => setShowReconnected(false), 2000)
+        hideTimer = setTimeout(() => setShowReconnected(false), 2000)
       }
       wasDisconnected.current = !isConnected
     })
 
-    return unsub
+    return () => {
+      unsub()
+      if (hideTimer) clearTimeout(hideTimer)
+    }
   }, [ws])
 
   useEffect(() => {

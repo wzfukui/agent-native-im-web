@@ -231,7 +231,8 @@
     "regenerateToken": "重新生成 Token",
     "regenerateConfirm": "现在重新生成 Token 吗？旧 API Key 会失效，并断开当前连接会话。",
     "regenerateResult": "Token 已轮换。断开会话数：{{count}}",
-    "copyOpsSnapshot": "复制运维快照"
+    "copyOpsSnapshot": "复制运维快照",
+    "awaitingApproval": "待批准"
   },
   "error": {
     "guidance": {

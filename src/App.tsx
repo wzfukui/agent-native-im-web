@@ -567,13 +567,18 @@ export default function App() {
       if (res.ok && res.data?.token) {
         setToken(res.data.token)
         setAuthHandshakeIssue(false)
-      } else if (typeof res.error === 'string' && (
-        res.error.toLowerCase().includes('invalid token') ||
-        res.error.toLowerCase().includes('missing authorization') ||
-        res.error.toLowerCase().includes('disabled') ||
-        res.error.toLowerCase().includes('forbidden')
-      )) {
-        logout()
+      } else {
+        const errMsg = typeof res.error === 'string'
+          ? res.error
+          : (res.error?.message || '')
+        if (errMsg && (
+          errMsg.toLowerCase().includes('invalid token') ||
+          errMsg.toLowerCase().includes('missing authorization') ||
+          errMsg.toLowerCase().includes('disabled') ||
+          errMsg.toLowerCase().includes('forbidden')
+        )) {
+          logout()
+        }
       }
     })
 
