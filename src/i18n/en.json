@@ -316,6 +316,7 @@
     "create": "Create",
     "dismiss": "Dismiss",
     "noMatches": "No matches",
+    "archived": "Archived",
     "errorTitle": "Something went wrong",
     "errorUnexpected": "An unexpected error occurred",
     "reload": "Reload",
