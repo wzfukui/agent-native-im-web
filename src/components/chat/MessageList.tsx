@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { MessageBubble } from './MessageBubble'
 import { Loader2 } from 'lucide-react'
 import type { Message } from '@/lib/types'
+import { formatDateSeparator } from '@/lib/utils'
 
 interface Props {
   messages: Message[]
@@ -87,6 +88,11 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
       {/* Messages */}
       <div className="space-y-2.5">
         {messages.map((msg, i) => {
+          // Date separator when day changes
+          const showDateSep = i === 0 || (
+            new Date(msg.created_at).toDateString() !== new Date(messages[i - 1].created_at).toDateString()
+          )
+
           // Show new message divider after lastReadMessageId
           const showDivider = lastReadMessageId != null &&
             i > 0 &&
@@ -96,6 +102,15 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
 
           return (
             <div key={msg.id}>
+              {showDateSep && (
+                <div className="flex items-center gap-3 py-3">
+                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                  <span className="text-[10px] text-[var(--color-text-muted)] font-medium flex-shrink-0">
+                    {formatDateSeparator(msg.created_at)}
+                  </span>
+                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                </div>
+              )}
               {showDivider && (
                 <div className="flex items-center gap-3 py-2">
                   <div className="flex-1 h-px bg-[var(--color-accent)]/30" />

@@ -63,8 +63,9 @@ export function ConnectionStatusBar({
   if (!issue && !(connected && showReconnected)) return null
 
   return (
+    <div className="flex justify-center py-1.5" style={{ animation: 'slide-up 0.2s ease-out' }}>
     <div
-      className={`flex items-center justify-center gap-2 px-4 py-1.5 text-xs font-medium transition-all ${
+      className={`inline-flex items-center gap-2 px-4 py-1 text-xs font-medium rounded-full transition-all shadow-sm ${
         !issue
           ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
           : issue === 'auth'
@@ -99,6 +100,7 @@ export function ConnectionStatusBar({
           {lastError && <span className="opacity-75 truncate max-w-[260px]">{t('connection.lastError', { error: lastError })}</span>}
         </>
       )}
+    </div>
     </div>
   )
 }

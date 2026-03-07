@@ -102,6 +102,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
   const title = conv.title || entityDisplayName(otherParticipant)
   const lastMsg = conv.last_message
   const lastText = lastMsg?.layers?.summary || (lastMsg?.content_type === 'image' ? '[Image]' : lastMsg?.content_type === 'file' ? '[File]' : '')
+  const hasUnread = !muted && (conv.unread_count || 0) > 0
 
   return (
     <>
@@ -113,6 +114,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
           active
             ? 'bg-[var(--color-bg-active)] shadow-sm'
             : 'hover:bg-[var(--color-bg-hover)]',
+          hasUnread && !active && 'border-l-2 border-[var(--color-accent)]',
         )}
       >
         {isGroup ? (
@@ -164,8 +166,9 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
               </div>
             ) : (
               <span className={cn(
-                'text-sm font-medium truncate flex items-center gap-1',
-                active ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-primary)]/90',
+                'text-sm truncate flex items-center gap-1',
+                hasUnread ? 'font-semibold text-[var(--color-text-primary)]' : 'font-medium',
+                !hasUnread && (active ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-primary)]/90'),
               )}>
                 {title}
                 {myParticipant?.pinned_at && <Pin className="w-3 h-3 text-[var(--color-accent)] flex-shrink-0" />}
@@ -187,7 +190,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
             )}
           </div>
           {lastText && (
-            <p className="text-xs text-[var(--color-text-muted)] truncate mt-0.5 leading-relaxed">
+            <p className={cn('text-xs truncate mt-0.5 leading-relaxed', hasUnread ? 'text-[var(--color-text-secondary)]' : 'text-[var(--color-text-muted)]')}>
               {lastMsg?.sender && lastMsg.sender_id !== myEntityId && (
                 <span className="text-[var(--color-text-secondary)]">
                   {entityDisplayName(lastMsg.sender).split(' ')[0]}:&nbsp;

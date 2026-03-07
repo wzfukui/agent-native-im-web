@@ -284,7 +284,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 {entityDisplayName(message.sender)}
               </span>
             )}
-            <span className="text-[10px] text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100 transition-opacity">
+            <span className="text-[10px] text-[var(--color-text-muted)] opacity-40 group-hover:opacity-100 transition-opacity">
               {formatTime(message.created_at)}
             </span>
           </div>

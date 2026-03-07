@@ -198,11 +198,11 @@ export function UserSettingsPage({ onBack }: Props) {
     { id: 'about', icon: Info, label: t('settings.about') },
   ]
 
-  const themes: { id: Theme; label: string; colors: string }[] = [
-    { id: 'dark', label: t('settings.themeDark'), colors: 'from-gray-800 to-gray-900' },
-    { id: 'midnight', label: t('settings.themeMidnight'), colors: 'from-slate-800 to-indigo-950' },
-    { id: 'light', label: t('settings.themeLight'), colors: 'from-gray-100 to-white' },
-    { id: 'green', label: t('settings.themeGreen'), colors: 'from-emerald-900 to-gray-900' },
+  const themes: { id: Theme; label: string; bg: string; sidebar: string; bubble: string; bubbleSelf: string; text: string }[] = [
+    { id: 'dark', label: t('settings.themeDark'), bg: '#1a1a2e', sidebar: '#16162a', bubble: '#2a2a40', bubbleSelf: '#6366f1', text: '#e2e8f0' },
+    { id: 'midnight', label: t('settings.themeMidnight'), bg: '#0f172a', sidebar: '#0c1322', bubble: '#1e293b', bubbleSelf: '#6366f1', text: '#cbd5e1' },
+    { id: 'light', label: t('settings.themeLight'), bg: '#f8fafc', sidebar: '#f1f5f9', bubble: '#e2e8f0', bubbleSelf: '#6366f1', text: '#1e293b' },
+    { id: 'green', label: t('settings.themeGreen'), bg: '#0d1f17', sidebar: '#0a1a13', bubble: '#1a3328', bubbleSelf: '#10b981', text: '#d1fae5' },
   ]
   const agentCheckScript = [
     '# Quick agent connectivity check',
@@ -455,15 +455,38 @@ PY`,
                     key={th.id}
                     onClick={() => setTheme(th.id)}
                     className={cn(
-                      'relative h-24 rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
+                      'relative h-28 rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
                       theme === th.id
                         ? 'border-[var(--color-accent)] shadow-lg shadow-[var(--color-accent)]/20'
                         : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
                     )}
                   >
-                    <div className={cn('absolute inset-0 bg-gradient-to-br', th.colors)} />
+                    {/* Mini UI mockup */}
+                    <div className="absolute inset-0 flex" style={{ background: th.bg }}>
+                      {/* Mini sidebar */}
+                      <div className="w-5 h-full flex flex-col items-center gap-1 py-2" style={{ background: th.sidebar }}>
+                        <div className="w-2.5 h-2.5 rounded" style={{ background: th.bubbleSelf }} />
+                        <div className="w-2 h-2 rounded-full" style={{ background: th.bubble }} />
+                        <div className="w-2 h-2 rounded-full" style={{ background: th.bubble }} />
+                      </div>
+                      {/* Mini chat area */}
+                      <div className="flex-1 flex flex-col justify-center gap-1.5 px-2 py-2">
+                        <div className="flex justify-start">
+                          <div className="h-2 rounded-full" style={{ background: th.bubble, width: '55%' }} />
+                        </div>
+                        <div className="flex justify-end">
+                          <div className="h-2 rounded-full" style={{ background: th.bubbleSelf, width: '40%' }} />
+                        </div>
+                        <div className="flex justify-start">
+                          <div className="h-2 rounded-full" style={{ background: th.bubble, width: '65%' }} />
+                        </div>
+                        <div className="flex justify-end">
+                          <div className="h-2 rounded-full" style={{ background: th.bubbleSelf, width: '35%' }} />
+                        </div>
+                      </div>
+                    </div>
                     <div className="relative flex items-end justify-between p-3 h-full">
-                      <span className="text-xs font-medium text-white drop-shadow-sm">{th.label}</span>
+                      <span className="text-xs font-medium drop-shadow-sm" style={{ color: th.text }}>{th.label}</span>
                       {theme === th.id && (
                         <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center">
                           <Check className="w-3 h-3 text-white" />

@@ -45,7 +45,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
         className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
           !botMode && !adminMode && !settingsMode
-            ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)]'
+            ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)] before:absolute before:-left-3 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-[var(--color-accent)]'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
         )}
         title={t('sidebar.messages')}

@@ -26,8 +26,11 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-primary)] px-4">
-      <div className="w-full max-w-sm">
+    <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-primary)] px-4 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-[var(--color-accent)]/5 blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] rounded-full bg-[#8b5cf6]/5 blur-[100px] pointer-events-none" />
+      <div className="w-full max-w-sm relative z-10">
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] to-[#8b5cf6] mb-4 shadow-lg shadow-[var(--color-accent)]/20">
@@ -44,7 +47,7 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
         {/* Form Card */}
         <form
           onSubmit={handleSubmit}
-          className="bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl p-6 space-y-4 shadow-xl shadow-black/20"
+          className="bg-[var(--color-bg-secondary)]/80 backdrop-blur-sm border border-[var(--color-border)] rounded-xl p-6 space-y-4 shadow-xl shadow-black/20"
         >
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
