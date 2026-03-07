@@ -70,6 +70,7 @@ export function HandoverCard({ message, participants }: Props) {
         <div className="border-t border-[var(--color-border-subtle)]">
           <button
             onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
             className="w-full flex items-center gap-1 px-3 py-1.5 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
           >
             {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
@@ -90,10 +91,12 @@ export function HandoverCard({ message, participants }: Props) {
                         <span className="px-1 py-0.5 rounded bg-[var(--color-bg-tertiary)] text-[10px] font-mono">
                           {d.type}
                         </span>
-                        {d.url ? (
+                        {d.url && /^https?:\/\//.test(d.url) ? (
                           <a href={d.url} className="text-[var(--color-accent)] hover:underline truncate" target="_blank" rel="noopener noreferrer">
                             {d.url}
                           </a>
+                        ) : d.url ? (
+                          <span className="truncate">{d.url}</span>
                         ) : (
                           <span className="truncate">{d.value}</span>
                         )}

@@ -250,6 +250,7 @@
     "pending": "To Do",
     "inProgress": "In Progress",
     "completed": "Completed",
+    "handedOver": "Handed Over",
     "low": "Low",
     "medium": "Medium",
     "high": "High",

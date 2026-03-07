@@ -250,6 +250,7 @@
     "pending": "待处理",
     "inProgress": "进行中",
     "completed": "已完成",
+    "handedOver": "已交接",
     "low": "低",
     "medium": "中",
     "high": "高",

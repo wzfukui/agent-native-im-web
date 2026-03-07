@@ -125,12 +125,14 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
   const grouped = {
     pending: tasks.filter((t) => t.status === 'pending'),
     in_progress: tasks.filter((t) => t.status === 'in_progress'),
+    handed_over: tasks.filter((t) => t.status === 'handed_over'),
     done: tasks.filter((t) => t.status === 'done' || t.status === 'cancelled'),
   }
 
   const statusLabels: Record<string, string> = {
     pending: t('task.pending'),
     in_progress: t('task.inProgress'),
+    handed_over: t('task.handedOver'),
     done: t('task.completed'),
   }
 
