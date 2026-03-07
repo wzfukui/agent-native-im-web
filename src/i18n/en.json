@@ -335,6 +335,22 @@
     "tokens": "Tokens (approx)",
     "clearMemory": "Clear all memories"
   },
+  "handover": {
+    "task_completion": "Task Handover",
+    "bug_report": "Bug Report",
+    "review_request": "Review Request",
+    "status_report": "Status Report",
+    "details": "Details",
+    "deliverables": "Deliverables",
+    "knownIssues": "Known Issues",
+    "linkedTask": "Linked Task #{{id}}"
+  },
+  "mentionIntent": {
+    "task_assign": "Task Assignment",
+    "question": "Question",
+    "review": "Review Request",
+    "fyi": "FYI"
+  },
   "connection": {
     "disconnected": "Connection lost, reconnecting...",
     "reconnected": "Reconnected",

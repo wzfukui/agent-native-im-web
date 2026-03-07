@@ -48,7 +48,7 @@ export interface Conversation {
 }
 
 // ─── Message (5-layer model) ─────────────────────────────────────
-export type ContentType = 'text' | 'markdown' | 'code' | 'image' | 'audio' | 'file' | 'artifact' | 'system'
+export type ContentType = 'text' | 'markdown' | 'code' | 'image' | 'audio' | 'file' | 'artifact' | 'system' | 'task_handover'
 
 export interface MessageLayers {
   summary?: string
@@ -149,6 +149,7 @@ export type WSEventType =
   | 'conversation.change_approved'
   | 'conversation.change_rejected'
   | 'task.updated'
+  | 'task.handover'
   | 'stream_start'
   | 'stream_delta'
   | 'stream_end'
@@ -215,7 +216,7 @@ export interface AdminStats {
 }
 
 // ─── Task ────────────────────────────────────────────────────────
-export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'cancelled'
+export type TaskStatus = 'pending' | 'in_progress' | 'done' | 'cancelled' | 'handed_over'
 export type TaskPriority = 'low' | 'medium' | 'high'
 
 export interface Task {

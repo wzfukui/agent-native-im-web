@@ -6,6 +6,7 @@ import { cn, entityDisplayName, formatTime, formatFileSize } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
+import { HandoverCard } from './HandoverCard'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
@@ -214,6 +215,9 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )
       }
 
+      case 'task_handover':
+        return <HandoverCard message={message} />
+
       case 'file':
         return (
           <div className="space-y-1.5">
@@ -306,7 +310,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           <div
             className={cn(
               'rounded-2xl max-w-full',
-              message.content_type === 'artifact' ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
+              (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
               isSelf
                 ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
                 : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
@@ -447,8 +451,17 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           </div>
         )}
 
+        {/* Mention intent badge */}
+        {!!layers.data?.mention_intent && (
+          <div className="px-1">
+            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[10px] font-medium text-[var(--color-accent)]">
+              {t(`mentionIntent.${String((layers.data.mention_intent as Record<string, unknown>).type || 'task_assign')}`)}
+            </span>
+          </div>
+        )}
+
         {/* Mentions */}
-        {message.mentions && message.mentions.length > 0 && (
+        {message.mentions && message.mentions.length > 0 && !layers.data?.mention_intent && (
           <div className="px-1 flex items-center gap-1 text-[10px] text-[var(--color-accent)] opacity-60">
             @{message.mentions.length} {t('message.mentioned')}
           </div>

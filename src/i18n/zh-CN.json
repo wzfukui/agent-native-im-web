@@ -335,6 +335,22 @@
     "tokens": "Token (估算)",
     "clearMemory": "清除所有记忆"
   },
+  "handover": {
+    "task_completion": "任务交接",
+    "bug_report": "缺陷报告",
+    "review_request": "审查请求",
+    "status_report": "状态报告",
+    "details": "详情",
+    "deliverables": "交付物",
+    "knownIssues": "已知问题",
+    "linkedTask": "关联任务 #{{id}}"
+  },
+  "mentionIntent": {
+    "task_assign": "任务分配",
+    "question": "提问",
+    "review": "审查请求",
+    "fyi": "知会"
+  },
   "connection": {
     "disconnected": "连接已断开，正在重连...",
     "reconnected": "已重新连接",

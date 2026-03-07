@@ -8,7 +8,7 @@ import { entityDisplayName, cn } from '@/lib/utils'
 import * as api from '@/lib/api'
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types'
 import {
-  X, Plus, Check, Circle, Clock, Ban,
+  X, Plus, Check, Circle, Clock, Ban, ArrowRightLeft,
   ChevronDown, Loader2, Trash2, Calendar, User,
 } from 'lucide-react'
 
@@ -32,6 +32,7 @@ const statusIcons: Record<TaskStatus, typeof Circle> = {
   in_progress: Clock,
   done: Check,
   cancelled: Ban,
+  handed_over: ArrowRightLeft,
 }
 
 export function TaskPanel({ conversationId, participants, onClose, isArchived }: Props) {
