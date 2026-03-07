@@ -17,14 +17,14 @@ function authHeaders(token: string): Record<string, string> {
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
-async function parseAPIResponse<T>(res: Response): Promise<APIResponse<T>> {
+async function parseAPIResponse<T>(res: Response, quiet = false): Promise<APIResponse<T>> {
   try {
     const parsed = await res.json()
-    if (!parsed.ok) reportApiError(parsed)
+    if (!parsed.ok && !quiet) reportApiError(parsed)
     return parsed
   } catch {
     const fallback = { ok: false, error: `HTTP ${res.status}` } as APIResponse<T>
-    reportApiError(fallback)
+    if (!quiet) reportApiError(fallback)
     return fallback
   }
 }
@@ -66,6 +66,16 @@ async function request<T>(method: string, path: string, token?: string, body?: u
     body: body ? JSON.stringify(body) : undefined,
   })
   return parseAPIResponse<T>(res)
+}
+
+/** Like request() but suppresses global error toasts — use for probing/optional endpoints */
+async function requestQuiet<T>(method: string, path: string, token?: string, body?: unknown): Promise<APIResponse<T>> {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method,
+    headers: token ? authHeaders(token) : { 'Content-Type': 'application/json' },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  return parseAPIResponse<T>(res, true)
 }
 
 async function tryRefreshToken(oldToken: string): Promise<string | null> {
@@ -237,7 +247,7 @@ export const adminDeleteUser = (token: string, id: number) =>
   request('DELETE', `/api/v1/admin/users/${id}`, token)
 
 export const adminGetStats = (token: string) =>
-  request<AdminStats>('GET', '/api/v1/admin/stats', token)
+  requestQuiet<AdminStats>('GET', '/api/v1/admin/stats', token)
 
 export const adminListConversations = (token: string, limit = 50, offset = 0) =>
   request<{ conversations: Conversation[]; total: number }>('GET', `/api/v1/admin/conversations?limit=${limit}&offset=${offset}`, token)
@@ -264,9 +274,9 @@ export async function uploadFile(token: string, file: File): Promise<APIResponse
   return parseAPIResponse<{ url: string }>(res)
 }
 
-// Push notifications
+// Push notifications (quiet — endpoint may not exist)
 export const getVapidKey = () =>
-  request<{ public_key: string }>('GET', '/api/v1/push/vapid-key')
+  requestQuiet<{ public_key: string }>('GET', '/api/v1/push/vapid-key')
 
 export const registerPush = (token: string, data: { endpoint: string; key_p256dh: string; key_auth: string }) =>
   request('POST', '/api/v1/push/subscribe', token, data)
