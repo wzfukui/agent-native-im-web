@@ -452,13 +452,19 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )}
 
         {/* Mention intent badge */}
-        {!!layers.data?.mention_intent && (
-          <div className="px-1">
-            <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[10px] font-medium text-[var(--color-accent)]">
-              {t(`mentionIntent.${String((layers.data.mention_intent as Record<string, unknown>).type || 'task_assign')}`)}
-            </span>
-          </div>
-        )}
+        {!!layers.data?.mention_intent && (() => {
+          const intent = layers.data.mention_intent
+          const intentType = typeof intent === 'object' && intent !== null && 'type' in (intent as object)
+            ? String((intent as Record<string, unknown>).type)
+            : 'task_assign'
+          return (
+            <div className="px-1">
+              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[10px] font-medium text-[var(--color-accent)]">
+                {t(`mentionIntent.${intentType}`)}
+              </span>
+            </div>
+          )
+        })()}
 
         {/* Mentions */}
         {message.mentions && message.mentions.length > 0 && !layers.data?.mention_intent && (
