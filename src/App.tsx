@@ -314,7 +314,6 @@ export default function App() {
     }, 15000)
     return () => clearInterval(interval)
   }, [])
-
   const retryOutboxNow = useCallback(async () => {
     if (!token) return
     if (!navigator.onLine) return
