@@ -51,7 +51,7 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
         >
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
-              {t('auth.username')}
+              {t('auth.usernameOrEmail')}
             </label>
             <input
               type="text"

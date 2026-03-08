@@ -12,6 +12,7 @@ interface Props {
 export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
   const { t } = useTranslation()
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [displayName, setDisplayName] = useState('')
@@ -39,7 +40,7 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
     
     setLoading(true)
     try {
-      const res = await api.register(username, password, undefined, displayName || undefined)
+      const res = await api.register(username, password, email || undefined, displayName || undefined)
       if (res.ok && res.data) {
         onRegister(res.data.token, res.data.entity)
       } else {
@@ -103,6 +104,19 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
             />
           </div>
           
+          <div>
+            <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
+              {t('auth.email')}
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('auth.emailPlaceholder')}
+              className="w-full h-10 px-3.5 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/50 transition-all text-sm"
+            />
+          </div>
+
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5 uppercase tracking-wider">
               {t('auth.displayName')}
