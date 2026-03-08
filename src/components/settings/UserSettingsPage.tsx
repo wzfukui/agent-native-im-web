@@ -27,6 +27,7 @@ export function UserSettingsPage({ onBack }: Props) {
 
   const [section, setSection] = useState<Section>('profile')
   const [editName, setEditName] = useState(entity?.display_name || '')
+  const [editEmail, setEditEmail] = useState(entity?.email || '')
   const [editAvatar, setEditAvatar] = useState(entity?.avatar_url || '')
   const [saving, setSaving] = useState(false)
   const [saveMsg, setSaveMsg] = useState('')
@@ -46,11 +47,14 @@ export function UserSettingsPage({ onBack }: Props) {
     if (!editName.trim() || !entity) return
     setSaving(true)
     setSaveMsg('')
-    const updateData: { display_name?: string; avatar_url?: string } = {
+    const updateData: { display_name?: string; avatar_url?: string; email?: string } = {
       display_name: editName.trim()
     }
     if (editAvatar && editAvatar !== entity.avatar_url) {
       updateData.avatar_url = editAvatar
+    }
+    if (editEmail !== (entity.email || '')) {
+      updateData.email = editEmail.trim()
     }
     const res = await api.updateProfile(token, updateData)
     if (res.ok && res.data) {
@@ -296,6 +300,18 @@ PY`,
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSaveProfile()}
+                  className="w-full h-9 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--color-text-secondary)]">{t('settings.email')}</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSaveProfile()}
+                  placeholder={t('settings.emailPlaceholder')}
                   className="w-full h-9 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
                 />
               </div>

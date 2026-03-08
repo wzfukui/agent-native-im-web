@@ -307,6 +307,14 @@ export default function App() {
     document.title = totalUnread > 0 ? `(${totalUnread}) Agent-Native IM` : 'Agent-Native IM'
   }, [totalUnread])
 
+  // ─── Stale stream cleanup ─────────────────────────────────────
+  useEffect(() => {
+    const interval = setInterval(() => {
+      useMessagesStore.getState().cleanStaleStreams()
+    }, 15000)
+    return () => clearInterval(interval)
+  }, [])
+
   const retryOutboxNow = useCallback(async () => {
     if (!token) return
     if (!navigator.onLine) return

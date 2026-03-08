@@ -230,7 +230,7 @@ export const regenerateEntityToken = (token: string, id: number) =>
 export const batchPresence = (token: string, entityIds: number[]) =>
   request<{ presence: Record<string, boolean> }>('POST', '/api/v1/presence/batch', token, { entity_ids: entityIds })
 
-export const updateProfile = (token: string, data: { display_name?: string; avatar_url?: string }) =>
+export const updateProfile = (token: string, data: { display_name?: string; avatar_url?: string; email?: string }) =>
   request<Entity>('PUT', '/api/v1/me', token, data)
 
 // Admin

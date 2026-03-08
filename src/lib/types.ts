@@ -9,6 +9,7 @@ export interface Entity {
   display_name: string
   status: EntityStatus
   avatar_url?: string
+  email?: string
   metadata: Record<string, unknown>
   owner_id?: number
   created_at: string

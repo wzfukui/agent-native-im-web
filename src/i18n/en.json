@@ -109,6 +109,8 @@
     "profile": "Profile",
     "security": "Security",
     "displayName": "Display Name",
+    "email": "Email",
+    "emailPlaceholder": "Enter your email",
     "profileSaved": "Profile saved",
     "changePasswordDesc": "Change your account password",
     "currentPassword": "Current Password",

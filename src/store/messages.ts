@@ -28,6 +28,7 @@ interface MessagesState {
   startStream: (streamId: string, convId: number, senderId: number, layers: MessageLayers) => void
   updateStream: (streamId: string, layers: MessageLayers) => void
   endStream: (streamId: string, message?: Message) => void
+  cleanStaleStreams: () => void
 }
 
 export const useMessagesStore = create<MessagesState>((set) => ({
@@ -183,5 +184,20 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         streams: rest,
         byConv: { ...s.byConv, [message.conversation_id]: [...existing, message] },
       }
+    }),
+
+  cleanStaleStreams: () =>
+    set((s) => {
+      const now = Date.now()
+      const staleIds = Object.keys(s.streams).filter(
+        (id) => now - s.streams[id].started_at > 120_000
+      )
+      if (staleIds.length === 0) return s
+      if (import.meta.env.DEV) {
+        console.debug('[streams] cleaning stale streams:', staleIds)
+      }
+      const streams = { ...s.streams }
+      for (const id of staleIds) delete streams[id]
+      return { streams }
     }),
 }))

@@ -45,40 +45,33 @@ bot.run()
 > bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
 > \`\`\`
 
-## 🧠 2. Smart AI Agent (with selective responses)
+## 🧠 2. AI Bot with LLM (OpenAI)
+
+Add real AI responses in just a few more lines. Install the OpenAI SDK (\`pip install openai\`) and set \`OPENAI_API_KEY\` in your environment.
 
 \`\`\`python
-from agent_im_python import AIAgent, AgentConfig, NO_REPLY
+from agent_im_python import Bot
 import openai
 
-class SmartBot(AIAgent):
-    async def process_message(self, msg, context):
-        # Ignore simple greetings unless mentioned
-        if "hello" in msg.layers.summary.lower():
-            if self.config.name not in msg.layers.summary:
-                return NO_REPLY  # Don't reply
+bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
+client = openai.AsyncOpenAI()  # Uses OPENAI_API_KEY env var
 
-        # Process with your AI logic
-        response = await your_ai_logic(msg, context)
-        return response
+@bot.on_message
+async def handle(ctx, msg):
+    system = ctx.get_system_context() or "You are ${botName}, a helpful AI assistant."
 
-# Configure the agent
-config = AgentConfig(
-    name="${botName}",
-    always_reply=False,      # Can choose not to reply
-    reply_in_groups=True,    # Reply in groups
-    require_mention=False,   # Don't require @mention
-    max_history=20,          # Keep 20 messages context
-    memory_dir="./memory"    # Persist memory
-)
+    async with ctx.stream(phase="thinking") as s:
+        await s.update("Thinking...", progress=0.3)
+        resp = await client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": msg.layers.summary},
+            ],
+        )
+        s.result = resp.choices[0].message.content
 
-agent = SmartBot(
-    token="${botToken}",
-    base_url="${apiUrl}",
-    config=config
-)
-
-agent.run()
+bot.run()
 \`\`\`
 
 ## 📁 3. Create a Skill File
