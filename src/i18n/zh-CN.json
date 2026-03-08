@@ -239,7 +239,19 @@
     "regenerateConfirm": "现在重新生成 Token 吗？旧 API Key 会失效，并断开当前连接会话。",
     "regenerateResult": "Token 已轮换。断开会话数：{{count}}",
     "copyOpsSnapshot": "复制运维快照",
-    "awaitingApproval": "待批准"
+    "awaitingApproval": "待批准",
+    "statusSection": "状态",
+    "statusReady": "就绪",
+    "statusActionNeeded": "需要操作",
+    "apiKey": "API 密钥",
+    "apiKeyConfigured": "已配置",
+    "apiKeyMissing": "未配置",
+    "bootstrap": "引导密钥",
+    "bootstrapPresent": "存在",
+    "bootstrapRevoked": "已吊销",
+    "connections": "连接数",
+    "hubWs": "Hub WS",
+    "conversations": "会话"
   },
   "error": {
     "guidance": {

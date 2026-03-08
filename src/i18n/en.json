@@ -239,7 +239,19 @@
     "regenerateConfirm": "Regenerate token now? Existing API keys will be revoked and connected sessions will be disconnected.",
     "regenerateResult": "Token rotated. Disconnected sessions: {{count}}",
     "copyOpsSnapshot": "Copy Ops Snapshot",
-    "awaitingApproval": "Awaiting Approval"
+    "awaitingApproval": "Awaiting Approval",
+    "statusSection": "Status",
+    "statusReady": "Ready",
+    "statusActionNeeded": "Action needed",
+    "apiKey": "API Key",
+    "apiKeyConfigured": "Configured",
+    "apiKeyMissing": "Missing",
+    "bootstrap": "Bootstrap",
+    "bootstrapPresent": "Present",
+    "bootstrapRevoked": "Revoked",
+    "connections": "Connections",
+    "hubWs": "Hub WS",
+    "conversations": "Conversations"
   },
   "error": {
     "guidance": {

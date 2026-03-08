@@ -46,6 +46,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
   const [docExpanded, setDocExpanded] = useState(false)
+  const [convsCollapsed, setConvsCollapsed] = useState(false)
   const [rotatingToken, setRotatingToken] = useState(false)
   const [rotatedToken, setRotatedToken] = useState<string | null>(null)
   const [opError, setOpError] = useState<string | null>(null)
@@ -256,7 +257,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-[var(--color-warning)]" />
                 <span className="text-xs font-semibold text-[var(--color-warning)]">
-                  Bootstrap Key ({t('bot.awaitingApproval')})
+                  {t('bot.bootstrapKey')} ({t('bot.awaitingApproval')})
                 </span>
               </div>
               <button
@@ -315,7 +316,7 @@ ${createdCredentials.doc}`
                 className="py-2 px-3 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-xs text-[var(--color-text-secondary)] cursor-pointer transition-colors flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
-                Quickstart
+                {t('bot.downloadQuickstart')}
               </button>
             </div>
 
@@ -341,32 +342,32 @@ ${createdCredentials.doc}`
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[var(--color-accent)]" />
-                <span className="text-sm font-medium text-[var(--color-text-primary)]">Status</span>
+                <span className="text-sm font-medium text-[var(--color-text-primary)]">{t('bot.statusSection')}</span>
               </div>
               <span className={cn(
                 'px-2 py-0.5 rounded-full text-xs font-medium',
                 selfCheck?.ready ? 'bg-[var(--color-success)]/12 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/12 text-[var(--color-warning)]',
               )}>
-                {selfCheck?.ready ? 'Ready' : 'Action needed'}
+                {selfCheck?.ready ? t('bot.statusReady') : t('bot.statusActionNeeded')}
               </span>
             </div>
 
             {/* Flat metrics row */}
             <div className="flex gap-6 text-xs mb-3">
               <div>
-                <p className="text-[var(--color-text-muted)]">API Key</p>
-                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_api_key ? 'Configured' : 'Missing'}</p>
+                <p className="text-[var(--color-text-muted)]">{t('bot.apiKey')}</p>
+                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_api_key ? t('bot.apiKeyConfigured') : t('bot.apiKeyMissing')}</p>
               </div>
               <div>
-                <p className="text-[var(--color-text-muted)]">Bootstrap</p>
-                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_bootstrap ? 'Present' : 'Revoked'}</p>
+                <p className="text-[var(--color-text-muted)]">{t('bot.bootstrap')}</p>
+                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_bootstrap ? t('bot.bootstrapPresent') : t('bot.bootstrapRevoked')}</p>
               </div>
               <div>
-                <p className="text-[var(--color-text-muted)]">Connections</p>
+                <p className="text-[var(--color-text-muted)]">{t('bot.connections')}</p>
                 <p className="text-[var(--color-text-primary)] font-medium">{diagnostics?.connections ?? 0}</p>
               </div>
               <div>
-                <p className="text-[var(--color-text-muted)]">Hub WS</p>
+                <p className="text-[var(--color-text-muted)]">{t('bot.hubWs')}</p>
                 <p className="text-[var(--color-text-primary)] font-medium">{diagnostics?.hub?.total_ws_connections ?? 0}</p>
               </div>
             </div>
@@ -573,6 +574,15 @@ ${createdCredentials.doc}`
 
         {/* ── Conversations ── */}
         <div className="px-5 py-4">
+          <button
+            onClick={() => setConvsCollapsed(!convsCollapsed)}
+            className="flex items-center gap-2 mb-3 cursor-pointer group w-full"
+          >
+            {convsCollapsed ? <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" /> : <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)]" />}
+            <span className="text-sm font-medium text-[var(--color-text-primary)]">{t('bot.conversations')}</span>
+            <span className="text-xs text-[var(--color-text-muted)]">({conversations.length})</span>
+          </button>
+          {!convsCollapsed && <>
           <div className="flex items-center gap-1 mb-3 bg-[var(--color-bg-secondary)] p-1 rounded-lg">
             <button
               onClick={() => setActiveTab('direct')}
@@ -646,6 +656,7 @@ ${createdCredentials.doc}`
               )}
             </div>
           )}
+          </>}
         </div>
       </div>
 
@@ -669,11 +680,11 @@ ${createdCredentials.doc}`
   )
 }
 
-/** Reusable info row — icon + label + value */
+/** Reusable info row — icon + label + value, compact gap */
 function InfoRow({ icon: Icon, label, children }: { icon: typeof User; label: string; children: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+    <div className="flex items-center gap-3">
+      <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5 w-24 flex-shrink-0">
         <Icon className="w-3.5 h-3.5" />
         {label}
       </span>
