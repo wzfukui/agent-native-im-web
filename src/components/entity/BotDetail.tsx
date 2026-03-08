@@ -375,7 +375,7 @@ ${createdCredentials.doc}`
             {(selfCheck?.recommendation || []).length > 0 && (
               <div className="rounded-lg bg-[var(--color-warning)]/6 border border-[var(--color-warning)]/15 p-2.5 mb-3">
                 {(selfCheck?.recommendation || []).map((item, i) => (
-                  <p key={i} className="text-xs text-[var(--color-text-secondary)] leading-relaxed">• {item}</p>
+                  <p key={i} className="text-xs text-[var(--color-text-secondary)] leading-relaxed">• {translateRecommendation(item, t)}</p>
                 ))}
               </div>
             )}
@@ -678,6 +678,18 @@ ${createdCredentials.doc}`
       />
     </div>
   )
+}
+
+/** Map backend recommendation strings to i18n keys */
+const REC_MAP: Record<string, string> = {
+  'entity is disabled, reactivate it first': 'bot.recDisabled',
+  'agent is still using bootstrap key, complete approval to issue permanent key': 'bot.recBootstrapOnly',
+  'no credentials found, recreate or re-approve this agent': 'bot.recNoCreds',
+  'agent is offline, verify network and websocket handshake': 'bot.recOffline',
+}
+function translateRecommendation(text: string, t: (key: string) => string): string {
+  const key = REC_MAP[text]
+  return key ? t(key) : text
 }
 
 /** Reusable info row — icon + label + value, compact gap */

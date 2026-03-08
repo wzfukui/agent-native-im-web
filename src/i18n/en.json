@@ -251,7 +251,11 @@
     "bootstrapRevoked": "Revoked",
     "connections": "Connections",
     "hubWs": "Hub WS",
-    "conversations": "Conversations"
+    "conversations": "Conversations",
+    "recDisabled": "Entity is disabled, reactivate it first",
+    "recBootstrapOnly": "Agent is still using bootstrap key, complete approval to issue permanent key",
+    "recNoCreds": "No credentials found, recreate or re-approve this agent",
+    "recOffline": "Agent is offline, verify network and WebSocket handshake"
   },
   "error": {
     "guidance": {
