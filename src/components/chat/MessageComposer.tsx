@@ -441,7 +441,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
         )}
       </div>
       <p className="text-[10px] text-[var(--color-text-muted)] mt-1 text-center opacity-0 group-focus-within/input:opacity-50 transition-opacity pointer-events-none">
-        Enter to send · Shift+Enter for new line · @mention
+        {t('conversation.composerHint')}
       </p>
       </div>
     </div>

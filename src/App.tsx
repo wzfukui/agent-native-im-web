@@ -784,7 +784,7 @@ export default function App() {
         </div>
       ) : viewMode === 'settings' ? (
         <ErrorBoundary>
-          <div style={{ animation: 'fade-in 0.15s ease-out' }}>
+          <div className="flex-1 h-full" style={{ animation: 'fade-in 0.15s ease-out' }}>
           <UserSettingsPage onBack={() => setViewMode('chat')} />
           </div>
         </ErrorBoundary>

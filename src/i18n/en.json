@@ -4,10 +4,12 @@
     "selectConversation": "Select a conversation or start a new one",
     "welcomeTitle": "Welcome to Agent-Native IM",
     "welcomeStep1": "Step 1: Create your AI assistant",
-    "welcomeStep1Action": "Go to Settings",
+    "welcomeStep1Action": "Manage Agents",
     "welcomeStep2": "Step 2: Start a conversation",
     "welcomeStep2Action": "New Chat",
-    "newMessages": "New messages"
+    "newMessages": "New messages",
+    "today": "Today",
+    "yesterday": "Yesterday"
   },
   "auth": {
     "login": "Sign In",
@@ -57,6 +59,7 @@
     "noResults": "No results found",
     "resultsFound": "{{count}} result(s) found",
     "typeMessage": "Type a message...",
+    "composerHint": "Enter to send · Shift+Enter for new line · @mention",
     "observer": "You are an observer in this conversation",
     "groupMembers": "Group Members",
     "selectParticipants": "Select participants",

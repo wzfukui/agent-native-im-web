@@ -4,10 +4,12 @@
     "selectConversation": "选择一个会话或创建新会话",
     "welcomeTitle": "欢迎使用 Agent-Native IM",
     "welcomeStep1": "第一步：创建你的 AI 助手",
-    "welcomeStep1Action": "前往设置",
+    "welcomeStep1Action": "管理 Agent",
     "welcomeStep2": "第二步：开始一段对话",
     "welcomeStep2Action": "新建会话",
-    "newMessages": "以下是新消息"
+    "newMessages": "以下是新消息",
+    "today": "今天",
+    "yesterday": "昨天"
   },
   "auth": {
     "login": "登录",
@@ -57,6 +59,7 @@
     "noResults": "未找到结果",
     "resultsFound": "找到 {{count}} 条结果",
     "typeMessage": "输入消息...",
+    "composerHint": "Enter 发送 · Shift+Enter 换行 · @提及",
     "observer": "你是此会话的观察者",
     "groupMembers": "群组成员",
     "selectParticipants": "选择参与者",

@@ -53,6 +53,18 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     return map
   }, [messages])
 
+  // Pre-compute date strings for separator checks (avoid repeated new Date() in render)
+  const dateSepIndices = useMemo(() => {
+    const set = new Set<number>()
+    set.add(0)
+    for (let i = 1; i < messages.length; i++) {
+      if (new Date(messages[i].created_at).toDateString() !== new Date(messages[i - 1].created_at).toDateString()) {
+        set.add(i)
+      }
+    }
+    return set
+  }, [messages])
+
   // Group consecutive messages from same sender
   const shouldShowSender = (msg: Message, i: number): boolean => {
     if (i === 0) return true
@@ -88,10 +100,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
       {/* Messages */}
       <div className="space-y-2.5">
         {messages.map((msg, i) => {
-          // Date separator when day changes
-          const showDateSep = i === 0 || (
-            new Date(msg.created_at).toDateString() !== new Date(messages[i - 1].created_at).toDateString()
-          )
+          const showDateSep = dateSepIndices.has(i)
 
           // Show new message divider after lastReadMessageId
           const showDivider = lastReadMessageId != null &&
@@ -106,7 +115,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 <div className="flex items-center gap-3 py-3">
                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                   <span className="text-[10px] text-[var(--color-text-muted)] font-medium flex-shrink-0">
-                    {formatDateSeparator(msg.created_at)}
+                    {formatDateSeparator(msg.created_at, t('app.today'), t('app.yesterday'))}
                   </span>
                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                 </div>

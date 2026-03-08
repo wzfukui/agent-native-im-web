@@ -65,7 +65,7 @@ export function ConnectionStatusBar({
   return (
     <div className="flex justify-center py-1.5" style={{ animation: 'slide-up 0.2s ease-out' }}>
     <div
-      className={`inline-flex items-center gap-2 px-4 py-1 text-xs font-medium rounded-full transition-all shadow-sm ${
+      className={`inline-flex items-center gap-2 px-4 py-1 text-xs font-medium rounded-full transition-all shadow-sm max-w-[90vw] flex-wrap justify-center ${
         !issue
           ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
           : issue === 'auth'
