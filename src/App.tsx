@@ -784,14 +784,14 @@ export default function App() {
       />
 
       {viewMode === 'admin' ? (
-        <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.15s ease-out' }}>
+        <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
           <ErrorBoundary>
             <AdminPanel onBack={() => setViewMode('chat')} />
           </ErrorBoundary>
         </div>
       ) : viewMode === 'settings' ? (
         <ErrorBoundary>
-          <div className="flex-1 h-full" style={{ animation: 'fade-in 0.15s ease-out' }}>
+          <div className="flex-1 h-full" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
           <UserSettingsPage onBack={() => setViewMode('chat')} />
           </div>
         </ErrorBoundary>
@@ -842,7 +842,7 @@ export default function App() {
             {viewMode === 'chat' ? (
               activeConv ? (
                 <>
-                  <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.15s ease-out' }}>
+                  <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
                     <ErrorBoundary>
                     <ChatThread
                       key={activeConv.id}
@@ -878,40 +878,40 @@ export default function App() {
                   )}
                 </>
               ) : (
-                <div className="flex-1 h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-6" style={{ animation: 'fade-in 0.15s ease-out' }}>
-                  <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-accent)]/10 to-[var(--color-bot)]/10 flex items-center justify-center">
-                    <Zap className="w-10 h-10 text-[var(--color-accent)] opacity-40" />
-                  </div>
-                  <p className="text-base font-medium text-[var(--color-text-secondary)]">
+                <div className="flex-1 h-full flex flex-col items-center justify-center" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
+                  <p className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] mb-1.5">
                     {conversations.length === 0 ? t('app.welcomeTitle') : 'Agent-Native IM'}
                   </p>
-                  <div className="flex gap-3">
+                  <p className="text-sm text-[var(--color-text-muted)] mb-8">
+                    {conversations.length === 0 ? t('auth.tagline') : ''}
+                  </p>
+                  <div className="flex flex-col gap-2 w-56">
                     <button
                       onClick={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
-                      className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-accent)]/40 hover:bg-[var(--color-accent)]/5 transition-all cursor-pointer group"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
                     >
-                      <MessageSquare className="w-5 h-5 text-[var(--color-accent)] opacity-60 group-hover:opacity-100 transition-opacity" />
-                      <span className="text-xs text-[var(--color-text-secondary)]">{t('app.welcomeStep2Action')}</span>
+                      <MessageSquare className="w-4 h-4 text-[var(--color-accent)] flex-shrink-0" />
+                      <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep2Action')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('bots')}
-                      className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-bot)]/40 hover:bg-[var(--color-bot)]/5 transition-all cursor-pointer group"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
                     >
-                      <Bot className="w-5 h-5 text-[var(--color-bot)] opacity-60 group-hover:opacity-100 transition-opacity" />
-                      <span className="text-xs text-[var(--color-text-secondary)]">{t('app.welcomeStep1Action')}</span>
+                      <Bot className="w-4 h-4 text-[var(--color-bot)] flex-shrink-0" />
+                      <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep1Action')}</span>
                     </button>
                     <button
                       onClick={() => setViewMode('settings')}
-                      className="flex flex-col items-center gap-2 px-5 py-4 rounded-xl border border-[var(--color-border)] hover:border-[var(--color-text-muted)]/40 hover:bg-[var(--color-bg-hover)] transition-all cursor-pointer group"
+                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
                     >
-                      <Settings2 className="w-5 h-5 text-[var(--color-text-muted)] opacity-60 group-hover:opacity-100 transition-opacity" />
-                      <span className="text-xs text-[var(--color-text-secondary)]">{t('settings.title')}</span>
+                      <Settings2 className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
+                      <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('settings.title')}</span>
                     </button>
                   </div>
                 </div>
               )
             ) : (
-              <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.15s ease-out' }}>
+              <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
                 <ErrorBoundary>
                   <BotDetail
                     bot={selectedBot}

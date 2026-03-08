@@ -261,7 +261,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         isSelf ? 'ml-auto flex-row-reverse' : '',
         isMentioned ? 'relative' : '',
       )}
-      style={{ animation: 'slide-up 0.2s ease-out' }}
+      style={{ animation: 'slide-up 0.2s cubic-bezier(0.16,1,0.3,1)' }}
     >
       {/* Mention highlight bar */}
       {isMentioned && !isSelf && (

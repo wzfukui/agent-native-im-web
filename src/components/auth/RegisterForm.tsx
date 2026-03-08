@@ -73,14 +73,11 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
     <div className="min-h-screen flex items-center justify-center bg-[var(--color-bg-primary)] px-4">
       <div className="w-full max-w-sm">
         {/* Logo */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-[var(--color-accent)] to-[#8b5cf6] mb-4 shadow-lg shadow-[var(--color-accent)]/20">
-            <Zap className="w-8 h-8 text-white" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[var(--color-text-primary)]">
+        <div className="mb-10">
+          <h1 className="text-[1.75rem] font-bold tracking-[-0.03em] text-[var(--color-text-primary)]">
             {t('auth.register')}
           </h1>
-          <p className="text-sm text-[var(--color-text-muted)] mt-1.5">
+          <p className="text-sm text-[var(--color-text-muted)] mt-2 leading-relaxed">
             {t('auth.joinTagline')}
           </p>
         </div>

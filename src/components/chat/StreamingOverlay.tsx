@@ -57,7 +57,7 @@ export function StreamingOverlay({ streams, onCancel }: Props) {
             {progress > 0 && (
               <div className="h-1 rounded-full bg-[var(--color-bg-primary)] overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-[var(--color-accent)] to-[#8b5cf6] transition-all duration-500"
+                  className="h-full rounded-full bg-[var(--color-accent)] transition-all duration-500"
                   style={{ width: `${Math.min(progress * 100, 100)}%` }}
                 />
               </div>

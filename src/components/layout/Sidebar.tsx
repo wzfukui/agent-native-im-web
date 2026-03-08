@@ -34,8 +34,8 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
 
   return (
     <div className="w-16 flex flex-col items-center py-4 gap-3 bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)]">
-      {/* Logo */}
-      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[var(--color-accent)] to-[#8b5cf6] flex items-center justify-center shadow-md shadow-[var(--color-accent)]/15 mb-2">
+      {/* Logo — solid, no gradient */}
+      <div className="w-10 h-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center mb-2">
         <Zap className="w-5 h-5 text-white" />
       </div>
 
