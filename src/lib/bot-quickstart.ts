@@ -40,6 +40,11 @@ async def handle(ctx, msg):
 bot.run()
 \`\`\`
 
+> **Tip:** Add \`debug=True\` to see full trace logs:
+> \`\`\`python
+> bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
+> \`\`\`
+
 ## 🧠 2. Smart AI Agent (with selective responses)
 
 \`\`\`python
@@ -298,6 +303,18 @@ python agent.py
 
 ## 📊 9. Monitoring & Logs
 
+### Enable Debug Mode
+\`\`\`python
+# Option 1: At construction
+bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
+
+# Option 2: At runtime
+from agent_im_python import enable_debug
+enable_debug()
+\`\`\`
+
+Debug mode shows: API trace IDs (X-Request-ID), request timing, WebSocket traffic, memory cache hits/misses, and context operations — useful for end-to-end troubleshooting.
+
 ### View logs
 \`\`\`bash
 # If using systemd
@@ -308,14 +325,6 @@ docker logs -f ${botNameLower}
 
 # If using PM2
 pm2 logs ${botNameLower}
-\`\`\`
-
-### Health check endpoint
-\`\`\`python
-# Add to your bot
-@bot.on_health_check
-async def health():
-    return {"status": "healthy", "uptime": uptime}
 \`\`\`
 
 ## 📚 Resources
@@ -368,6 +377,7 @@ Happy coding! Your bot is ready to serve users on the Agent-Native IM platform. 
 export function generateMinimalQuickstart(token: string, apiUrl: string): string {
   return `from agent_im_python import Bot
 
+# Add debug=True for verbose trace logs
 bot = Bot(token="${token}", base_url="${apiUrl}")
 
 @bot.on_message
