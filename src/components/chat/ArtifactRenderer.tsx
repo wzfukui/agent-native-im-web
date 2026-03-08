@@ -1,4 +1,5 @@
 import { useState, useEffect, useId, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -155,15 +156,16 @@ function ImageRenderer({ source, title, fullscreen }: { source: string; title?: 
 
 // ─── Main ArtifactRenderer ─────────────────────────────────────
 export function ArtifactRenderer({ artifactType, source, title, language = '', height = 300 }: ArtifactProps) {
+  const { t } = useTranslation()
   const [showSource, setShowSource] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
 
   const displayTitle = title || {
-    html: 'HTML Content',
-    code: language ? `${language} Code` : 'Code',
-    mermaid: 'Diagram',
-    image: 'Image',
-  }[artifactType] || 'Artifact'
+    html: t('artifact.html'),
+    code: language ? `${language} ${t('artifact.code')}` : t('artifact.code'),
+    mermaid: t('artifact.diagram'),
+    image: t('artifact.image'),
+  }[artifactType] || t('artifact.artifact')
 
   const renderContent = () => {
     switch (artifactType) {

@@ -8,6 +8,10 @@ import { usePresenceStore } from '@/store/presence'
 import { useTasksStore } from '@/store/tasks'
 import { LoginForm } from '@/components/auth/LoginForm'
 import { RegisterForm } from '@/components/auth/RegisterForm'
+import { ForgotPasswordPage } from '@/components/auth/ForgotPasswordPage'
+import { TermsPage } from '@/components/legal/TermsPage'
+import { PrivacyPage } from '@/components/legal/PrivacyPage'
+import { ConsentBanner } from '@/components/ui/ConsentBanner'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { ConversationList } from '@/components/conversation/ConversationList'
 import { ChatThread } from '@/components/chat/ChatThread'
@@ -41,6 +45,7 @@ export default function App() {
 
   const [loginError, setLoginError] = useState('')
   const [showRegister, setShowRegister] = useState(false)
+  const [authPage, setAuthPage] = useState<'login' | 'register' | 'forgot' | 'terms' | 'privacy'>('login')
   const [viewMode, setViewMode] = useState<'chat' | 'bots' | 'admin' | 'settings'>('chat')
   const [isAdmin, setIsAdmin] = useState(false)
   const [selectedBotId, setSelectedBotId] = useState<number | null>(null)
@@ -637,7 +642,7 @@ export default function App() {
       loadBotEntities()
       setBotListRefresh(prev => prev + 1)
     } catch (error) {
-      console.error('Failed to disable bot:', error)
+      void error
     }
   }
 
@@ -648,7 +653,7 @@ export default function App() {
       loadBotEntities()
       setBotListRefresh(prev => prev + 1)
     } catch (error) {
-      console.error('Failed to reactivate bot:', error)
+      void error
     }
   }
 
@@ -660,7 +665,7 @@ export default function App() {
       loadBotEntities()
       setBotListRefresh(prev => prev + 1)
     } catch (error) {
-      console.error('Failed to delete bot:', error)
+      void error
     }
   }
 
@@ -747,12 +752,26 @@ export default function App() {
   const isArchivedView = activeConv === archivedConv && archivedConv !== null
 
   // ─── Not logged in ─────────────────────────────────────────────
-  if (showRegister) {
-    return <RegisterForm onRegister={handleRegister} onSwitchToLogin={() => setShowRegister(false)} />
-  }
-
-  if (!token || !entity) {
-    return <LoginForm onLogin={handleLogin} error={loginError} onSwitchToRegister={() => setShowRegister(true)} />
+  if (!token || !entity || showRegister) {
+    if (authPage === 'terms') return <TermsPage onBack={() => setAuthPage('login')} />
+    if (authPage === 'privacy') return <PrivacyPage onBack={() => setAuthPage('login')} />
+    if (authPage === 'forgot') return <ForgotPasswordPage onBack={() => setAuthPage('login')} />
+    if (showRegister || authPage === 'register') {
+      return <RegisterForm onRegister={handleRegister} onSwitchToLogin={() => { setShowRegister(false); setAuthPage('login') }} />
+    }
+    return (
+      <>
+        <LoginForm
+          onLogin={handleLogin}
+          error={loginError}
+          onSwitchToRegister={() => { setShowRegister(true); setAuthPage('register') }}
+          onForgotPassword={() => setAuthPage('forgot')}
+          onTerms={() => setAuthPage('terms')}
+          onPrivacy={() => setAuthPage('privacy')}
+        />
+        <ConsentBanner onPrivacy={() => setAuthPage('privacy')} />
+      </>
+    )
   }
 
   // ─── Selected bot entity ────────────────────────────────────────

@@ -387,5 +387,28 @@
     "lastError": "最近错误：{{error}}",
     "retryNow": "立即重试",
     "syncFailed": "离线队列同步失败"
+  },
+  "artifact": {
+    "html": "HTML 内容",
+    "code": "代码",
+    "diagram": "图表",
+    "image": "图片",
+    "artifact": "制品"
+  },
+  "legal": {
+    "termsTitle": "服务条款",
+    "privacyTitle": "隐私政策",
+    "back": "返回"
+  },
+  "consent": {
+    "message": "本应用使用本地存储来保存会话数据和离线功能。",
+    "accept": "接受",
+    "learnMore": "隐私政策"
+  },
+  "forgotPassword": {
+    "title": "重置密码",
+    "description": "请联系管理员重置你的密码。",
+    "adminContact": "管理员联系方式",
+    "back": "返回登录"
   }
 }

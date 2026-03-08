@@ -102,7 +102,6 @@ export function UserSettingsPage({ onBack }: Props) {
     const res = await api.listDevices(token)
     if (res.ok && res.data?.devices) {
       const rawDevices = res.data.devices || []
-      console.log('Raw devices from backend:', rawDevices)
 
       // Group by device_id and keep only the latest/first connection per device
       const deviceMap = new Map<string, DeviceItem>()
@@ -113,7 +112,6 @@ export function UserSettingsPage({ onBack }: Props) {
       }
 
       const uniqueDevices = Array.from(deviceMap.values())
-      console.log('Unique devices after dedup:', uniqueDevices)
 
       setDevices(uniqueDevices)
     } else {

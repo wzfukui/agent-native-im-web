@@ -33,7 +33,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
       const res = await api.listConversations(token, true)
       if (res.ok && res.data) setArchived(Array.isArray(res.data) ? res.data : [])
     } catch (error) {
-      console.error('Failed to load archived conversations:', error)
+      void error
       setArchived([])
     }
   }, [token])

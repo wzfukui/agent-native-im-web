@@ -6,9 +6,12 @@ interface Props {
   onSwitchToRegister?: () => void
   onLogin: (username: string, password: string) => Promise<void>
   error?: string
+  onForgotPassword?: () => void
+  onTerms?: () => void
+  onPrivacy?: () => void
 }
 
-export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
+export function LoginForm({ onLogin, error, onSwitchToRegister, onForgotPassword, onTerms, onPrivacy }: Props) {
   const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -91,17 +94,40 @@ export function LoginForm({ onLogin, error, onSwitchToRegister }: Props) {
           </button>
         </form>
 
-        <div className="mt-8 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={onSwitchToRegister}
-            className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors cursor-pointer"
-          >
-            {t('auth.noAccount')} <span className="font-medium">{t('auth.signUp')}</span>
-          </button>
-          <span className="text-[11px] text-[var(--color-text-muted)]">
-            ANIMP Protocol
-          </span>
+        <div className="mt-6 space-y-3">
+          <div className="flex items-center justify-between">
+            <button
+              type="button"
+              onClick={onSwitchToRegister}
+              className="text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-accent)] transition-colors cursor-pointer"
+            >
+              {t('auth.noAccount')} <span className="font-medium">{t('auth.signUp')}</span>
+            </button>
+            {onForgotPassword && (
+              <button
+                type="button"
+                onClick={onForgotPassword}
+                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent)] transition-colors cursor-pointer"
+              >
+                {t('forgotPassword.title')}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center justify-center gap-3 text-[11px] text-[var(--color-text-muted)]">
+            {onTerms && (
+              <button onClick={onTerms} className="hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors">
+                {t('legal.termsTitle')}
+              </button>
+            )}
+            {onTerms && onPrivacy && <span>·</span>}
+            {onPrivacy && (
+              <button onClick={onPrivacy} className="hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors">
+                {t('legal.privacyTitle')}
+              </button>
+            )}
+            <span>·</span>
+            <span>ANIMP Protocol</span>
+          </div>
         </div>
       </div>
     </div>

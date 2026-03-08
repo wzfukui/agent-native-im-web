@@ -10,22 +10,22 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  token: localStorage.getItem('aim_token'),
+  token: sessionStorage.getItem('aim_token'),
   entity: (() => {
-    try { return JSON.parse(localStorage.getItem('aim_entity') || 'null') } catch { return null }
+    try { return JSON.parse(sessionStorage.getItem('aim_entity') || 'null') } catch { return null }
   })(),
   setAuth: (token, entity) => {
-    localStorage.setItem('aim_token', token)
-    localStorage.setItem('aim_entity', JSON.stringify(entity))
+    sessionStorage.setItem('aim_token', token)
+    sessionStorage.setItem('aim_entity', JSON.stringify(entity))
     set({ token, entity })
   },
   setToken: (token) => {
-    localStorage.setItem('aim_token', token)
+    sessionStorage.setItem('aim_token', token)
     set({ token })
   },
   logout: () => {
-    localStorage.removeItem('aim_token')
-    localStorage.removeItem('aim_entity')
+    sessionStorage.removeItem('aim_token')
+    sessionStorage.removeItem('aim_entity')
     set({ token: null, entity: null })
   },
 }))

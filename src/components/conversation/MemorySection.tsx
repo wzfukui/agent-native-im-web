@@ -59,7 +59,7 @@ export function MemorySection({ conversationId, canManage }: Props) {
       await api.deleteMemory(token, conversationId, memId)
       setMemories((prev) => prev.filter((m) => m.id !== memId))
     } catch (error) {
-      console.error('Failed to delete memory:', error)
+      void error
     }
   }
 
@@ -70,12 +70,12 @@ export function MemorySection({ conversationId, canManage }: Props) {
         try {
           await api.deleteMemory(token, conversationId, mem.id)
         } catch (error) {
-          console.error(`Failed to delete memory ${mem.id}:`, error)
+          void error
         }
       }
       setMemories([])
     } catch (error) {
-      console.error('Failed to clear memories:', error)
+      void error
     } finally {
       setClearing(false)
     }

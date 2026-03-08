@@ -87,7 +87,7 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
         setShowForm(false)
       }
     } catch (error) {
-      console.error('Failed to create task:', error)
+      void error
     } finally {
       setCreating(false)
     }
@@ -100,7 +100,7 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
         useTasksStore.getState().updateTask(res.data)
       }
     } catch (error) {
-      console.error('Failed to update task status:', error)
+      void error
     }
   }
 
@@ -116,7 +116,7 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
         useTasksStore.getState().removeTask(conversationId, deleteConfirmTask.id)
       }
     } catch (error) {
-      console.error('Failed to delete task:', error)
+      void error
     } finally {
       setDeleteConfirmTask(null)
     }

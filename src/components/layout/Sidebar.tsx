@@ -49,6 +49,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
         )}
         title={t('sidebar.messages')}
+        aria-label={t('sidebar.messages')}
       >
         <MessageSquare className="w-5 h-5" />
         {totalUnread > 0 && (
@@ -71,6 +72,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-bot)]'
         )}
         title={t('sidebar.agents')}
+        aria-label={t('sidebar.agents')}
       >
         <Bot className="w-5 h-5" />
       </button>
@@ -86,6 +88,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
               : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)]'
           )}
           title={t('sidebar.admin')}
+          aria-label={t('sidebar.admin')}
         >
           <Shield className="w-5 h-5" />
         </button>
@@ -101,10 +104,14 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
       </button>
 
       {/* Connection status */}
-      <div className={cn(
-        'w-8 h-8 rounded-lg flex items-center justify-center',
-        wsConnected ? 'text-[var(--color-success)]' : 'text-[var(--color-text-muted)]',
-      )}>
+      <div
+        className={cn(
+          'w-8 h-8 rounded-lg flex items-center justify-center',
+          wsConnected ? 'text-[var(--color-success)]' : 'text-[var(--color-text-muted)]',
+        )}
+        role="status"
+        aria-label={wsConnected ? t('common.online') : t('common.offline')}
+      >
         {wsConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
       </div>
     </div>

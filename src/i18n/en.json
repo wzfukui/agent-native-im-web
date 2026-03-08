@@ -387,5 +387,28 @@
     "lastError": "last error: {{error}}",
     "retryNow": "Retry now",
     "syncFailed": "Outbox sync failed"
+  },
+  "artifact": {
+    "html": "HTML Content",
+    "code": "Code",
+    "diagram": "Diagram",
+    "image": "Image",
+    "artifact": "Artifact"
+  },
+  "legal": {
+    "termsTitle": "Terms of Service",
+    "privacyTitle": "Privacy Policy",
+    "back": "Back"
+  },
+  "consent": {
+    "message": "This app uses local storage for session data and offline functionality.",
+    "accept": "Accept",
+    "learnMore": "Privacy Policy"
+  },
+  "forgotPassword": {
+    "title": "Reset Password",
+    "description": "Contact your administrator to reset your password.",
+    "adminContact": "Administrator contact",
+    "back": "Back to Sign In"
   }
 }

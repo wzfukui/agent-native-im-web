@@ -51,7 +51,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
       }
       // If failed, keep edit mode open so user doesn't lose input
     } catch (e) {
-      console.error('Failed to update conversation:', e)
+      void e
     } finally {
       setSaving(false)
     }
