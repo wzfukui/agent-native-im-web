@@ -197,7 +197,21 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         console.debug('[streams] cleaning stale streams:', staleIds)
       }
       const streams = { ...s.streams }
-      for (const id of staleIds) delete streams[id]
+      for (const id of staleIds) {
+        // Mark as timed out so UI shows feedback instead of silently disappearing
+        streams[id] = {
+          ...streams[id],
+          layers: {
+            ...streams[id].layers,
+            status: { phase: 'error', progress: 0, text: 'Timed out' },
+          },
+        }
+      }
+      // Remove after a brief display period (clean up on next cycle)
+      const removeIds = Object.keys(s.streams).filter(
+        (id) => now - s.streams[id].started_at > 135_000 // 15s after timeout mark
+      )
+      for (const id of removeIds) delete streams[id]
       return { streams }
     }),
 }))
