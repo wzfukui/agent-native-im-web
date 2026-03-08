@@ -154,17 +154,12 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setRotatingToken(false)
   }
 
-  // Empty state
+  // Empty state — minimal, no gradient icon
   if (!bot) {
     return (
-      <div className="h-full flex flex-col items-center justify-center text-[var(--color-text-muted)] gap-4">
-        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[var(--color-bot)]/10 to-[var(--color-accent)]/10 flex items-center justify-center">
-          <Bot className="w-10 h-10 text-[var(--color-bot)] opacity-40" />
-        </div>
-        <div className="text-center">
-          <p className="text-base font-medium text-[var(--color-text-secondary)]">{t('bot.agentDetails')}</p>
-          <p className="text-xs mt-1">{t('bot.selectAgent')}</p>
-        </div>
+      <div className="h-full flex flex-col items-center justify-center">
+        <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t('bot.agentDetails')}</p>
+        <p className="text-xs text-[var(--color-text-muted)]">{t('bot.selectAgent')}</p>
       </div>
     )
   }
@@ -214,10 +209,16 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     `recommendation=${(selfCheck?.recommendation || []).join(' | ') || 'none'}`,
   ].join('\n')
 
+  // --- Shared button style helper ---
+  const secondaryBtn = 'py-1.5 px-3 rounded-lg text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer flex items-center gap-1.5'
+  const copyBtn = (label: string) => copied === label
+    ? <Check className="w-3 h-3 text-[var(--color-success)]" />
+    : <Copy className="w-3 h-3 text-[var(--color-text-muted)]" />
+
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg-primary)]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+      <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         <button
           onClick={onBack}
           className="lg:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer"
@@ -226,84 +227,75 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
         </button>
         <EntityAvatar entity={bot} size="sm" showStatus />
         <div className="flex-1 min-w-0">
-          <h2 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+          <h2 className="text-sm font-semibold text-[var(--color-text-primary)] truncate tracking-[-0.01em]">
             {entityDisplayName(bot)}
           </h2>
-          <p className="text-[10px] text-[var(--color-text-muted)]">@{bot.name}</p>
+          <p className="text-xs text-[var(--color-text-muted)]">@{bot.name}</p>
         </div>
+
+        {/* Status + primary action in header */}
         <span className={cn(
-          'px-2 py-0.5 rounded-full text-[10px] font-medium flex items-center gap-1',
+          'px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5',
           isDisabled
-            ? 'bg-amber-500/15 text-amber-500'
+            ? 'bg-[var(--color-warning)]/12 text-[var(--color-warning)]'
             : isOnline
-              ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-              : 'bg-[var(--color-text-muted)]/15 text-[var(--color-text-muted)]'
+              ? 'bg-[var(--color-success)]/12 text-[var(--color-success)]'
+              : 'bg-[var(--color-text-muted)]/12 text-[var(--color-text-muted)]'
         )}>
-          {isDisabled ? <><PowerOff className="w-2.5 h-2.5" /> {t('bot.disabled')}</> : isOnline ? <><Wifi className="w-2.5 h-2.5" /> {t('common.online')}</> : <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>}
+          {isDisabled ? <><PowerOff className="w-3 h-3" /> {t('bot.disabled')}</> : isOnline ? <><Wifi className="w-3 h-3" /> {t('common.online')}</> : <><WifiOff className="w-3 h-3" /> {t('common.offline')}</>}
         </span>
       </div>
 
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
-        {/* Full credential card (just created) */}
+        {/* ── Credential banner (just created) ── */}
         {showFullCreds && createdCredentials && (
-          <div className="px-4 py-3 border-b border-[var(--color-border)]">
-            <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 overflow-hidden">
-              <div className="flex items-center justify-between px-3 pt-3 pb-1.5">
-                <div className="flex items-center gap-1.5">
-                  <Key className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-xs font-medium text-amber-500">
-                    {entityDisplayName(createdCredentials.entity)} {t('bot.created')} - Bootstrap Key ({t('bot.awaitingApproval')})
-                  </span>
-                </div>
-                <button
-                  onClick={onDismissCredentials}
-                  className="text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
-                >
-                  {t('common.dismiss')}
+          <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-warning)]/4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Key className="w-4 h-4 text-[var(--color-warning)]" />
+                <span className="text-xs font-semibold text-[var(--color-warning)]">
+                  Bootstrap Key ({t('bot.awaitingApproval')})
+                </span>
+              </div>
+              <button
+                onClick={onDismissCredentials}
+                className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer"
+              >
+                {t('common.dismiss')}
+              </button>
+            </div>
+
+            {/* Connection fields — flat, no nested cards */}
+            <div className="space-y-2 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--color-text-muted)] w-8 flex-shrink-0">API</span>
+                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1 rounded truncate">
+                  {window.location.origin}/api/v1
+                </code>
+                <button onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')} className="p-1 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                  {copyBtn('api')}
                 </button>
               </div>
-
-              {/* Connection fields */}
-              <div className="px-3 space-y-1.5">
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase w-10 flex-shrink-0">API</span>
-                  <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
-                    {window.location.origin}/api/v1
-                  </code>
-                  <button
-                    onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')}
-                    className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
-                  >
-                    {copied === 'api' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
-                  </button>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-medium text-amber-500 uppercase flex-shrink-0">Bootstrap Key (临时)</span>
-                  <code className="flex-1 text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-1 rounded truncate">
-                    {createdCredentials.key}
-                  </code>
-                  <button
-                    onClick={() => handleCopy(createdCredentials.key, 'bootstrap')}
-                    className="w-6 h-6 rounded bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer flex-shrink-0"
-                  >
-                    {copied === 'bootstrap' ? <Check className="w-2.5 h-2.5 text-[var(--color-success)]" /> : <Copy className="w-2.5 h-2.5 text-[var(--color-text-muted)]" />}
-                  </button>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[var(--color-warning)] w-8 flex-shrink-0">Key</span>
+                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1 rounded truncate">
+                  {createdCredentials.key}
+                </code>
+                <button onClick={() => handleCopy(createdCredentials.key, 'bootstrap')} className="p-1 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                  {copyBtn('bootstrap')}
+                </button>
               </div>
+            </div>
 
-              {/* One-click copy all integration info */}
-              <div className="px-3 pt-2 pb-1.5">
-                <button
-                  onClick={() => {
-                    const integrationInfo = `# Agent Integration Configuration
+            {/* Actions — horizontal, no gradient */}
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const integrationInfo = `# Agent Integration Configuration
 API Endpoint: ${window.location.origin}/api/v1
-Bootstrap Key (临时): ${createdCredentials.key}
-
-# ⚠️ 重要说明
-此为 Bootstrap Key，仅用于首次 WebSocket 连接。
-Bot 连接后需要用户批准，才能获得永久 Token (aim_ 前缀)。
+Bootstrap Key: ${createdCredentials.key}
 
 # Environment Variables (.env)
 IM_SERVER=${window.location.origin}
@@ -311,192 +303,175 @@ BOOTSTRAP_KEY=${createdCredentials.key}
 
 # Integration Documentation
 ${createdCredentials.doc}`
-                    handleCopy(integrationInfo, 'integration')
-                  }}
-                  className="w-full py-2 rounded-lg bg-gradient-to-r from-amber-500 to-amber-600 hover:opacity-90 text-white text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-opacity shadow-sm"
-                >
-                  {copied === 'integration' ? (
-                    <>
-                      <Check className="w-4 h-4" />
-                      <span>{t('invite.copied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-4 h-4" />
-                      <span>{t('bot.copyIntegration')}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div className="px-3 pb-1">
-                <button
-                  onClick={downloadQuickstart}
-                  className="w-full py-2 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors border border-[var(--color-border)]"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download Quickstart</span>
-                </button>
-              </div>
-
-              {/* Collapsible doc preview */}
-              <div className="px-3 pb-2">
-                <button
-                  onClick={() => setDocExpanded(!docExpanded)}
-                  className="w-full flex items-center justify-center gap-1 py-1 text-[9px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
-                >
-                  {docExpanded ? <ChevronUp className="w-2.5 h-2.5" /> : <ChevronDown className="w-2.5 h-2.5" />}
-                  {docExpanded ? t('bot.collapseDoc') : t('bot.expandDoc')}
-                </button>
-                {docExpanded && (
-                  <div className="mt-1 p-2 rounded bg-[var(--color-bg-primary)] border border-[var(--color-border)] max-h-48 overflow-y-auto text-[10px] prose prose-invert prose-xs max-w-none">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{createdCredentials.doc}</ReactMarkdown>
-                  </div>
-                )}
-              </div>
+                  handleCopy(integrationInfo, 'integration')
+                }}
+                className="flex-1 py-2 rounded-lg bg-[var(--color-warning)]/12 hover:bg-[var(--color-warning)]/18 text-[var(--color-warning)] text-xs font-medium flex items-center justify-center gap-2 cursor-pointer transition-colors"
+              >
+                {copied === 'integration' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied === 'integration' ? t('invite.copied') : t('bot.copyIntegration')}
+              </button>
+              <button
+                onClick={downloadQuickstart}
+                className="py-2 px-3 rounded-lg bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-xs text-[var(--color-text-secondary)] cursor-pointer transition-colors flex items-center gap-1.5"
+              >
+                <Download className="w-3.5 h-3.5" />
+                Quickstart
+              </button>
             </div>
+
+            {/* Collapsible doc */}
+            <button
+              onClick={() => setDocExpanded(!docExpanded)}
+              className="mt-2 flex items-center gap-1 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
+            >
+              {docExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {docExpanded ? t('bot.collapseDoc') : t('bot.expandDoc')}
+            </button>
+            {docExpanded && (
+              <div className="mt-2 p-3 rounded-lg bg-[var(--color-bg-primary)] border border-[var(--color-border)] max-h-48 overflow-y-auto text-xs md max-w-none">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{createdCredentials.doc}</ReactMarkdown>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Self-check and diagnostics */}
+        {/* ── Status overview — flat key-value, no nested cards ── */}
         {(selfCheck || diagnostics) && (
-          <div className="px-4 py-3 border-b border-[var(--color-border)]">
-            <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <Activity className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-                <span className="text-xs font-medium text-[var(--color-text-primary)]">Agent Self-check</span>
-                <span className={cn(
-                  'ml-auto px-1.5 py-0.5 rounded text-[10px] font-medium',
-                  selfCheck?.ready ? 'bg-[var(--color-success)]/15 text-[var(--color-success)]' : 'bg-amber-500/15 text-amber-500',
-                )}>
-                  {selfCheck?.ready ? 'READY' : 'ACTION NEEDED'}
-                </span>
+          <div className="px-5 py-4 border-b border-[var(--color-border)]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Activity className="w-4 h-4 text-[var(--color-accent)]" />
+                <span className="text-sm font-medium text-[var(--color-text-primary)]">Status</span>
               </div>
+              <span className={cn(
+                'px-2 py-0.5 rounded-full text-xs font-medium',
+                selfCheck?.ready ? 'bg-[var(--color-success)]/12 text-[var(--color-success)]' : 'bg-[var(--color-warning)]/12 text-[var(--color-warning)]',
+              )}>
+                {selfCheck?.ready ? 'Ready' : 'Action needed'}
+              </span>
+            </div>
 
-              <div className="grid grid-cols-2 gap-2 text-[10px]">
-                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
-                  <p className="text-[var(--color-text-muted)]">API Key</p>
-                  <p className="text-[var(--color-text-secondary)]">{selfCheck?.has_api_key ? 'Configured' : 'Missing'}</p>
-                </div>
-                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
-                  <p className="text-[var(--color-text-muted)]">Bootstrap</p>
-                  <p className="text-[var(--color-text-secondary)]">{selfCheck?.has_bootstrap ? 'Present' : 'Revoked'}</p>
-                </div>
-                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
-                  <p className="text-[var(--color-text-muted)]">Connections</p>
-                  <p className="text-[var(--color-text-secondary)]">{diagnostics?.connections ?? 0}</p>
-                </div>
-                <div className="rounded-md bg-[var(--color-bg-primary)] px-2 py-1.5">
-                  <p className="text-[var(--color-text-muted)]">Hub WS</p>
-                  <p className="text-[var(--color-text-secondary)]">{diagnostics?.hub?.total_ws_connections ?? 0}</p>
-                </div>
+            {/* Flat metrics row */}
+            <div className="flex gap-6 text-xs mb-3">
+              <div>
+                <p className="text-[var(--color-text-muted)]">API Key</p>
+                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_api_key ? 'Configured' : 'Missing'}</p>
               </div>
-
-              {(selfCheck?.recommendation || []).length > 0 && (
-                <div className="rounded-md bg-amber-500/8 border border-amber-500/20 p-2">
-                  {(selfCheck?.recommendation || []).map((item, i) => (
-                    <p key={i} className="text-[10px] text-[var(--color-text-secondary)] leading-relaxed">• {item}</p>
-                  ))}
-                </div>
-              )}
-              {opError && (
-                <div className="rounded-md bg-red-500/8 border border-red-500/20 p-2 text-[10px] text-red-400">
-                  {opError}
-                </div>
-              )}
-              {opInfo && (
-                <div className="rounded-md bg-emerald-500/8 border border-emerald-500/20 p-2 text-[10px] text-emerald-400">
-                  {opInfo}
-                </div>
-              )}
-
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleCopy(diagnosticsSnapshot, 'diag-snapshot')}
-                  className="flex-1 py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer"
-                >
-                  {copied === 'diag-snapshot' ? t('common.copied') : t('bot.copyOpsSnapshot')}
-                </button>
-                <button
-                  onClick={() => setConfirmRegenerate(true)}
-                  disabled={rotatingToken || isDisabled}
-                  className="flex-1 py-1.5 rounded-md bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[10px] text-[var(--color-accent)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
-                >
-                  {rotatingToken ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Key className="w-3 h-3" />}
-                  {t('bot.regenerateToken')}
-                </button>
+              <div>
+                <p className="text-[var(--color-text-muted)]">Bootstrap</p>
+                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_bootstrap ? 'Present' : 'Revoked'}</p>
+              </div>
+              <div>
+                <p className="text-[var(--color-text-muted)]">Connections</p>
+                <p className="text-[var(--color-text-primary)] font-medium">{diagnostics?.connections ?? 0}</p>
+              </div>
+              <div>
+                <p className="text-[var(--color-text-muted)]">Hub WS</p>
+                <p className="text-[var(--color-text-primary)] font-medium">{diagnostics?.hub?.total_ws_connections ?? 0}</p>
               </div>
             </div>
-          </div>
-        )}
 
-        {/* Pending connection card (has bootstrap key but not just created) */}
-        {showPendingCreds && (
-          <div className="px-4 py-3 border-b border-[var(--color-border)]">
-            <div className="rounded-lg bg-amber-500/8 border border-amber-500/20 p-3 space-y-2">
-              <div className="flex items-center gap-1.5">
-                <AlertCircle className="w-3.5 h-3.5 text-amber-500" />
-                <span className="text-xs font-medium text-amber-500">{t('bot.pendingConnection')}</span>
+            {(selfCheck?.recommendation || []).length > 0 && (
+              <div className="rounded-lg bg-[var(--color-warning)]/6 border border-[var(--color-warning)]/15 p-2.5 mb-3">
+                {(selfCheck?.recommendation || []).map((item, i) => (
+                  <p key={i} className="text-xs text-[var(--color-text-secondary)] leading-relaxed">• {item}</p>
+                ))}
               </div>
-              <p className="text-[11px] text-[var(--color-text-secondary)] leading-relaxed">
-                {t('bot.pendingConnectionDesc')}
-              </p>
-              {credStatus?.bootstrap_prefix && (
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[9px] font-medium text-[var(--color-text-muted)] uppercase">{t('bot.keyPrefix')}</span>
-                  <code className="text-[10px] font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2 py-0.5 rounded">
-                    {credStatus.bootstrap_prefix}****
-                  </code>
-                </div>
-              )}
-              <p className="text-[9px] text-[var(--color-text-muted)] italic">{t('bot.keyLostHint')}</p>
-            </div>
-          </div>
-        )}
+            )}
+            {opError && (
+              <div className="rounded-lg bg-[var(--color-error)]/6 border border-[var(--color-error)]/15 p-2.5 mb-3 text-xs text-[var(--color-error)]">
+                {opError}
+              </div>
+            )}
+            {opInfo && (
+              <div className="rounded-lg bg-[var(--color-success)]/6 border border-[var(--color-success)]/15 p-2.5 mb-3 text-xs text-[var(--color-success)]">
+                {opInfo}
+              </div>
+            )}
 
-        {/* Agent access pack */}
-        <div className="px-4 py-3 border-b border-[var(--color-border)]">
-          <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] p-3 space-y-2">
-            <div className="flex items-center gap-1.5">
-              <Key className="w-3.5 h-3.5 text-[var(--color-accent)]" />
-              <span className="text-xs font-medium text-[var(--color-text-primary)]">{t('bot.agentAccessPack')}</span>
-              {!accessToken && (
-                <span className="ml-auto text-[10px] text-amber-500">{t('bot.regenerateToGetToken')}</span>
-              )}
-            </div>
             <div className="flex gap-2">
+              <button
+                onClick={() => handleCopy(diagnosticsSnapshot, 'diag-snapshot')}
+                className={secondaryBtn}
+              >
+                {copyBtn('diag-snapshot')}
+                {copied === 'diag-snapshot' ? t('common.copied') : t('bot.copyOpsSnapshot')}
+              </button>
+              <button
+                onClick={() => setConfirmRegenerate(true)}
+                disabled={rotatingToken || isDisabled}
+                className="py-1.5 px-3 rounded-lg text-xs text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
+              >
+                {rotatingToken ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Key className="w-3 h-3" />}
+                {t('bot.regenerateToken')}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── Pending connection notice ── */}
+        {showPendingCreds && (
+          <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-warning)]/4">
+            <div className="flex items-center gap-2 mb-1.5">
+              <AlertCircle className="w-4 h-4 text-[var(--color-warning)]" />
+              <span className="text-xs font-semibold text-[var(--color-warning)]">{t('bot.pendingConnection')}</span>
+            </div>
+            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-2">
+              {t('bot.pendingConnectionDesc')}
+            </p>
+            {credStatus?.bootstrap_prefix && (
+              <p className="text-xs text-[var(--color-text-muted)]">
+                {t('bot.keyPrefix')}: <code className="font-mono text-[var(--color-text-primary)]">{credStatus.bootstrap_prefix}****</code>
+              </p>
+            )}
+            <p className="text-xs text-[var(--color-text-muted)] italic mt-1">{t('bot.keyLostHint')}</p>
+          </div>
+        )}
+
+        {/* ── Access pack — consolidated ── */}
+        {(accessToken || !showFullCreds) && (
+          <div className="px-5 py-4 border-b border-[var(--color-border)]">
+            <div className="flex items-center gap-2 mb-3">
+              <Key className="w-4 h-4 text-[var(--color-accent)]" />
+              <span className="text-sm font-medium text-[var(--color-text-primary)]">{t('bot.agentAccessPack')}</span>
+              {!accessToken && (
+                <span className="ml-auto text-xs text-[var(--color-warning)]">{t('bot.regenerateToGetToken')}</span>
+              )}
+            </div>
+            <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => handleCopy(accessText, 'agent-access-text')}
                 disabled={!accessToken}
-                className="flex-1 py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
+                {copyBtn('agent-access-text')}
                 {copied === 'agent-access-text' ? t('common.copied') : t('bot.copyAgentAccess')}
               </button>
               <button
                 onClick={() => handleCopy(accessUrl, 'agent-access-url')}
                 disabled={!accessToken}
-                className="flex-1 py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1"
+                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
-                <Link className="w-3 h-3" />
+                <Link className="w-3 h-3 text-[var(--color-text-muted)]" />
                 {copied === 'agent-access-url' ? t('common.copied') : t('bot.copyAgentUrl')}
               </button>
+              <button
+                onClick={downloadQuickstart}
+                disabled={!accessToken}
+                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+              >
+                <Download className="w-3 h-3 text-[var(--color-text-muted)]" />
+                {t('bot.downloadQuickstart')}
+              </button>
             </div>
-            <button
-              onClick={downloadQuickstart}
-              disabled={!accessToken}
-              className="w-full py-1.5 rounded-md bg-[var(--color-bg-primary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] text-[10px] text-[var(--color-text-secondary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
-            >
-              <Download className="w-3 h-3" />
-              {t('bot.downloadQuickstart')}
-            </button>
           </div>
-        </div>
+        )}
 
-        {/* Agent info card */}
-        <div className="px-4 py-3 border-b border-[var(--color-border)]">
+        {/* ── Agent info — no card wrapper ── */}
+        <div className="px-5 py-4 border-b border-[var(--color-border)]">
           {/* Avatar change */}
           {!isDisabled && (
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-4">
               <AvatarPicker
                 currentUrl={bot.avatar_url}
                 onSelect={async (url) => {
@@ -505,134 +480,90 @@ ${createdCredentials.doc}`
                 }}
                 size="sm"
               />
-              <span className="text-[10px] text-[var(--color-text-muted)]">{t('bot.changeAvatar')}</span>
+              <span className="text-xs text-[var(--color-text-muted)]">{t('bot.changeAvatar')}</span>
             </div>
           )}
 
           {/* Description */}
           {description && (
-            <div className="flex items-start gap-2 mb-3">
-              <Sparkles className="w-3.5 h-3.5 text-[var(--color-accent)] mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed">{description}</p>
+            <div className="flex items-start gap-2.5 mb-4">
+              <Sparkles className="w-4 h-4 text-[var(--color-accent)] mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-[var(--color-text-secondary)] leading-relaxed">{description}</p>
             </div>
           )}
 
-          {/* Info rows — vertical list (名片 style) */}
-          <div className="space-y-2">
-            {/* Owner */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
-                <User className="w-3 h-3" />
-                {t('bot.owner')}
-              </span>
-              <div className="flex items-center gap-1.5">
-                {ownerEntity ? (
-                  <>
-                    <EntityAvatar entity={ownerEntity} size="xs" />
-                    <span className="text-[11px] text-[var(--color-text-primary)]">{entityDisplayName(ownerEntity)}</span>
-                  </>
-                ) : (
-                  <span className="text-[11px] text-[var(--color-text-muted)]">#{bot.owner_id || '—'}</span>
-                )}
-              </div>
-            </div>
-
-            {/* Type */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
-                <Tag className="w-3 h-3" />
-                {t('bot.type')}
-              </span>
-              <span className="text-[11px] text-[var(--color-text-primary)] capitalize">{bot.entity_type}</span>
-            </div>
-
-            {/* ID */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
-                <Hash className="w-3 h-3" />
-                ID
-              </span>
-              <span className="text-[11px] text-[var(--color-text-primary)] font-mono">{bot.id}</span>
-            </div>
-
-            {/* Created */}
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
-                <Calendar className="w-3 h-3" />
-                {t('bot.createdAt')}
-              </span>
-              <span className="text-[11px] text-[var(--color-text-primary)]">
+          {/* Info rows — clean key-value */}
+          <div className="space-y-2.5">
+            <InfoRow icon={User} label={t('bot.owner')}>
+              {ownerEntity ? (
+                <span className="flex items-center gap-1.5">
+                  <EntityAvatar entity={ownerEntity} size="xs" />
+                  <span className="text-xs text-[var(--color-text-primary)]">{entityDisplayName(ownerEntity)}</span>
+                </span>
+              ) : (
+                <span className="text-xs text-[var(--color-text-muted)]">#{bot.owner_id || '—'}</span>
+              )}
+            </InfoRow>
+            <InfoRow icon={Tag} label={t('bot.type')}>
+              <span className="text-xs text-[var(--color-text-primary)] capitalize">{bot.entity_type}</span>
+            </InfoRow>
+            <InfoRow icon={Hash} label="ID">
+              <span className="text-xs text-[var(--color-text-primary)] font-mono">{bot.id}</span>
+            </InfoRow>
+            <InfoRow icon={Calendar} label={t('bot.createdAt')}>
+              <span className="text-xs text-[var(--color-text-primary)]">
                 {bot.created_at ? new Date(bot.created_at).toLocaleDateString() : '—'}
               </span>
-            </div>
-
-            {/* Last seen */}
+            </InfoRow>
             {lastSeen && (
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1.5">
-                  <Clock className="w-3 h-3" />
-                  {t('bot.lastSeen')}
-                </span>
-                <span className="text-[11px] text-[var(--color-text-primary)]">
+              <InfoRow icon={Clock} label={t('bot.lastSeen')}>
+                <span className="text-xs text-[var(--color-text-primary)]">
                   {new Date(lastSeen).toLocaleString()}
                 </span>
-              </div>
+              </InfoRow>
             )}
           </div>
 
-          {/* Tags */}
-          {tags.length > 0 && (
-            <div className="flex flex-wrap gap-1 mt-2.5">
+          {/* Tags + Capabilities — inline */}
+          {(tags.length > 0 || caps.length > 0) && (
+            <div className="flex flex-wrap gap-1.5 mt-4">
               {tags.map((tag, i) => (
-                <span key={i} className="px-1.5 py-0.5 rounded-md bg-[var(--color-bot)]/10 text-[var(--color-bot)] text-[10px]">
+                <span key={`t${i}`} className="px-2 py-0.5 rounded-full bg-[var(--color-bot)]/10 text-[var(--color-bot)] text-xs">
                   {tag}
+                </span>
+              ))}
+              {caps.map((cap, i) => (
+                <span key={`c${i}`} className="px-2 py-0.5 rounded-full bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs">
+                  {cap}
                 </span>
               ))}
             </div>
           )}
 
-          {/* Capabilities */}
-          {caps.length > 0 && (
-            <div className="flex items-start gap-2 mt-2.5">
-              <FileText className="w-3.5 h-3.5 text-[var(--color-bot)] mt-0.5 flex-shrink-0" />
-              <div className="flex flex-wrap gap-1">
-                {caps.map((cap, i) => (
-                  <span key={i} className="px-1.5 py-0.5 rounded-md bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-[10px]">
-                    {cap}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Action buttons — varies by status */}
-          <div className="flex gap-2 mt-3">
+          {/* Actions */}
+          <div className="flex gap-2 mt-4">
             {isDisabled ? (
-              <>
-                {/* Disabled state: re-enable only */}
-                <button
-                  onClick={() => onReactivate(bot.id)}
-                  className="py-1.5 px-3 rounded-lg bg-[var(--color-success)]/15 hover:bg-[var(--color-success)]/25 text-[var(--color-success)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <RotateCcw className="w-3 h-3" />
-                  {t('bot.reactivate')}
-                </button>
-              </>
+              <button
+                onClick={() => onReactivate(bot.id)}
+                className="py-2 px-4 rounded-lg bg-[var(--color-success)]/12 hover:bg-[var(--color-success)]/18 text-[var(--color-success)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                {t('bot.reactivate')}
+              </button>
             ) : (
               <>
-                {/* Active state: start chat + disable */}
                 <button
                   onClick={() => onStartChat(bot.id)}
-                  className="py-1.5 px-3 rounded-lg bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 text-[var(--color-accent)] text-[11px] font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                  className="py-2 px-4 rounded-lg bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/18 text-[var(--color-accent)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
                 >
-                  <MessageSquare className="w-3 h-3" />
+                  <MessageSquare className="w-3.5 h-3.5" />
                   {t('conversation.newChat')}
                 </button>
                 <button
                   onClick={() => setConfirmDisable(true)}
-                  className="py-1.5 px-2 rounded-lg hover:bg-amber-500/15 text-[var(--color-text-muted)] hover:text-amber-500 text-[11px] flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
+                  className="py-2 px-3 rounded-lg hover:bg-[var(--color-warning)]/10 text-[var(--color-text-muted)] hover:text-[var(--color-warning)] text-xs flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
                 >
-                  <PowerOff className="w-3 h-3" />
+                  <PowerOff className="w-3.5 h-3.5" />
                   {t('bot.disableAgent')}
                 </button>
               </>
@@ -640,36 +571,36 @@ ${createdCredentials.doc}`
           </div>
         </div>
 
-        {/* Conversations tabs */}
-        <div className="p-4">
+        {/* ── Conversations ── */}
+        <div className="px-5 py-4">
           <div className="flex items-center gap-1 mb-3 bg-[var(--color-bg-secondary)] p-1 rounded-lg">
             <button
               onClick={() => setActiveTab('direct')}
               className={cn(
-                'flex-1 py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-all cursor-pointer',
+                'flex-1 py-2 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer',
                 activeTab === 'direct'
                   ? 'bg-[var(--color-bg-primary)] shadow-sm text-[var(--color-text-primary)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
               )}
             >
-              <MessageSquare className="w-4 h-4" />
+              <MessageSquare className="w-3.5 h-3.5" />
               {t('conversation.direct')}
-              <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-[10px]">
+              <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-xs">
                 {directConvs.length}
               </span>
             </button>
             <button
               onClick={() => setActiveTab('groups')}
               className={cn(
-                'flex-1 py-2 px-3 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-all cursor-pointer',
+                'flex-1 py-2 px-3 rounded-md text-xs font-medium flex items-center justify-center gap-2 transition-all cursor-pointer',
                 activeTab === 'groups'
                   ? 'bg-[var(--color-bg-primary)] shadow-sm text-[var(--color-text-primary)]'
                   : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]'
               )}
             >
-              <Users className="w-4 h-4" />
+              <Users className="w-3.5 h-3.5" />
               {t('conversation.group')}
-              <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-[10px]">
+              <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-tertiary)] text-xs">
                 {groupConvs.length}
               </span>
             </button>
@@ -680,7 +611,7 @@ ${createdCredentials.doc}`
               <Loader2 className="w-5 h-5 text-[var(--color-text-muted)] animate-spin" />
             </div>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-0.5">
               {tabConvs.map((conv) => (
                 <button
                   key={conv.id}
@@ -689,7 +620,7 @@ ${createdCredentials.doc}`
                 >
                   <div className={cn(
                     'w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0',
-                    conv.conv_type === 'direct' ? 'bg-[var(--color-accent)]/10' : 'bg-[var(--color-bot)]/10'
+                    conv.conv_type === 'direct' ? 'bg-[var(--color-accent)]/8' : 'bg-[var(--color-bot)]/8'
                   )}>
                     {conv.conv_type === 'direct' ? (
                       <MessageSquare className="w-4 h-4 text-[var(--color-accent)]" />
@@ -701,7 +632,7 @@ ${createdCredentials.doc}`
                     <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
                       {conv.title || t('conversation.unnamed')}
                     </p>
-                    <p className="text-[10px] text-[var(--color-text-muted)]">
+                    <p className="text-xs text-[var(--color-text-muted)]">
                       {new Date(conv.updated_at).toLocaleDateString()}
                     </p>
                   </div>
@@ -734,6 +665,19 @@ ${createdCredentials.doc}`
         onConfirm={() => { setConfirmRegenerate(false); handleRegenerateToken() }}
         onCancel={() => setConfirmRegenerate(false)}
       />
+    </div>
+  )
+}
+
+/** Reusable info row — icon + label + value */
+function InfoRow({ icon: Icon, label, children }: { icon: typeof User; label: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs text-[var(--color-text-muted)] flex items-center gap-1.5">
+        <Icon className="w-3.5 h-3.5" />
+        {label}
+      </span>
+      {children}
     </div>
   )
 }
