@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageList } from './MessageList'
 import { MessageComposer } from './MessageComposer'
-import { StreamingOverlay } from './StreamingOverlay'
 import { GroupMembersPanel } from '@/components/conversation/GroupMembersPanel'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAuthStore } from '@/store/auth'
@@ -566,17 +565,17 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           loading={searchResults !== null ? searchLoading : loading}
           hasMore={searchResults !== null ? false : hasMore}
           lastReadMessageId={searchResults ? undefined : initialLastRead}
+          streams={searchResults ? undefined : convStreams}
+          participants={conversation.participants}
           onLoadMore={searchResults !== null ? undefined : handleLoadMore}
           onInteractionReply={handleInteractionReply}
           onRevoke={isArchived ? undefined : handleRevoke}
           onReply={isArchived ? undefined : (msg) => setReplyTo(msg)}
           onReact={isArchived ? undefined : handleReact}
           onRetryOutbox={isArchived ? undefined : handleRetryOutbox}
+          onCancelStream={onCancelStream}
         />
       )}
-
-      {/* Streaming overlay */}
-      <StreamingOverlay streams={convStreams} onCancel={onCancelStream} />
 
       {/* Group members panel */}
       {showMembers && isGroup && (

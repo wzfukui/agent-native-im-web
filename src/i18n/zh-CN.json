@@ -172,6 +172,8 @@
     "sending": "发送中...",
     "queuedOffline": "已加入离线队列",
     "deliveryFailed": "发送失败",
+    "expandMore": "展开全部",
+    "collapseContent": "收起",
     "retryNow": "立即重试"
   },
   "chat": {
@@ -225,6 +227,8 @@
     "descriptionPlaceholder": "这个 Agent 做什么？",
     "tagsLabel": "标签（可选）",
     "tagsPlaceholder": "如：客服、财务、销售",
+    "autoApprove": "首次连接时自动批准",
+    "autoApproveDesc": "跳过手动审批，Agent 连接后自动下发永久密钥",
     "pendingConnection": "等待连接",
     "pendingConnectionDesc": "此 Agent 有引导密钥但尚未连接。",
     "keyPrefix": "密钥前缀",

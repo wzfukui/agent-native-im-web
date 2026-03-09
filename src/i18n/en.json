@@ -172,6 +172,8 @@
     "sending": "Sending...",
     "queuedOffline": "Queued for offline sync",
     "deliveryFailed": "Delivery failed",
+    "expandMore": "Show more",
+    "collapseContent": "Show less",
     "retryNow": "Retry now"
   },
   "chat": {
@@ -225,6 +227,8 @@
     "descriptionPlaceholder": "What does this agent do?",
     "tagsLabel": "Tags (optional)",
     "tagsPlaceholder": "e.g. support, billing, sales",
+    "autoApprove": "Auto-approve on first connection",
+    "autoApproveDesc": "Skip manual approval — permanent key issued automatically when agent connects",
     "pendingConnection": "Waiting for connection",
     "pendingConnectionDesc": "This agent has a bootstrap key but hasn't connected yet.",
     "keyPrefix": "Key prefix",

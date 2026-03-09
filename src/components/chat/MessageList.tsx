@@ -1,8 +1,9 @@
-import { useEffect, useRef, useMemo, useState } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageBubble } from './MessageBubble'
+import { StreamingBubble } from './StreamingBubble'
 import { Loader2 } from 'lucide-react'
-import type { Message } from '@/lib/types'
+import type { Message, ActiveStream, Entity } from '@/lib/types'
 import { formatDateSeparator } from '@/lib/utils'
 
 interface Props {
@@ -11,40 +12,56 @@ interface Props {
   loading?: boolean
   hasMore?: boolean
   lastReadMessageId?: number
+  streams?: ActiveStream[]
+  participants?: { entity_id: number; entity?: Entity }[]
   onLoadMore?: () => void
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
   onReply?: (msg: Message) => void
   onReact?: (msgId: number, emoji: string) => void
   onRetryOutbox?: (tempId: string) => void
+  onCancelStream?: (streamId: string, conversationId: number) => void
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const prevLengthRef = useRef(0)
+  const isNearBottomRef = useRef(true)
 
-  // Auto-scroll to bottom on new messages
+  // Track whether user is near bottom (for auto-scroll during streaming)
+  const handleScroll = () => {
+    if (!containerRef.current) return
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current
+    isNearBottomRef.current = scrollHeight - scrollTop - clientHeight < 120
+
+    // Load more on scroll to top
+    if (hasMore && !loading && scrollTop < 100) {
+      onLoadMore?.()
+    }
+  }
+
+  // Auto-scroll on new messages
   useEffect(() => {
-    if (messages.length > prevLengthRef.current) {
+    if (messages.length > prevLengthRef.current && isNearBottomRef.current) {
       endRef.current?.scrollIntoView({ behavior: messages.length - prevLengthRef.current > 5 ? 'auto' : 'smooth' })
     }
     prevLengthRef.current = messages.length
   }, [messages.length])
 
+  // Auto-scroll during streaming updates (when user is near bottom)
+  const streamContent = streams?.map(s => s.layers.summary || '').join('') || ''
+  useEffect(() => {
+    if (streams && streams.length > 0 && isNearBottomRef.current) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [streamContent, streams?.length])
+
   // Initial scroll
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'auto' })
   }, [])
-
-  // Scroll detection for load more
-  const handleScroll = () => {
-    if (!hasMore || loading || !containerRef.current) return
-    if (containerRef.current.scrollTop < 100) {
-      onLoadMore?.()
-    }
-  }
 
   // Build message map for reply previews
   const messageMap = useMemo(() => {
@@ -53,7 +70,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     return map
   }, [messages])
 
-  // Pre-compute date strings for separator checks (avoid repeated new Date() in render)
+  // Pre-compute date strings for separator checks
   const dateSepIndices = useMemo(() => {
     const set = new Set<number>()
     set.add(0)
@@ -70,9 +87,13 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     if (i === 0) return true
     const prev = messages[i - 1]
     if (prev.sender_id !== msg.sender_id) return true
-    // Show sender if time gap > 5 minutes
     const gap = new Date(msg.created_at).getTime() - new Date(prev.created_at).getTime()
     return gap > 300000
+  }
+
+  // Resolve sender entity for streams
+  const findEntity = (senderId: number): Entity | undefined => {
+    return participants?.find(p => p.entity_id === senderId)?.entity
   }
 
   return (
@@ -101,8 +122,6 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
       <div className="space-y-2.5">
         {messages.map((msg, i) => {
           const showDateSep = dateSepIndices.has(i)
-
-          // Show new message divider after lastReadMessageId
           const showDivider = lastReadMessageId != null &&
             i > 0 &&
             messages[i - 1].id === lastReadMessageId &&
@@ -144,6 +163,16 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
             </div>
           )
         })}
+
+        {/* Inline streaming bubbles */}
+        {streams && streams.map((stream) => (
+          <StreamingBubble
+            key={stream.stream_id}
+            stream={stream}
+            sender={findEntity(stream.sender_id)}
+            onCancel={onCancelStream}
+          />
+        ))}
       </div>
 
       <div ref={endRef} />

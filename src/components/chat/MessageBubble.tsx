@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -14,6 +14,9 @@ import {
   FileText, Download, Play, Pause,
   Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, RefreshCw, CloudOff, AlertTriangle,
 } from 'lucide-react'
+
+/** Max collapsed height in px (~10 lines of text) */
+const COLLAPSE_HEIGHT = 240
 
 function AudioPlayer({ url, duration: totalDuration }: { url?: string; duration?: number }) {
   const audioRef = useRef<HTMLAudioElement>(null)
@@ -102,7 +105,21 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   const [showThinking, setShowThinking] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
   const [showQuickReact, setShowQuickReact] = useState(false)
+  const [collapsed, setCollapsed] = useState(true)
+  const [isOverflow, setIsOverflow] = useState(false)
+  const contentRef = useRef<HTMLDivElement>(null)
   const layers = message.layers || {}
+
+  // Measure content height to decide if collapse is needed
+  const measureOverflow = useCallback(() => {
+    const el = contentRef.current
+    if (!el) return
+    setIsOverflow(el.scrollHeight > COLLAPSE_HEIGHT + 40)
+  }, [])
+
+  useEffect(() => {
+    measureOverflow()
+  }, [message.layers?.summary, measureOverflow])
   const isRevoked = !!message.revoked_at
   const isBot = message.sender_type === 'bot' || message.sender_type === 'service'
   const isMentioned = myEntityId != null && message.mentions?.includes(myEntityId)
@@ -316,7 +333,47 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
             )}
           >
-            {renderContent()}
+            {/* Collapsible content wrapper */}
+            <div className="relative">
+              <div
+                ref={contentRef}
+                className={cn(
+                  'overflow-hidden transition-[max-height] duration-300',
+                  isOverflow && collapsed ? '' : '',
+                )}
+                style={isOverflow && collapsed ? { maxHeight: `${COLLAPSE_HEIGHT}px` } : undefined}
+              >
+                {renderContent()}
+              </div>
+              {/* Gradient fade + expand button */}
+              {isOverflow && collapsed && (
+                <div className="absolute bottom-0 left-0 right-0">
+                  <div className="h-16 bg-gradient-to-t from-[var(--color-bubble-other)] to-transparent pointer-events-none"
+                    style={isSelf ? { background: `linear-gradient(to top, var(--color-bubble-self), transparent)` } : undefined}
+                  />
+                  <div className={cn('flex justify-center pb-1 -mt-1', isSelf ? 'bg-[var(--color-bubble-self)]' : 'bg-[var(--color-bubble-other)]')}>
+                    <button
+                      onClick={() => setCollapsed(false)}
+                      className="text-[11px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] font-medium cursor-pointer flex items-center gap-1 px-3 py-1 rounded-full bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/15 transition-colors"
+                    >
+                      <ChevronDown className="w-3 h-3" />
+                      {t('message.expandMore')}
+                    </button>
+                  </div>
+                </div>
+              )}
+              {isOverflow && !collapsed && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => setCollapsed(true)}
+                    className="text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-accent)] font-medium cursor-pointer flex items-center gap-1 px-3 py-1 rounded-full hover:bg-[var(--color-accent)]/10 transition-colors"
+                  >
+                    <ChevronUp className="w-3 h-3" />
+                    {t('message.collapseContent')}
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Interaction card */}
             {layers.interaction && onInteractionReply && (
