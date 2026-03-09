@@ -200,11 +200,23 @@ export function UserSettingsPage({ onBack }: Props) {
     { id: 'about', icon: Info, label: t('settings.about') },
   ]
 
-  const themes: { id: Theme; label: string; bg: string; sidebar: string; bubble: string; bubbleSelf: string; text: string }[] = [
-    { id: 'dark', label: t('settings.themeDark'), bg: '#1a1a2e', sidebar: '#16162a', bubble: '#2a2a40', bubbleSelf: '#6366f1', text: '#e2e8f0' },
-    { id: 'midnight', label: t('settings.themeMidnight'), bg: '#0f172a', sidebar: '#0c1322', bubble: '#1e293b', bubbleSelf: '#6366f1', text: '#cbd5e1' },
-    { id: 'light', label: t('settings.themeLight'), bg: '#f8fafc', sidebar: '#f1f5f9', bubble: '#e2e8f0', bubbleSelf: '#6366f1', text: '#1e293b' },
-    { id: 'green', label: t('settings.themeGreen'), bg: '#0d1f17', sidebar: '#0a1a13', bubble: '#1a3328', bubbleSelf: '#10b981', text: '#d1fae5' },
+  type ThemeItem = { id: Theme; label: string; bg: string; sidebar: string; bubble: string; bubbleSelf: string; text: string; gradient?: string }
+
+  const lightThemes: ThemeItem[] = [
+    { id: 'light', label: t('settings.themeLight'), bg: '#f8fafc', sidebar: '#f1f5f9', bubble: '#e2e8f0', bubbleSelf: '#6366f1', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.06) 0%, transparent 60%)' },
+    { id: 'light-rose', label: t('settings.themeLightRose'), bg: '#fdf2f8', sidebar: '#fce7f3', bubble: '#f9a8d4', bubbleSelf: '#db2777', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(219,39,119,0.06) 0%, transparent 60%)' },
+    { id: 'light-ocean', label: t('settings.themeLightOcean'), bg: '#f0f9ff', sidebar: '#e0f2fe', bubble: '#bae6fd', bubbleSelf: '#0284c7', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(2,132,199,0.06) 0%, transparent 60%)' },
+    { id: 'light-green', label: t('settings.themeLightGreen'), bg: '#f0fdf4', sidebar: '#dcfce7', bubble: '#bbf7d0', bubbleSelf: '#16a34a', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(22,163,74,0.06) 0%, transparent 60%)' },
+  ]
+
+  const darkThemes: ThemeItem[] = [
+    { id: 'dark', label: t('settings.themeDark'), bg: '#1a1a2e', sidebar: '#16162a', bubble: '#2a2a40', bubbleSelf: '#6366f1', text: '#e2e8f0', gradient: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.12) 0%, transparent 70%)' },
+    { id: 'midnight', label: t('settings.themeMidnight'), bg: '#0f172a', sidebar: '#0c1322', bubble: '#1e293b', bubbleSelf: '#6366f1', text: '#cbd5e1', gradient: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(99,102,241,0.15) 0%, transparent 70%)' },
+    { id: 'green', label: t('settings.themeGreen'), bg: '#0d1f17', sidebar: '#0a1a13', bubble: '#1a3328', bubbleSelf: '#10b981', text: '#d1fae5', gradient: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(16,185,129,0.12) 0%, transparent 70%)' },
+    { id: 'rose', label: t('settings.themeRose'), bg: '#1f0d18', sidebar: '#1a0a14', bubble: '#331a28', bubbleSelf: '#e11d48', text: '#fce7f3', gradient: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(225,29,72,0.12) 0%, transparent 70%)' },
+    { id: 'ocean', label: t('settings.themeOcean'), bg: '#0d171f', sidebar: '#0a1319', bubble: '#1a2833', bubbleSelf: '#0ea5e9', text: '#e0f2fe', gradient: 'radial-gradient(ellipse 90% 60% at 30% 0%, rgba(14,165,233,0.12) 0%, transparent 50%), radial-gradient(ellipse 60% 40% at 80% 10%, rgba(56,189,248,0.08) 0%, transparent 50%)' },
+    { id: 'amber', label: t('settings.themeAmber'), bg: '#1a1508', sidebar: '#15110a', bubble: '#332a1a', bubbleSelf: '#f59e0b', text: '#fef3c7', gradient: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(245,158,11,0.12) 0%, transparent 70%)' },
+    { id: 'violet', label: t('settings.themeViolet'), bg: '#180d1f', sidebar: '#140a1a', bubble: '#281a33', bubbleSelf: '#a855f7', text: '#f3e8ff', gradient: 'radial-gradient(ellipse 70% 50% at 30% 0%, rgba(168,85,247,0.12) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 75% 5%, rgba(139,92,246,0.08) 0%, transparent 45%)' },
   ]
   const agentCheckScript = [
     '# Quick agent connectivity check',
@@ -275,7 +287,7 @@ PY`,
 
       {/* Right content */}
       <div className="flex-1 overflow-y-auto bg-[var(--color-bg-primary)]">
-        <div className="max-w-lg mx-auto py-8 px-6">
+        <div className={cn('mx-auto py-8 px-6', section === 'theme' ? 'max-w-3xl' : 'max-w-lg')}>
           {section === 'profile' && (
             <div className="space-y-6">
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.profile')}</h3>
@@ -461,54 +473,97 @@ PY`,
           )}
 
           {section === 'theme' && (
-            <div className="space-y-6">
+            <div className="space-y-8">
               <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.theme')}</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {themes.map((th) => (
-                  <button
-                    key={th.id}
-                    onClick={() => setTheme(th.id)}
-                    className={cn(
-                      'relative h-28 rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
-                      theme === th.id
-                        ? 'border-[var(--color-accent)] shadow-lg shadow-[var(--color-accent)]/20'
-                        : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
-                    )}
-                  >
-                    {/* Mini UI mockup */}
-                    <div className="absolute inset-0 flex" style={{ background: th.bg }}>
-                      {/* Mini sidebar */}
-                      <div className="w-5 h-full flex flex-col items-center gap-1 py-2" style={{ background: th.sidebar }}>
-                        <div className="w-2.5 h-2.5 rounded" style={{ background: th.bubbleSelf }} />
-                        <div className="w-2 h-2 rounded-full" style={{ background: th.bubble }} />
-                        <div className="w-2 h-2 rounded-full" style={{ background: th.bubble }} />
-                      </div>
-                      {/* Mini chat area */}
-                      <div className="flex-1 flex flex-col justify-center gap-1.5 px-2 py-2">
-                        <div className="flex justify-start">
-                          <div className="h-2 rounded-full" style={{ background: th.bubble, width: '55%' }} />
-                        </div>
-                        <div className="flex justify-end">
-                          <div className="h-2 rounded-full" style={{ background: th.bubbleSelf, width: '40%' }} />
-                        </div>
-                        <div className="flex justify-start">
-                          <div className="h-2 rounded-full" style={{ background: th.bubble, width: '65%' }} />
-                        </div>
-                        <div className="flex justify-end">
-                          <div className="h-2 rounded-full" style={{ background: th.bubbleSelf, width: '35%' }} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="relative flex items-end justify-between p-3 h-full">
-                      <span className="text-xs font-medium drop-shadow-sm" style={{ color: th.text }}>{th.label}</span>
-                      {theme === th.id && (
-                        <div className="w-5 h-5 rounded-full bg-[var(--color-accent)] flex items-center justify-center">
-                          <Check className="w-3 h-3 text-white" />
-                        </div>
+
+              {/* Light themes group */}
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.themeGroupLight')}</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {lightThemes.map((th) => (
+                    <button
+                      key={th.id}
+                      onClick={() => setTheme(th.id)}
+                      className={cn(
+                        'relative h-28 rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
+                        theme === th.id
+                          ? 'border-[var(--color-accent)] shadow-lg shadow-[var(--color-accent)]/20 scale-[1.02]'
+                          : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)] hover:scale-[1.01]',
                       )}
-                    </div>
-                  </button>
-                ))}
+                    >
+                      <div className="absolute inset-0 flex" style={{ background: th.gradient ? `${th.gradient}, ${th.bg}` : th.bg }}>
+                        <div className="w-4 h-full flex flex-col items-center gap-1 py-2" style={{ background: th.sidebar }}>
+                          <div className="w-2 h-2 rounded" style={{ background: th.bubbleSelf }} />
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: th.bubble }} />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center gap-1.5 px-1.5 py-2">
+                          <div className="flex justify-start">
+                            <div className="h-2 rounded-full" style={{ background: th.bubble, width: '60%' }} />
+                          </div>
+                          <div className="flex justify-end">
+                            <div className="h-2 rounded-full" style={{ background: th.bubbleSelf, width: '45%' }} />
+                          </div>
+                          <div className="flex justify-start">
+                            <div className="h-2 rounded-full" style={{ background: th.bubble, width: '50%' }} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative flex items-end justify-between p-2.5 h-full">
+                        <span className="text-[11px] font-semibold drop-shadow-sm" style={{ color: th.text }}>{th.label}</span>
+                        {theme === th.id && (
+                          <div className="w-4 h-4 rounded-full bg-[var(--color-accent)] flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dark themes group */}
+              <div className="space-y-3">
+                <p className="text-xs font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.themeGroupDark')}</p>
+                <div className="grid grid-cols-4 gap-3">
+                  {darkThemes.map((th) => (
+                    <button
+                      key={th.id}
+                      onClick={() => setTheme(th.id)}
+                      className={cn(
+                        'relative h-28 rounded-xl border-2 cursor-pointer transition-all overflow-hidden',
+                        theme === th.id
+                          ? 'border-[var(--color-accent)] shadow-lg shadow-[var(--color-accent)]/20 scale-[1.02]'
+                          : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)] hover:scale-[1.01]',
+                      )}
+                    >
+                      <div className="absolute inset-0 flex" style={{ background: th.gradient ? `${th.gradient}, ${th.bg}` : th.bg }}>
+                        <div className="w-4 h-full flex flex-col items-center gap-1 py-2" style={{ background: th.sidebar }}>
+                          <div className="w-2 h-2 rounded" style={{ background: th.bubbleSelf }} />
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: th.bubble }} />
+                        </div>
+                        <div className="flex-1 flex flex-col justify-center gap-1.5 px-1.5 py-2">
+                          <div className="flex justify-start">
+                            <div className="h-2 rounded-full" style={{ background: th.bubble, width: '60%' }} />
+                          </div>
+                          <div className="flex justify-end">
+                            <div className="h-2 rounded-full" style={{ background: th.bubbleSelf, width: '45%' }} />
+                          </div>
+                          <div className="flex justify-start">
+                            <div className="h-2 rounded-full" style={{ background: th.bubble, width: '50%' }} />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="relative flex items-end justify-between p-2.5 h-full">
+                        <span className="text-[11px] font-semibold drop-shadow-sm" style={{ color: th.text }}>{th.label}</span>
+                        {theme === th.id && (
+                          <div className="w-4 h-4 rounded-full bg-[var(--color-accent)] flex items-center justify-center">
+                            <Check className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}

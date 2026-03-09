@@ -112,12 +112,12 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
           return (
             <div key={msg.id}>
               {showDateSep && (
-                <div className="flex items-center gap-3 py-3">
-                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                <div className="flex items-center justify-center gap-3 py-3 mx-auto max-w-[60%]">
+                  <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, var(--color-border), transparent)' }} />
                   <span className="text-[10px] text-[var(--color-text-muted)] font-medium flex-shrink-0">
                     {formatDateSeparator(msg.created_at, t('app.today'), t('app.yesterday'))}
                   </span>
-                  <div className="flex-1 h-px bg-[var(--color-border)]" />
+                  <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, var(--color-border), transparent)' }} />
                 </div>
               )}
               {showDivider && (

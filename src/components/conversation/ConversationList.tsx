@@ -115,40 +115,40 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
             />
           ))
         )}
-
-        {/* Archive folder */}
-        {!search && (
-          <div className="mt-2 border-t border-[var(--color-border)] pt-1">
-            <button
-              onClick={() => setArchivedOpen(!archivedOpen)}
-              className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] cursor-pointer transition-colors"
-            >
-              <Archive className="w-3.5 h-3.5" />
-              <span className="text-xs font-medium">{t('conversation.archived')}</span>
-              {archivedOpen ? <ChevronDown className="w-3 h-3 ml-auto" /> : <ChevronRight className="w-3 h-3 ml-auto" />}
-            </button>
-            {archivedOpen && (
-              <div className="space-y-0.5 opacity-60">
-                {archived.length === 0 ? (
-                  <p className="text-[10px] text-[var(--color-text-muted)] text-center py-3">{t('conversation.noArchivedConversations')}</p>
-                ) : (
-                  archived.map((conv) => (
-                    <ConversationItem
-                      key={conv.id}
-                      conv={conv}
-                      active={conv.id === activeId}
-                      myEntityId={myEntityId}
-                      onClick={() => onSelect(conv.id)}
-                      onUnarchive={onUnarchive}
-                      isArchived
-                    />
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </div>
+
+      {/* Archive folder — pinned to bottom */}
+      {!search && (
+        <div className="flex-shrink-0 border-t border-[var(--color-border)] px-2 py-1">
+          <button
+            onClick={() => setArchivedOpen(!archivedOpen)}
+            className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] cursor-pointer transition-colors"
+          >
+            <Archive className="w-3.5 h-3.5" />
+            <span className="text-xs font-medium">{t('conversation.archived')}</span>
+            {archivedOpen ? <ChevronDown className="w-3 h-3 ml-auto" /> : <ChevronRight className="w-3 h-3 ml-auto" />}
+          </button>
+          {archivedOpen && (
+            <div className="space-y-0.5 opacity-60 max-h-48 overflow-y-auto">
+              {archived.length === 0 ? (
+                <p className="text-[10px] text-[var(--color-text-muted)] text-center py-3">{t('conversation.noArchivedConversations')}</p>
+              ) : (
+                archived.map((conv) => (
+                  <ConversationItem
+                    key={conv.id}
+                    conv={conv}
+                    active={conv.id === activeId}
+                    myEntityId={myEntityId}
+                    onClick={() => onSelect(conv.id)}
+                    onUnarchive={onUnarchive}
+                    isArchived
+                  />
+                ))
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }

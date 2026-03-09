@@ -113,7 +113,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   return (
     <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-border)]">
+      <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--color-border)]">
         <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
           {t('settings.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
         </h3>

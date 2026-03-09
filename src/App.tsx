@@ -740,6 +740,8 @@ export default function App() {
     if (!activeId || !token) { setArchivedConv(null); return }
     const inMain = conversations.find((c) => c.id === activeId)
     if (inMain) { setArchivedConv(null); return }
+    // Already have this archived conversation loaded — skip re-fetch
+    if (archivedConv && archivedConv.id === activeId) return
     // Not in main list — fetch it (likely archived)
     api.getConversation(token, activeId).then((res) => {
       if (res.ok && res.data) setArchivedConv(res.data)

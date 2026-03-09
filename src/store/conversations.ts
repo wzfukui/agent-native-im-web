@@ -34,11 +34,13 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   setConversations: (conversations) => set({ conversations }),
   setActive: (activeId) => set({ activeId }),
   updateConversation: (id, partial) =>
-    set((s) => ({
-      conversations: s.conversations.map((c) =>
-        c.id === id ? { ...c, ...partial } : c
-      ),
-    })),
+    set((s) => {
+      const idx = s.conversations.findIndex((c) => c.id === id)
+      if (idx === -1) return s // no-op if conversation not in list
+      const updated = [...s.conversations]
+      updated[idx] = { ...updated[idx], ...partial }
+      return { conversations: updated }
+    }),
   addConversation: (conv) =>
     set((s) => ({
       conversations: [conv, ...s.conversations.filter((c) => c.id !== conv.id)],

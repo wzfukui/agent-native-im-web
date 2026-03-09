@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Theme = 'dark' | 'midnight' | 'light' | 'green'
+export type Theme = 'dark' | 'midnight' | 'light' | 'green' | 'rose' | 'ocean' | 'amber' | 'violet' | 'light-rose' | 'light-ocean' | 'light-green'
 export type Locale = 'en' | 'zh-CN'
 
 function loadSetting<T>(key: string, fallback: T): T {
