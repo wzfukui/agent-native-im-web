@@ -15,7 +15,7 @@ import {
   Bot, ArrowLeft, Wifi, WifiOff, Sparkles, FileText, User,
   MessageSquare, Users, ChevronRight, ChevronDown, ChevronUp, Loader2,
   Hash, Calendar, Tag, Key, Copy, Check, Clock, AlertCircle,
-  PowerOff, RotateCcw, Download, Activity, RefreshCw, Link,
+  PowerOff, RotateCcw, Download, Activity, RefreshCw, Link, ExternalLink,
 } from 'lucide-react'
 
 interface Props {
@@ -464,6 +464,15 @@ ${createdCredentials.doc}`
                 <Download className="w-3 h-3 text-[var(--color-text-muted)]" />
                 {t('bot.downloadQuickstart')}
               </button>
+              <a
+                href={`${window.location.origin}/api/v1/onboarding-guide`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(secondaryBtn, 'border border-[var(--color-border)] no-underline')}
+              >
+                <ExternalLink className="w-3 h-3 text-[var(--color-text-muted)]" />
+                {t('bot.onboardingGuide')}
+              </a>
             </div>
           </div>
         )}
