@@ -317,7 +317,13 @@
     "noLinks": "No invite links",
     "uses": "{{count}}/{{max}} uses",
     "expires": "Expires {{date}}",
-    "copied": "Copied!"
+    "copied": "Copied!",
+    "joinedSuccess": "Joined successfully!",
+    "invitedToJoin": "You've been invited to join this conversation",
+    "join": "Join",
+    "joining": "Joining...",
+    "invalidOrExpired": "Invalid or expired invite link",
+    "joinFailed": "Failed to join"
   },
   "streaming": {
     "processing": "Processing...",

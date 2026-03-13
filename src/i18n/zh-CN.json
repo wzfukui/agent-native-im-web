@@ -317,7 +317,13 @@
     "noLinks": "暂无邀请链接",
     "uses": "{{count}}/{{max}} 次使用",
     "expires": "到期 {{date}}",
-    "copied": "已复制！"
+    "copied": "已复制！",
+    "joinedSuccess": "加入成功！",
+    "invitedToJoin": "你被邀请加入此会话",
+    "join": "加入",
+    "joining": "加入中...",
+    "invalidOrExpired": "邀请链接无效或已过期",
+    "joinFailed": "加入失败"
   },
   "streaming": {
     "processing": "处理中...",

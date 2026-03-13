@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageList } from './MessageList'
-import { MessageComposer } from './MessageComposer'
+import { MessageComposer, type UploadedAttachment } from './MessageComposer'
 import { GroupMembersPanel } from '@/components/conversation/GroupMembersPanel'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAuthStore } from '@/store/auth'
@@ -267,7 +267,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   }, [searchQuery, searching, token, conversation.id])
 
   // Send message
-  const handleSend = useCallback(async (text: string, files?: File[], mentions?: number[]) => {
+  const handleFileUpload = useCallback(async (file: File): Promise<string | null> => {
+    const res = await api.uploadFile(token, file)
+    if (res.ok && res.data) return res.data.url
+    return null
+  }, [token])
+
+  const handleSend = useCallback(async (text: string, uploadedAttachments?: UploadedAttachment[], mentions?: number[]) => {
     // Capture reply target before clearing
     const currentReplyTo = replyTo
     setReplyTo(null)
@@ -277,32 +283,35 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     // Generate a temporary ID for optimistic message
     const tempId = `temp-${Date.now()}-${Math.random()}`
 
-    // Create optimistic message
+    const hasAttachments = uploadedAttachments && uploadedAttachments.length > 0
+    const contentType = hasAttachments && uploadedAttachments.some((a) => a.type === 'image') ? 'image' : 'text'
+
+    // Create optimistic message with attachments (already uploaded)
     const optimisticMsg: Message = {
-      id: -Math.floor(Math.random() * 1000000), // Negative ID for optimistic messages
+      id: -Math.floor(Math.random() * 1000000),
       conversation_id: conversation.id,
       sender_id: myEntity.id,
       sender_type: myEntity.entity_type,
       sender: myEntity,
-      content_type: 'text',
+      content_type: contentType,
       layers: {
         summary: text.length > 100 ? text.substring(0, 100) + '...' : text,
         data: { body: text },
       },
       created_at: new Date().toISOString(),
-      attachments: [],
+      attachments: hasAttachments ? uploadedAttachments : [],
       mentions,
       reply_to: currentReplyTo?.id,
     }
 
-    // Add optimistic message immediately
+    // Add optimistic message immediately (with attachments visible)
     addOptimisticMessage(tempId, optimisticMsg)
 
     const queueForOffline = async (state: 'queued' | 'failed') => {
       const queuedId = await enqueueOutboxMessage({
         temp_id: tempId,
         conversation_id: conversation.id,
-        content_type: 'text',
+        content_type: contentType,
         text,
         mentions,
         reply_to: currentReplyTo?.id,
@@ -319,34 +328,6 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     }
 
     try {
-      let attachments: { type: string; url: string; filename: string; mime_type: string; size: number }[] = []
-
-      // Upload files first
-      if (files && files.length > 0) {
-        let uploadFailed = false
-        for (const file of files) {
-          const res = await api.uploadFile(token, file)
-          if (res.ok && res.data) {
-            attachments.push({
-              type: file.type.startsWith('image/') ? 'image' : 'file',
-              url: res.data.url,
-              filename: file.name,
-              mime_type: file.type,
-              size: file.size,
-            })
-          } else {
-            uploadFailed = true
-          }
-        }
-        // If some files failed and there's no text, abort the send
-        if (uploadFailed && attachments.length === 0 && !text.trim()) {
-          removeOptimisticMessage(tempId, conversation.id)
-          return
-        }
-      }
-
-      const contentType = attachments.some((a) => a.type === 'image') ? 'image' : 'text'
-
       const res = await api.sendMessage(token, {
         conversation_id: conversation.id,
         content_type: contentType,
@@ -354,7 +335,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           summary: text.length > 100 ? text.substring(0, 100) + '...' : text,
           data: { body: text },
         },
-        attachments: attachments.length > 0 ? attachments : undefined,
+        attachments: hasAttachments ? uploadedAttachments : undefined,
         mentions,
         reply_to: currentReplyTo?.id,
       })
@@ -368,14 +349,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           startBotThinking()
         }
       } else {
-        if (files && files.length > 0) {
+        if (hasAttachments) {
           removeOptimisticMessage(tempId, conversation.id)
         } else {
           await queueForOffline('failed')
         }
       }
     } catch (error) {
-      if (files && files.length > 0) {
+      if (hasAttachments) {
         removeOptimisticMessage(tempId, conversation.id)
       } else {
         await queueForOffline('failed')
@@ -511,16 +492,31 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     e.preventDefault()
   }, [])
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
     e.preventDefault()
     dragCountRef.current = 0
     setDragging(false)
     if (isArchived) return // Block file drop for archived conversations
     const droppedFiles = Array.from(e.dataTransfer.files)
-    if (droppedFiles.length > 0) {
-      handleSend('', droppedFiles)
+    if (droppedFiles.length === 0) return
+    // Upload dropped files first, then send
+    const uploaded: UploadedAttachment[] = []
+    for (const file of droppedFiles) {
+      const url = await handleFileUpload(file)
+      if (url) {
+        uploaded.push({
+          type: file.type.startsWith('image/') ? 'image' : 'file',
+          url,
+          filename: file.name,
+          mime_type: file.type,
+          size: file.size,
+        })
+      }
     }
-  }, [handleSend, isArchived])
+    if (uploaded.length > 0) {
+      handleSend('', uploaded)
+    }
+  }, [handleSend, handleFileUpload, isArchived])
 
   return (
     <div
@@ -694,6 +690,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         conversationId={conversation.id}
         onSend={handleSend}
         onAudioSend={handleAudioSend}
+        onFileUpload={handleFileUpload}
         onTyping={onTyping ? () => onTyping(conversation.id) : undefined}
         placeholder={t('conversation.typeMessage')}
         participants={conversation.participants}

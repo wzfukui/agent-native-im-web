@@ -1,14 +1,30 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic, CornerUpLeft } from 'lucide-react'
+import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic, CornerUpLeft, Loader2 } from 'lucide-react'
 import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAudioRecorder } from '@/lib/use-audio-recorder'
-import type { Participant, Message } from '@/lib/types'
+import type { Participant, Message, Attachment } from '@/lib/types'
+
+/** A file that has been selected and is being (or has been) uploaded. */
+export interface PendingFile {
+  file: File
+  status: 'uploading' | 'uploaded' | 'failed'
+  url?: string
+}
+
+/** Pre-uploaded attachment data passed from composer to send handler. */
+export interface UploadedAttachment {
+  type: string
+  url: string
+  filename: string
+  mime_type: string
+  size: number
+}
 
 interface Props {
   conversationId?: number
-  onSend: (text: string, attachments?: File[], mentions?: number[]) => void
+  onSend: (text: string, attachments?: UploadedAttachment[], mentions?: number[]) => void
   onAudioSend?: (blob: Blob, duration: number) => void
   onFileUpload?: (file: File) => Promise<string | null>
   onTyping?: () => void
@@ -23,8 +39,7 @@ interface Props {
 export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, replyTo, onCancelReply }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
-  const [files, setFiles] = useState<File[]>([])
-  const [uploading, setUploading] = useState(false)
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
   const [mentionIds, setMentionIds] = useState<number[]>([])
   const { state: recState, duration: recDuration, start: recStart, stop: recStop, cancel: recCancel } = useAudioRecorder()
   const prevConvIdRef = useRef<number | undefined>(undefined)
@@ -56,7 +71,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     } catch {
       setText('')
     }
-    setFiles([])
+    setPendingFiles([])
     setMentionIds([])
     prevConvIdRef.current = conversationId
   }, [conversationId])
@@ -126,17 +141,32 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     }, 0)
   }, [text, mentionStart])
 
+  const uploadedAttachments: UploadedAttachment[] = useMemo(() =>
+    pendingFiles
+      .filter((pf): pf is PendingFile & { url: string } => pf.status === 'uploaded' && !!pf.url)
+      .map((pf) => ({
+        type: pf.file.type.startsWith('image/') ? 'image' : 'file',
+        url: pf.url,
+        filename: pf.file.name,
+        mime_type: pf.file.type,
+        size: pf.file.size,
+      })),
+  [pendingFiles])
+
+  const hasUploading = pendingFiles.some((pf) => pf.status === 'uploading')
+
   const handleSubmit = useCallback(async () => {
     const trimmed = text.trim()
-    if (!trimmed && files.length === 0) return
-    onSend(trimmed, files.length > 0 ? files : undefined, mentionIds.length > 0 ? mentionIds : undefined)
+    if (!trimmed && uploadedAttachments.length === 0) return
+    if (hasUploading) return // Wait for uploads to finish
+    onSend(trimmed, uploadedAttachments.length > 0 ? uploadedAttachments : undefined, mentionIds.length > 0 ? mentionIds : undefined)
     setText('')
-    setFiles([])
+    setPendingFiles([])
     setMentionIds([])
     setMentionQuery(null)
     if (conversationId) localStorage.removeItem(`draft:${conversationId}`)
     textareaRef.current?.focus()
-  }, [text, files, mentionIds, onSend, conversationId])
+  }, [text, uploadedAttachments, hasUploading, mentionIds, onSend, conversationId])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Handle mention autocomplete navigation
@@ -185,14 +215,33 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     }
   }, [recStop, onAudioSend])
 
+  const addAndUploadFiles = useCallback((newFiles: File[]) => {
+    if (!onFileUpload || newFiles.length === 0) return
+    const entries: PendingFile[] = newFiles.map((f) => ({ file: f, status: 'uploading' as const }))
+    setPendingFiles((prev) => [...prev, ...entries])
+    // Upload each file immediately
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i]
+      onFileUpload(file).then((url) => {
+        setPendingFiles((prev) =>
+          prev.map((pf) =>
+            pf.file === file
+              ? { ...pf, status: url ? 'uploaded' : 'failed', url: url ?? undefined }
+              : pf,
+          ),
+        )
+      })
+    }
+  }, [onFileUpload])
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || [])
-    setFiles((prev) => [...prev, ...selected])
+    addAndUploadFiles(selected)
     e.target.value = ''
   }
 
   const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index))
+    setPendingFiles((prev) => prev.filter((_, i) => i !== index))
   }
 
   const autoResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -287,20 +336,30 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
       )}
 
       {/* Attached files preview */}
-      {files.length > 0 && (
+      {pendingFiles.length > 0 && (
         <div className="flex gap-2 mb-2 flex-wrap">
-          {files.map((file, i) => (
+          {pendingFiles.map((pf, i) => (
             <div
               key={i}
-              className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-xs"
+              className={cn(
+                'flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-xs transition-colors',
+                pf.status === 'failed'
+                  ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]/30'
+                  : 'bg-[var(--color-bg-tertiary)] border-[var(--color-border)]',
+              )}
             >
-              {file.type.startsWith('image/') ? (
+              {pf.status === 'uploading' ? (
+                <Loader2 className="w-3.5 h-3.5 text-[var(--color-accent)] animate-spin" />
+              ) : pf.file.type.startsWith('image/') ? (
                 <ImageIcon className="w-3.5 h-3.5 text-[var(--color-accent)]" />
               ) : (
                 <FileText className="w-3.5 h-3.5 text-[var(--color-accent)]" />
               )}
-              <span className="text-[var(--color-text-secondary)] max-w-[100px] truncate">{file.name}</span>
-              <span className="text-[var(--color-text-muted)]">{formatFileSize(file.size)}</span>
+              <span className="text-[var(--color-text-secondary)] max-w-[100px] truncate">{pf.file.name}</span>
+              <span className="text-[var(--color-text-muted)]">{formatFileSize(pf.file.size)}</span>
+              {pf.status === 'failed' && (
+                <span className="text-[var(--color-error)] text-[10px]">{t('common.failed')}</span>
+              )}
               <button onClick={() => removeFile(i)} className="cursor-pointer hover:text-[var(--color-error)] transition-colors">
                 <X className="w-3 h-3" />
               </button>
@@ -402,7 +461,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
                 }
                 if (imageFiles.length > 0) {
                   e.preventDefault()
-                  setFiles((prev) => [...prev, ...imageFiles])
+                  addAndUploadFiles(imageFiles)
                 }
               }}
               placeholder={placeholder || t('conversation.typeMessage')}
@@ -412,13 +471,18 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
             />
 
             {/* Send or Mic button */}
-            {text.trim() || files.length > 0 ? (
+            {text.trim() || pendingFiles.length > 0 ? (
               <button
                 onClick={handleSubmit}
-                disabled={disabled}
-                className="w-8 h-8 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center flex-shrink-0 transition-all cursor-pointer shadow-sm shadow-[var(--color-accent)]/25"
+                disabled={disabled || hasUploading}
+                className={cn(
+                  'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all cursor-pointer shadow-sm',
+                  hasUploading
+                    ? 'bg-[var(--color-accent)]/50 text-white/70'
+                    : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white shadow-[var(--color-accent)]/25',
+                )}
               >
-                <Send className="w-4 h-4" />
+                {hasUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
             ) : onAudioSend ? (
               <button
