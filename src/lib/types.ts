@@ -98,7 +98,7 @@ export interface Message {
   conversation_id: number
   sender_id: number
   temp_id?: string
-  client_state?: 'sending' | 'queued' | 'failed'
+  client_state?: 'sending' | 'sent' | 'queued' | 'failed'
   sender_type?: string
   sender?: Entity
   stream_id?: string

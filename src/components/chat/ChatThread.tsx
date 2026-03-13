@@ -41,6 +41,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const updateMessageReactions = useMessagesStore((s) => s.updateMessageReactions)
   const addOptimisticMessage = useMessagesStore((s) => s.addOptimisticMessage)
   const replaceOptimisticMessage = useMessagesStore((s) => s.replaceOptimisticMessage)
+  const clearSentState = useMessagesStore((s) => s.clearSentState)
   const removeOptimisticMessage = useMessagesStore((s) => s.removeOptimisticMessage)
   const setOptimisticState = useMessagesStore((s) => s.setOptimisticState)
   const [loading, setLoading] = useState(false)
@@ -299,8 +300,9 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       })
 
       if (res.ok && res.data) {
-        // Replace optimistic message with real message
+        // Show 'sent' checkmark briefly, then clear
         replaceOptimisticMessage(tempId, res.data)
+        setTimeout(() => clearSentState(tempId), 2000)
       } else {
         if (files && files.length > 0) {
           removeOptimisticMessage(tempId, conversation.id)
@@ -315,7 +317,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         await queueForOffline('failed')
       }
     }
-  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage, setOptimisticState])
+  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, clearSentState, removeOptimisticMessage, setOptimisticState])
 
   const handleRetryOutbox = useCallback(async (tempId: string) => {
     const item = await getOutboxMessageByTempId(tempId)
@@ -344,6 +346,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     })
     if (res.ok && res.data) {
       replaceOptimisticMessage(tempId, res.data)
+      setTimeout(() => clearSentState(tempId), 2000)
       await deleteOutboxMessage(item.id)
     } else {
       setOptimisticState(tempId, 'failed')
@@ -353,7 +356,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         last_error: typeof res.error === 'string' ? res.error : (res.error?.message || 'send failed'),
       })
     }
-  }, [token, replaceOptimisticMessage, setOptimisticState])
+  }, [token, replaceOptimisticMessage, clearSentState, setOptimisticState])
 
   // Revoke message
   const handleRevoke = useCallback(async (msgId: number) => {

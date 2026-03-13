@@ -12,7 +12,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, RefreshCw, CloudOff, AlertTriangle,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, RefreshCw, CloudOff, AlertTriangle, Check,
 } from 'lucide-react'
 
 /** Max collapsed height in px (~10 lines of text) */
@@ -457,6 +457,12 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 <RefreshCw className="w-3 h-3 animate-spin" />
                 <span>{t('message.sending')}</span>
               </>
+            )}
+            {message.client_state === 'sent' && (
+              <span className="flex items-center gap-1 text-[var(--color-success)]">
+                <Check className="w-3 h-3" />
+                <span>{t('message.sent')}</span>
+              </span>
             )}
             {message.client_state === 'queued' && (
               <>

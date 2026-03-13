@@ -18,8 +18,9 @@ interface MessagesState {
   // optimistic messages
   addOptimisticMessage: (tempId: string, msg: Message) => void
   replaceOptimisticMessage: (tempId: string, msg: Message) => void
+  clearSentState: (tempId: string) => void
   removeOptimisticMessage: (tempId: string, convId: number) => void
-  setOptimisticState: (tempId: string, state: 'sending' | 'queued' | 'failed') => void
+  setOptimisticState: (tempId: string, state: 'sending' | 'sent' | 'queued' | 'failed') => void
 
   // reactions
   updateMessageReactions: (convId: number, msgId: number, reactions: ReactionSummary[]) => void
@@ -101,8 +102,30 @@ export const useMessagesStore = create<MessagesState>((set) => ({
 
       const convId = optimisticMsg.conversation_id
       const messages = s.byConv[convId] || []
+      // Keep temp_id and show 'sent' state briefly so user sees confirmation
+      const sentMsg = { ...msg, temp_id: tempId, client_state: 'sent' as const }
       const updatedMessages = messages.map((m) =>
-        m.id === optimisticMsg.id ? msg : m
+        m.id === optimisticMsg.id ? sentMsg : m
+      )
+
+      return {
+        optimistic: { ...s.optimistic, [tempId]: sentMsg },
+        byConv: { ...s.byConv, [convId]: updatedMessages },
+      }
+    }),
+
+  // Clear the 'sent' indicator after brief display
+  clearSentState: (tempId: string) =>
+    set((s) => {
+      const optimisticMsg = s.optimistic[tempId]
+      if (!optimisticMsg) return s
+
+      const convId = optimisticMsg.conversation_id
+      const messages = s.byConv[convId] || []
+      // Remove temp_id and client_state to finalize
+      const { temp_id: _t, client_state: _c, ...cleanMsg } = optimisticMsg
+      const updatedMessages = messages.map((m) =>
+        m.temp_id === tempId ? cleanMsg : m
       )
 
       const { [tempId]: _, ...restOptimistic } = s.optimistic

@@ -170,6 +170,7 @@
     "dropFiles": "Drop files here to send",
     "loadEarlier": "Load earlier messages",
     "sending": "Sending...",
+    "sent": "Sent",
     "queuedOffline": "Queued for offline sync",
     "deliveryFailed": "Delivery failed",
     "expandMore": "Show more",
