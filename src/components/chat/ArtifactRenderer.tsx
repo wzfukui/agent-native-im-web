@@ -55,13 +55,16 @@ function CopyButton({ text, size = 'sm' }: { text: string; size?: 'sm' | 'xs' })
 }
 
 // ─── HTML Renderer ─────────────────────────────────────────────
-function HtmlRenderer({ source, height }: { source: string; height: number }) {
+function HtmlRenderer({ source, height, fullscreen }: { source: string; height: number; fullscreen?: boolean }) {
   return (
     <iframe
       sandbox="allow-scripts"
       srcDoc={source}
-      style={{ height: `${height}px` }}
-      className="w-full rounded-b-lg border-0 bg-white"
+      style={fullscreen ? undefined : { height: `${height}px` }}
+      className={cn(
+        'w-full border-0 bg-white',
+        fullscreen ? 'h-full rounded-none' : 'rounded-b-lg',
+      )}
     />
   )
 }
@@ -155,7 +158,7 @@ function ImageRenderer({ source, title, fullscreen }: { source: string; title?: 
 }
 
 // ─── Main ArtifactRenderer ─────────────────────────────────────
-export function ArtifactRenderer({ artifactType, source, title, language = '', height = 300 }: ArtifactProps) {
+export function ArtifactRenderer({ artifactType, source, title, language = '', height = 480 }: ArtifactProps) {
   const { t } = useTranslation()
   const [showSource, setShowSource] = useState(false)
   const [fullscreen, setFullscreen] = useState(false)
@@ -170,7 +173,7 @@ export function ArtifactRenderer({ artifactType, source, title, language = '', h
   const renderContent = () => {
     switch (artifactType) {
       case 'html':
-        return <HtmlRenderer source={source} height={height} />
+        return <HtmlRenderer source={source} height={height} fullscreen={fullscreen} />
       case 'code':
         return <CodeRenderer source={source} language={language} />
       case 'mermaid':
@@ -222,7 +225,7 @@ export function ArtifactRenderer({ artifactType, source, title, language = '', h
       </div>
 
       {/* Content */}
-      <div className={cn(fullscreen && 'flex-1 overflow-auto')}>
+      <div className={cn(fullscreen && 'flex-1 min-h-0 overflow-auto')}>
         {renderContent()}
       </div>
 
