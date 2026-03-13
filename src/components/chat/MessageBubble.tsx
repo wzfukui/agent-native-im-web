@@ -12,7 +12,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, RefreshCw, CloudOff, AlertTriangle, Check,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, CloudOff, AlertTriangle,
 } from 'lucide-react'
 
 /** Max collapsed height in px (~10 lines of text) */
@@ -266,7 +266,62 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )
 
       default: // text
-        return <p className="text-sm leading-relaxed whitespace-pre-wrap">{body}</p>
+        return (
+          <>
+            <p className="text-sm leading-relaxed whitespace-pre-wrap">{body}</p>
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="space-y-1.5 mt-1.5">
+                {message.attachments.some((att) => att.type === 'image') && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {message.attachments.filter((att) => att.type === 'image').map((att, i) => {
+                      if (!att.url) return null
+                      return (
+                        <div
+                          key={i}
+                          className="relative group cursor-pointer"
+                          onClick={() => setLightboxImage({ url: att.url!, alt: att.filename || 'image' })}
+                        >
+                          <img
+                            src={att.url}
+                            alt={att.filename || 'image'}
+                            className="w-[150px] h-[150px] rounded-lg object-cover hover:opacity-90 transition-opacity"
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0 rounded-lg bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-white text-xs font-medium">View</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+                {message.attachments.filter((att) => att.type !== 'image').map((att, i) => (
+                  <a
+                    key={i}
+                    href={att.url}
+                    download={att.filename}
+                    className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-primary)]/50 border border-[var(--color-border)] hover:border-[var(--color-accent)]/40 transition-colors group"
+                  >
+                    <div className="w-9 h-9 rounded-lg bg-[var(--color-accent-dim)] flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-[var(--color-accent)]" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium text-[var(--color-text-primary)] truncate">
+                        {att.filename || 'file'}
+                      </p>
+                      {att.size && (
+                        <p className="text-[10px] text-[var(--color-text-muted)]">
+                          {formatFileSize(att.size)}
+                        </p>
+                      )}
+                    </div>
+                    <Download className="w-3.5 h-3.5 text-[var(--color-text-muted)] group-hover:text-[var(--color-accent)] transition-colors flex-shrink-0" />
+                  </a>
+                ))}
+              </div>
+            )}
+          </>
+        )
     }
   }
 
@@ -274,9 +329,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     <>
     <div
       className={cn(
-        'flex gap-2.5 max-w-[85%] group',
+        'flex gap-2.5 max-w-[85%] group transition-opacity duration-300',
         isSelf ? 'ml-auto flex-row-reverse' : '',
         isMentioned ? 'relative' : '',
+        message.client_state === 'sending' ? 'opacity-60' : '',
       )}
       style={{ animation: 'slide-up 0.2s cubic-bezier(0.16,1,0.3,1)' }}
     >
@@ -452,18 +508,6 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         {/* Local delivery status for optimistic/offline messages */}
         {isSelf && message.temp_id && message.client_state && (
           <div className="px-1 flex items-center gap-1.5 text-[10px] text-[var(--color-text-muted)]">
-            {message.client_state === 'sending' && (
-              <>
-                <RefreshCw className="w-3 h-3 animate-spin" />
-                <span>{t('message.sending')}</span>
-              </>
-            )}
-            {message.client_state === 'sent' && (
-              <span className="flex items-center gap-1 text-[var(--color-success)]">
-                <Check className="w-3 h-3" />
-                <span>{t('message.sent')}</span>
-              </span>
-            )}
             {message.client_state === 'queued' && (
               <>
                 <CloudOff className="w-3 h-3" />

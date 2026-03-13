@@ -41,7 +41,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const updateMessageReactions = useMessagesStore((s) => s.updateMessageReactions)
   const addOptimisticMessage = useMessagesStore((s) => s.addOptimisticMessage)
   const replaceOptimisticMessage = useMessagesStore((s) => s.replaceOptimisticMessage)
-  const clearSentState = useMessagesStore((s) => s.clearSentState)
+
   const removeOptimisticMessage = useMessagesStore((s) => s.removeOptimisticMessage)
   const setOptimisticState = useMessagesStore((s) => s.setOptimisticState)
   const [loading, setLoading] = useState(false)
@@ -302,7 +302,6 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       if (res.ok && res.data) {
         // Show 'sent' checkmark briefly, then clear
         replaceOptimisticMessage(tempId, res.data)
-        setTimeout(() => clearSentState(tempId), 2000)
       } else {
         if (files && files.length > 0) {
           removeOptimisticMessage(tempId, conversation.id)
@@ -317,7 +316,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         await queueForOffline('failed')
       }
     }
-  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, clearSentState, removeOptimisticMessage, setOptimisticState])
+  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage, setOptimisticState])
 
   const handleRetryOutbox = useCallback(async (tempId: string) => {
     const item = await getOutboxMessageByTempId(tempId)
@@ -346,7 +345,6 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     })
     if (res.ok && res.data) {
       replaceOptimisticMessage(tempId, res.data)
-      setTimeout(() => clearSentState(tempId), 2000)
       await deleteOutboxMessage(item.id)
     } else {
       setOptimisticState(tempId, 'failed')
@@ -356,7 +354,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         last_error: typeof res.error === 'string' ? res.error : (res.error?.message || 'send failed'),
       })
     }
-  }, [token, replaceOptimisticMessage, clearSentState, setOptimisticState])
+  }, [token, replaceOptimisticMessage, setOptimisticState])
 
   // Revoke message
   const handleRevoke = useCallback(async (msgId: number) => {
@@ -376,27 +374,47 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
   // Send audio message
   const handleAudioSend = useCallback(async (blob: Blob, duration: number) => {
+    const tempId = `temp-${Date.now()}-${Math.random()}`
     const file = new File([blob], `voice_${Date.now()}.webm`, { type: blob.type })
-    const uploadRes = await api.uploadFile(token, file)
-    if (!uploadRes.ok || !uploadRes.data) return
 
-    const res = await api.sendMessage(token, {
+    // Optimistic message — show immediately
+    const optimisticMsg: Message = {
+      id: -Math.floor(Math.random() * 1000000),
       conversation_id: conversation.id,
+      sender_id: myEntity.id,
+      sender_type: myEntity.entity_type,
+      sender: myEntity,
       content_type: 'audio',
-      layers: {
-        summary: `Voice message (${duration}s)`,
-      },
-      attachments: [{
-        type: 'audio',
-        url: uploadRes.data.url,
-        filename: file.name,
-        mime_type: blob.type,
-        size: blob.size,
-        duration,
-      }],
-    })
-    if (res.ok && res.data) addMessage(res.data)
-  }, [token, conversation.id])
+      layers: { summary: `Voice message (${duration}s)` },
+      created_at: new Date().toISOString(),
+      attachments: [{ type: 'audio', filename: file.name, mime_type: blob.type, size: blob.size, duration }],
+    }
+    addOptimisticMessage(tempId, optimisticMsg)
+
+    try {
+      const uploadRes = await api.uploadFile(token, file)
+      if (!uploadRes.ok || !uploadRes.data) {
+        setOptimisticState(tempId, 'failed')
+        return
+      }
+      const res = await api.sendMessage(token, {
+        conversation_id: conversation.id,
+        content_type: 'audio',
+        layers: { summary: `Voice message (${duration}s)` },
+        attachments: [{
+          type: 'audio', url: uploadRes.data.url,
+          filename: file.name, mime_type: blob.type, size: blob.size, duration,
+        }],
+      })
+      if (res.ok && res.data) {
+        replaceOptimisticMessage(tempId, res.data)
+      } else {
+        setOptimisticState(tempId, 'failed')
+      }
+    } catch {
+      setOptimisticState(tempId, 'failed')
+    }
+  }, [token, conversation.id, myEntity, addOptimisticMessage, replaceOptimisticMessage, setOptimisticState])
 
   // Interaction reply
   const handleInteractionReply = useCallback(async (msgId: number, choice: string, label: string) => {

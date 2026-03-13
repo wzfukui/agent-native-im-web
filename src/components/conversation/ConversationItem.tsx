@@ -242,7 +242,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
             <VolumeX className="w-3.5 h-3.5" />
             {muted ? t('common.unmute') : t('settings.mute')}
           </button>
-          {isGroup && !isArchived && (
+          {!isArchived && (
             <button
               onClick={() => { setShowMenu(false); onArchive?.(conv.id) }}
               className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"
