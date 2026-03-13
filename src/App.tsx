@@ -33,6 +33,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
+import { JoinInvitePage } from '@/components/invite/JoinInvitePage'
 import { setGlobalErrorHandler, getErrorMessage, type ParsedError } from '@/lib/errors'
 import { setSessionHooks } from '@/lib/auth-session'
 
@@ -68,6 +69,7 @@ export default function App() {
   const [outboxFailedCount, setOutboxFailedCount] = useState(0)
   const [outboxLastSyncAt, setOutboxLastSyncAt] = useState<string | null>(null)
   const [outboxLastError, setOutboxLastError] = useState<string | null>(null)
+  const [inviteCode, setInviteCode] = useState<string | null>(null)
 
   // ─── Global error handler ────────────────────────────────────
   const pushError = useCallback((parsed: ParsedError) => {
@@ -89,6 +91,12 @@ export default function App() {
   useEffect(() => {
     setGlobalErrorHandler(pushError)
   }, [pushError])
+
+  // ─── Detect invite URL (/join/:code) ──────────────────────────
+  useEffect(() => {
+    const match = window.location.pathname.match(/^\/join\/([a-zA-Z0-9_-]+)$/)
+    if (match) setInviteCode(match[1])
+  }, [])
 
   const decodeJwtExp = useCallback((jwtToken: string): number | null => {
     const parts = jwtToken.split('.')
@@ -752,6 +760,25 @@ export default function App() {
   // ─── Active conversation ───────────────────────────────────────
   const activeConv = conversations.find((c) => c.id === activeId) || archivedConv
   const isArchivedView = activeConv === archivedConv && archivedConv !== null
+
+  // ─── Invite join page ────────────────────────────────────────────
+  if (inviteCode && token) {
+    return (
+      <JoinInvitePage
+        code={inviteCode}
+        token={token}
+        onJoined={(convId) => {
+          setInviteCode(null)
+          window.history.replaceState({}, '', '/')
+          loadConversations().then(() => setActive(convId))
+        }}
+        onCancel={() => {
+          setInviteCode(null)
+          window.history.replaceState({}, '', '/')
+        }}
+      />
+    )
+  }
 
   // ─── Not logged in ─────────────────────────────────────────────
   if (!token || !entity || showRegister) {
