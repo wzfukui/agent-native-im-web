@@ -45,7 +45,8 @@ export function JoinInvitePage({ code, token, onJoined, onCancel }: JoinInvitePa
     const res = await api.joinViaInvite(token, code)
     if (res.ok) {
       setJoined(true)
-      const convId = inviteInfo?.conversation?.id
+      // Use conversation ID from response (most reliable) or fallback to inviteInfo
+      const convId = (res.data as any)?.id ?? inviteInfo?.conversation?.id
       setTimeout(() => {
         if (convId) onJoined(convId)
       }, 1000)

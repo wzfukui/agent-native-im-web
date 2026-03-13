@@ -53,6 +53,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [dragging, setDragging] = useState(false)
   const [initialLastRead, setInitialLastRead] = useState<number | undefined>(undefined)
+  const [botThinking, setBotThinking] = useState(false)
+  const botThinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dragCountRef = useRef(0)
   const updateConversation = useConversationsStore((s) => s.updateConversation)
   const online = usePresenceStore((s) => s.online)
@@ -65,6 +67,57 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   // Check if current user is observer
   const myParticipant = conversation.participants?.find((p) => p.entity_id === myEntity.id)
   const isObserver = myParticipant?.role === 'observer'
+
+  // Find bot participant(s) for thinking indicator
+  const botParticipant = useMemo(() => {
+    const bot = conversation.participants?.find(
+      (p) => p.entity_id !== myEntity.id && (p.entity?.entity_type === 'bot' || p.entity?.entity_type === 'service')
+    )
+    return bot?.entity
+  }, [conversation.participants, myEntity.id])
+
+  const isDmWithBot = !isGroup && !!botParticipant
+
+  // Start bot thinking indicator with auto-timeout
+  const startBotThinking = useCallback(() => {
+    if (botThinkingTimerRef.current) clearTimeout(botThinkingTimerRef.current)
+    setBotThinking(true)
+    botThinkingTimerRef.current = setTimeout(() => setBotThinking(false), 60000)
+  }, [])
+
+  const stopBotThinking = useCallback(() => {
+    if (botThinkingTimerRef.current) {
+      clearTimeout(botThinkingTimerRef.current)
+      botThinkingTimerRef.current = null
+    }
+    setBotThinking(false)
+  }, [])
+
+  // Clear thinking when a bot message arrives
+  useEffect(() => {
+    if (!botThinking || messages.length === 0) return
+    const lastMsg = messages[messages.length - 1]
+    if (lastMsg.sender_id !== myEntity.id && (lastMsg.sender_type === 'bot' || lastMsg.sender_type === 'service')) {
+      stopBotThinking()
+    }
+  }, [messages.length, botThinking, myEntity.id, stopBotThinking])
+
+  // Clear thinking when bot starts typing/processing (typing indicator takes over)
+  useEffect(() => {
+    if (!botThinking || !typingEntities || typingEntities.size === 0) return
+    const now = Date.now()
+    for (const [eid, v] of typingEntities) {
+      if (eid !== myEntity.id && v.expiresAt > now) {
+        stopBotThinking()
+        break
+      }
+    }
+  }, [typingEntities, botThinking, myEntity.id, stopBotThinking])
+
+  // Clear thinking on conversation switch
+  useEffect(() => {
+    return () => stopBotThinking()
+  }, [conversation.id, stopBotThinking])
 
   // Typing/processing indicator
   const typingInfo = useMemo(() => {
@@ -96,6 +149,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     () => Object.values(streams).filter((s) => s?.conversation_id === conversation.id),
     [streams, conversation.id],
   )
+
+  // Clear thinking when streaming starts (bot is actively responding)
+  useEffect(() => {
+    if (botThinking && convStreams.length > 0) {
+      stopBotThinking()
+    }
+  }, [convStreams.length, botThinking, stopBotThinking])
 
   // Save draft before switching away, restore on switch
   const prevConvIdRef = useRef<number | null>(null)
@@ -300,8 +360,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       })
 
       if (res.ok && res.data) {
-        // Show 'sent' checkmark briefly, then clear
         replaceOptimisticMessage(tempId, res.data)
+        // Trigger bot thinking indicator for DM-with-bot or @bot in group
+        if (isDmWithBot) {
+          startBotThinking()
+        } else if (isGroup && mentions && botParticipant && mentions.includes(botParticipant.id)) {
+          startBotThinking()
+        }
       } else {
         if (files && files.length > 0) {
           removeOptimisticMessage(tempId, conversation.id)
@@ -316,7 +381,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         await queueForOffline('failed')
       }
     }
-  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage, setOptimisticState])
+  }, [token, conversation.id, myEntity, replyTo, addOptimisticMessage, replaceOptimisticMessage, removeOptimisticMessage, setOptimisticState, isDmWithBot, isGroup, botParticipant, startBotThinking])
 
   const handleRetryOutbox = useCallback(async (tempId: string) => {
     const item = await getOutboxMessageByTempId(tempId)
@@ -595,6 +660,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           onReact={isArchived ? undefined : handleReact}
           onRetryOutbox={isArchived ? undefined : handleRetryOutbox}
           onCancelStream={onCancelStream}
+          thinkingEntity={botThinking ? botParticipant : undefined}
         />
       )}
 

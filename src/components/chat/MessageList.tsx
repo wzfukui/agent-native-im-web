@@ -2,6 +2,7 @@ import { useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageBubble } from './MessageBubble'
 import { StreamingBubble } from './StreamingBubble'
+import { ThinkingBubble } from './ThinkingBubble'
 import { Loader2 } from 'lucide-react'
 import type { Message, ActiveStream, Entity } from '@/lib/types'
 import { formatDateSeparator } from '@/lib/utils'
@@ -21,9 +22,10 @@ interface Props {
   onReact?: (msgId: number, emoji: string) => void
   onRetryOutbox?: (tempId: string) => void
   onCancelStream?: (streamId: string, conversationId: number) => void
+  thinkingEntity?: Entity
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, thinkingEntity }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -57,6 +59,13 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
       endRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [streamContent, streams?.length])
+
+  // Auto-scroll when thinking indicator appears
+  useEffect(() => {
+    if (thinkingEntity && isNearBottomRef.current) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [thinkingEntity])
 
   // Initial scroll
   useEffect(() => {
@@ -173,6 +182,11 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
             onCancel={onCancelStream}
           />
         ))}
+
+        {/* Bot thinking indicator */}
+        {thinkingEntity && (!streams || streams.length === 0) && (
+          <ThinkingBubble entity={thinkingEntity} />
+        )}
       </div>
 
       <div ref={endRef} />

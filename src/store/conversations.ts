@@ -32,7 +32,15 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   activeId: null,
   mutedIds: loadMutedIds(),
   setConversations: (conversations) => set({ conversations }),
-  setActive: (activeId) => set({ activeId }),
+  setActive: (activeId) => {
+    set({ activeId })
+    // Persist to URL hash for refresh survival
+    if (activeId) {
+      window.history.replaceState({}, '', `#c=${activeId}`)
+    } else {
+      window.history.replaceState({}, '', window.location.pathname + window.location.search)
+    }
+  },
   updateConversation: (id, partial) =>
     set((s) => {
       const idx = s.conversations.findIndex((c) => c.id === id)

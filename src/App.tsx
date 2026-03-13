@@ -98,6 +98,16 @@ export default function App() {
     if (match) setInviteCode(match[1])
   }, [])
 
+  // ─── Restore active conversation from URL hash on refresh ────
+  useEffect(() => {
+    const hash = window.location.hash
+    const convMatch = hash.match(/^#c=(\d+)$/)
+    if (convMatch) {
+      const convId = Number(convMatch[1])
+      if (convId > 0) setActive(convId)
+    }
+  }, [])
+
   const decodeJwtExp = useCallback((jwtToken: string): number | null => {
     const parts = jwtToken.split('.')
     if (parts.length < 2) return null
