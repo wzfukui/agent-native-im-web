@@ -26,10 +26,24 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
 
+  const { setOnline } = usePresenceStore()
+
   const loadEntities = async () => {
     try {
       const res = await api.listEntities(token)
-      if (res.ok && res.data) setEntities(Array.isArray(res.data) ? res.data : [])
+      const list = res.ok && res.data ? (Array.isArray(res.data) ? res.data : []) : []
+      setEntities(list)
+
+      // Fetch presence for all bot entities so the online dot is accurate
+      const botIds = list.filter((e) => e.entity_type !== 'user').map((e) => e.id)
+      if (botIds.length > 0) {
+        const presRes = await api.batchPresence(token, botIds)
+        if (presRes.ok && presRes.data?.presence) {
+          for (const [idStr, isOn] of Object.entries(presRes.data.presence)) {
+            setOnline(Number(idStr), isOn as boolean)
+          }
+        }
+      }
     } catch (error) {
       void error
       setEntities([])
