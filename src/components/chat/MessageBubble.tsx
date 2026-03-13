@@ -340,9 +340,11 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
       {isMentioned && !isSelf && (
         <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-[var(--color-accent)]" />
       )}
-      {/* Avatar */}
-      {showSender && !isSelf && (
-        <EntityAvatar entity={message.sender} size="sm" className="mt-0.5" />
+      {/* Avatar (or spacer for alignment) */}
+      {!isSelf && (
+        showSender
+          ? <EntityAvatar entity={message.sender} size="sm" className="mt-0.5" />
+          : <div className="w-8 flex-shrink-0" />
       )}
 
       <div className={cn('space-y-0.5', isSelf ? 'items-end' : 'items-start', 'flex flex-col')}>
