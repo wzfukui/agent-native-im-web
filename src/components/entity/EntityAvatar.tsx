@@ -1,4 +1,4 @@
-import { cn, getInitials, entityColor } from '@/lib/utils'
+import { cn, getInitials, entityColor, useAuthFileUrl } from '@/lib/utils'
 import type { Entity } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
 import { Bot, User } from 'lucide-react'
@@ -15,6 +15,7 @@ const dotSize = { xs: 'w-2 h-2', sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-
 
 export function EntityAvatar({ entity, size = 'md', showStatus = false, className }: Props) {
   const online = usePresenceStore((s) => entity ? s.online.has(entity.id) : false)
+  const avatarUrl = useAuthFileUrl(entity?.avatar_url)
   const color = entityColor(entity)
   const isBot = entity?.entity_type === 'bot' || entity?.entity_type === 'service'
 
@@ -28,8 +29,8 @@ export function EntityAvatar({ entity, size = 'md', showStatus = false, classNam
         )}
         style={{ backgroundColor: color + '22', color }}
       >
-        {entity?.avatar_url ? (
-          <img src={entity.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+        {avatarUrl ? (
+          <img src={avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
         ) : isBot ? (
           <Bot className={size === 'sm' ? 'w-3.5 h-3.5' : size === 'lg' ? 'w-6 h-6' : 'w-4.5 h-4.5'} />
         ) : (

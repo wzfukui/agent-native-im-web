@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { cn, entityDisplayName, formatTime, formatFileSize } from '@/lib/utils'
+import { cn, entityDisplayName, formatTime, formatFileSize, authenticatedFileUrl } from '@/lib/utils'
+import { useAuthStore } from '@/store/auth'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
@@ -102,6 +103,8 @@ interface Props {
 
 export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, showSender = true }: Props) {
   const { t } = useTranslation()
+  const token = useAuthStore((s) => s.token)
+  const authUrl = (url: string | undefined) => authenticatedFileUrl(url, token)
   const [showThinking, setShowThinking] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
   const [showQuickReact, setShowQuickReact] = useState(false)
@@ -189,10 +192,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                   <div
                     key={i}
                     className="relative group cursor-pointer"
-                    onClick={() => setLightboxImage({ url: att.url!, alt: att.filename || 'image' })}
+                    onClick={() => setLightboxImage({ url: authUrl(att.url!), alt: att.filename || 'image' })}
                   >
                     <img
-                      src={att.url}
+                      src={authUrl(att.url)}
                       alt={att.filename || 'image'}
                       className="w-[150px] h-[150px] rounded-lg object-cover hover:opacity-90 transition-opacity"
                       loading="lazy"
@@ -208,7 +211,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )
 
       case 'audio':
-        return <AudioPlayer url={message.attachments?.[0]?.url} duration={message.attachments?.[0]?.duration} />
+        return <AudioPlayer url={authUrl(message.attachments?.[0]?.url)} duration={message.attachments?.[0]?.duration} />
 
       case 'artifact': {
         const artifactType = (layers.data?.artifact_type as string) || 'html'
@@ -242,7 +245,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
             {message.attachments?.map((att, i) => (
               <a
                 key={i}
-                href={att.url}
+                href={authUrl(att.url)}
                 download={att.filename}
                 className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-primary)]/50 border border-[var(--color-border)] hover:border-[var(--color-accent)]/40 transition-colors group"
               >
@@ -279,10 +282,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                         <div
                           key={i}
                           className="relative group cursor-pointer"
-                          onClick={() => setLightboxImage({ url: att.url!, alt: att.filename || 'image' })}
+                          onClick={() => setLightboxImage({ url: authUrl(att.url!), alt: att.filename || 'image' })}
                         >
                           <img
-                            src={att.url}
+                            src={authUrl(att.url)}
                             alt={att.filename || 'image'}
                             className="w-[150px] h-[150px] rounded-lg object-cover hover:opacity-90 transition-opacity"
                             loading="lazy"
@@ -298,7 +301,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 {message.attachments.filter((att) => att.type !== 'image').map((att, i) => (
                   <a
                     key={i}
-                    href={att.url}
+                    href={authUrl(att.url)}
                     download={att.filename}
                     className="flex items-center gap-3 p-2.5 rounded-lg bg-[var(--color-bg-primary)]/50 border border-[var(--color-border)] hover:border-[var(--color-accent)]/40 transition-colors group"
                   >

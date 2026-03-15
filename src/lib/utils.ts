@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import type { Entity } from './types'
+import { useAuthStore } from '@/store/auth'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -67,4 +68,22 @@ export function formatDateSeparator(iso: string, todayLabel = 'Today', yesterday
 export function truncate(str: string, max: number): string {
   if (str.length <= max) return str
   return str.slice(0, max - 1) + '\u2026'
+}
+
+/**
+ * Append JWT token to /files/ URLs for authenticated access.
+ * Non-file URLs (http://, https://, data:, etc.) are returned unchanged.
+ */
+export function authenticatedFileUrl(url: string | undefined | null, token: string | null): string {
+  if (!url || !token) return url ?? ''
+  // Only modify relative /files/ paths served by our backend
+  if (!url.startsWith('/files/')) return url
+  const separator = url.includes('?') ? '&' : '?'
+  return `${url}${separator}token=${encodeURIComponent(token)}`
+}
+
+/** React hook: resolves an authenticated file URL using the current auth token. */
+export function useAuthFileUrl(url: string | undefined | null): string {
+  const token = useAuthStore((s) => s.token)
+  return authenticatedFileUrl(url, token)
 }

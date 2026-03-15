@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Camera, Upload, Loader2, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
-import { cn } from '@/lib/utils'
+import { cn, authenticatedFileUrl } from '@/lib/utils'
 import { reportError } from '@/lib/errors'
 
 // Preset bot avatar colors/emojis for quick selection
@@ -29,6 +29,7 @@ function generatePresetSvg(emoji: string): string {
 export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
+  const displayUrl = authenticatedFileUrl(currentUrl, token)
   const [uploading, setUploading] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -109,9 +110,9 @@ export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
           'rounded-full border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-accent)] flex items-center justify-center cursor-pointer transition-colors overflow-hidden group',
         )}
       >
-        {currentUrl ? (
+        {displayUrl ? (
           <>
-            <img src={currentUrl} alt="" className="w-full h-full rounded-full object-cover" />
+            <img src={displayUrl} alt="" className="w-full h-full rounded-full object-cover" />
             <div className="absolute inset-0 bg-black/40 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
               <Camera className={cn(iconSize, 'text-white')} />
             </div>
