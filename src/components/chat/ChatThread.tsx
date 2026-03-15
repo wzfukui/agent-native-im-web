@@ -34,6 +34,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const messages = useMessagesStore((s) => s.byConv[conversation.id] ?? EMPTY_MESSAGES)
   const hasMore = useMessagesStore((s) => s.hasMore[conversation.id] ?? true)
   const streams = useMessagesStore((s) => s.streams)
+  const progress = useMessagesStore((s) => s.progress[conversation.id])
   const setMessages = useMessagesStore((s) => s.setMessages)
   const prependMessages = useMessagesStore((s) => s.prependMessages)
   const addMessage = useMessagesStore((s) => s.addMessage)
@@ -657,6 +658,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           onRetryOutbox={isArchived ? undefined : handleRetryOutbox}
           onCancelStream={onCancelStream}
           thinkingEntity={botThinking ? botParticipant : undefined}
+          progress={progress}
         />
       )}
 

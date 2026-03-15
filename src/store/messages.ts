@@ -1,5 +1,14 @@
 import { create } from 'zustand'
-import type { Message, ActiveStream, MessageLayers, ReactionSummary } from '@/lib/types'
+import type { Message, ActiveStream, MessageLayers, ReactionSummary, StreamStatus } from '@/lib/types'
+
+// Transient progress indicator for a conversation (not persisted)
+export interface ProgressEntry {
+  conversation_id: number
+  sender_id: number
+  stream_id: string
+  status: StreamStatus
+  received_at: number
+}
 
 interface MessagesState {
   // convId -> messages (newest last)
@@ -9,6 +18,8 @@ interface MessagesState {
   streams: Record<string, ActiveStream>
   // optimistic messages (tempId -> message)
   optimistic: Record<string, Message>
+  // transient progress indicators (convId -> ProgressEntry)
+  progress: Record<number, ProgressEntry>
 
   setMessages: (convId: number, msgs: Message[], hasMore: boolean) => void
   prependMessages: (convId: number, msgs: Message[], hasMore: boolean) => void
@@ -30,6 +41,12 @@ interface MessagesState {
   updateStream: (streamId: string, layers: MessageLayers) => void
   endStream: (streamId: string, message?: Message) => void
   cleanStaleStreams: () => void
+
+  // progress indicators
+  setProgress: (convId: number, entry: ProgressEntry) => void
+  clearProgress: (convId: number) => void
+  clearProgressBySender: (convId: number, senderId: number) => void
+  cleanStaleProgress: () => void
 }
 
 export const useMessagesStore = create<MessagesState>((set) => ({
@@ -37,6 +54,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   hasMore: {},
   streams: {},
   optimistic: {},
+  progress: {},
 
   setMessages: (convId, msgs, hasMore) =>
     set((s) => ({
@@ -207,6 +225,37 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         streams: rest,
         byConv: { ...s.byConv, [message.conversation_id]: [...existing, message] },
       }
+    }),
+
+  setProgress: (convId, entry) =>
+    set((s) => ({
+      progress: { ...s.progress, [convId]: entry },
+    })),
+
+  clearProgress: (convId) =>
+    set((s) => {
+      const { [convId]: _, ...rest } = s.progress
+      return { progress: rest }
+    }),
+
+  clearProgressBySender: (convId, senderId) =>
+    set((s) => {
+      const existing = s.progress[convId]
+      if (!existing || existing.sender_id !== senderId) return s
+      const { [convId]: _, ...rest } = s.progress
+      return { progress: rest }
+    }),
+
+  cleanStaleProgress: () =>
+    set((s) => {
+      const now = Date.now()
+      const fresh: Record<number, ProgressEntry> = {}
+      for (const [k, v] of Object.entries(s.progress)) {
+        if (now - v.received_at < 30_000) {
+          fresh[Number(k)] = v
+        }
+      }
+      return { progress: fresh }
     }),
 
   cleanStaleStreams: () =>

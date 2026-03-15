@@ -41,7 +41,7 @@ export default function App() {
   const { t } = useTranslation()
   const { token, entity, setAuth, setToken, logout } = useAuthStore()
   const { conversations, activeId, setConversations, setActive, addConversation, updateConversation, removeConversation, mutedIds } = useConversationsStore()
-  const { addMessage, revokeMessage, updateMessageReactions, startStream, updateStream, endStream } = useMessagesStore()
+  const { addMessage, revokeMessage, updateMessageReactions, startStream, updateStream, endStream, setProgress, clearProgressBySender } = useMessagesStore()
   const { setOnline, setWsConnected } = usePresenceStore()
 
   const [loginError, setLoginError] = useState('')
@@ -330,10 +330,11 @@ export default function App() {
     document.title = totalUnread > 0 ? `(${totalUnread}) Agent-Native IM` : 'Agent-Native IM'
   }, [totalUnread])
 
-  // ─── Stale stream cleanup ─────────────────────────────────────
+  // ─── Stale stream & progress cleanup ──────────────────────────
   useEffect(() => {
     const interval = setInterval(() => {
       useMessagesStore.getState().cleanStaleStreams()
+      useMessagesStore.getState().cleanStaleProgress()
     }, 15000)
     return () => clearInterval(interval)
   }, [])
@@ -425,6 +426,9 @@ export default function App() {
             // The addMessage function already checks for duplicates by ID
             // Just add the message - if it's already there, it won't be added again
             addMessage(message)
+
+            // Clear progress indicator when a real message arrives
+            clearProgressBySender(message.conversation_id, message.sender_id)
 
             const currentActiveId = useConversationsStore.getState().activeId
             const isActive = message.conversation_id === currentActiveId
@@ -520,6 +524,20 @@ export default function App() {
         case 'entity.config': {
           // Subscription config push — currently informational for frontend
           // Could be used to show subscription mode indicators in the UI
+          break
+        }
+
+        case 'message.progress': {
+          const data = msg.data as { conversation_id?: number; sender_id?: number; stream_id?: string; status?: { phase: string; progress: number; text: string } }
+          if (data?.conversation_id && data?.sender_id) {
+            setProgress(data.conversation_id, {
+              conversation_id: data.conversation_id,
+              sender_id: data.sender_id,
+              stream_id: data.stream_id || '',
+              status: data.status || { phase: 'working', progress: 0, text: '' },
+              received_at: Date.now(),
+            })
+          }
           break
         }
 

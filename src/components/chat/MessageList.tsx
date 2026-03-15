@@ -5,6 +5,7 @@ import { StreamingBubble } from './StreamingBubble'
 import { ThinkingBubble } from './ThinkingBubble'
 import { Loader2 } from 'lucide-react'
 import type { Message, ActiveStream, Entity } from '@/lib/types'
+import type { ProgressEntry } from '@/store/messages'
 import { formatDateSeparator } from '@/lib/utils'
 
 interface Props {
@@ -23,9 +24,10 @@ interface Props {
   onRetryOutbox?: (tempId: string) => void
   onCancelStream?: (streamId: string, conversationId: number) => void
   thinkingEntity?: Entity
+  progress?: ProgressEntry
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, thinkingEntity }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, thinkingEntity, progress }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -60,12 +62,18 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     }
   }, [streamContent, streams?.length])
 
-  // Auto-scroll when thinking indicator appears
+  // Auto-scroll when thinking indicator or progress appears
   useEffect(() => {
     if (thinkingEntity && isNearBottomRef.current) {
       endRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
   }, [thinkingEntity])
+
+  useEffect(() => {
+    if (progress && isNearBottomRef.current) {
+      endRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [progress])
 
   // Initial scroll
   useEffect(() => {
@@ -183,8 +191,20 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
           />
         ))}
 
+        {/* Progress indicator (transient, from message.progress events) */}
+        {progress && (!streams || streams.length === 0) && (
+          <div className="flex items-center gap-2 px-4 py-2 text-sm text-[var(--color-text-muted)]">
+            <span className="flex gap-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" style={{ animationDelay: '0.2s' }} />
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" style={{ animationDelay: '0.4s' }} />
+            </span>
+            <span>{progress.status?.text || t('chat.processing')}</span>
+          </div>
+        )}
+
         {/* Bot thinking indicator */}
-        {thinkingEntity && (!streams || streams.length === 0) && (
+        {thinkingEntity && (!streams || streams.length === 0) && !progress && (
           <ThinkingBubble entity={thinkingEntity} />
         )}
       </div>

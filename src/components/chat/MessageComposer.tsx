@@ -84,6 +84,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mentionRef = useRef<HTMLDivElement>(null)
+  const isComposingRef = useRef(false)
 
   // Filter participants by mention query
   const mentionCandidates = useMemo(() => {
@@ -195,6 +196,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     }
 
     if (e.key === 'Enter' && !e.shiftKey) {
+      if (isComposingRef.current || e.nativeEvent.isComposing) return
       e.preventDefault()
       handleSubmit()
     }
@@ -449,6 +451,8 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
               value={text}
               onChange={autoResize}
               onKeyDown={handleKeyDown}
+              onCompositionStart={() => { isComposingRef.current = true }}
+              onCompositionEnd={() => { isComposingRef.current = false }}
               onPaste={(e) => {
                 const items = e.clipboardData?.items
                 if (!items) return

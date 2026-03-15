@@ -159,6 +159,7 @@ export type WSEventType =
   | 'entity.offline'
   | 'entity.status_update'
   | 'entity.config'
+  | 'message.progress'
   | 'typing'
   | 'pong'
 
