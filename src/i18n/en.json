@@ -426,6 +426,17 @@
     "accept": "Accept",
     "learnMore": "Privacy Policy"
   },
+  "entityPopover": {
+    "bot": "Bot",
+    "service": "Service",
+    "user": "User",
+    "active": "Active",
+    "disabled": "Disabled",
+    "pending": "Pending",
+    "joined": "Joined",
+    "sendMessage": "Message",
+    "viewDetails": "Details"
+  },
   "forgotPassword": {
     "title": "Reset Password",
     "description": "Contact your administrator to reset your password.",

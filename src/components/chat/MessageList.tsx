@@ -24,11 +24,13 @@ interface Props {
   onReact?: (msgId: number, emoji: string) => void
   onRetryOutbox?: (tempId: string) => void
   onCancelStream?: (streamId: string, conversationId: number) => void
+  onEntitySendMessage?: (entity: Entity) => void
+  onEntityViewDetails?: (entity: Entity) => void
   thinkingEntity?: Entity
   progress?: ProgressEntry
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, thinkingEntity, progress }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, onEntitySendMessage, onEntityViewDetails, thinkingEntity, progress }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -177,6 +179,8 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 onReply={onReply}
                 onReact={onReact}
                 onRetryOutbox={onRetryOutbox}
+                onEntitySendMessage={onEntitySendMessage}
+                onEntityViewDetails={onEntityViewDetails}
               />
             </div>
           )

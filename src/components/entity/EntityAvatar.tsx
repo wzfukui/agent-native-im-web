@@ -9,12 +9,13 @@ interface Props {
   size?: 'xs' | 'sm' | 'md' | 'lg'
   showStatus?: boolean
   className?: string
+  onClick?: (e: React.MouseEvent) => void
 }
 
 const sizeMap = { xs: 'w-6 h-6 text-[10px]', sm: 'w-8 h-8 text-xs', md: 'w-10 h-10 text-sm', lg: 'w-14 h-14 text-lg' }
 const dotSize = { xs: 'w-2 h-2', sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-3.5' }
 
-export function EntityAvatar({ entity, size = 'md', showStatus = false, className }: Props) {
+export function EntityAvatar({ entity, size = 'md', showStatus = false, className, onClick }: Props) {
   const online = usePresenceStore((s) => entity ? s.online.has(entity.id) : false)
   const token = useAuthStore((s) => s.token)
   const avatarUrl = authenticatedFileUrl(entity?.avatar_url, token)
@@ -22,7 +23,10 @@ export function EntityAvatar({ entity, size = 'md', showStatus = false, classNam
   const isBot = isBotOrService(entity)
 
   return (
-    <div className={cn('relative flex-shrink-0', className)}>
+    <div
+      className={cn('relative flex-shrink-0', onClick && 'cursor-pointer', className)}
+      onClick={onClick}
+    >
       <div
         className={cn(
           sizeMap[size],

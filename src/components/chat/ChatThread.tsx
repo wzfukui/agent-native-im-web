@@ -25,10 +25,12 @@ interface Props {
   typingEntities?: Map<number, { name: string; expiresAt: number; isProcessing?: boolean; phase?: string }>
   onToggleSettings?: () => void
   onToggleTasks?: () => void
+  onEntitySendMessage?: (entity: import('@/lib/types').Entity) => void
+  onEntityViewDetails?: (entity: import('@/lib/types').Entity) => void
   isArchived?: boolean
 }
 
-export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings, onToggleTasks, isArchived }: Props) {
+export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typingEntities, onToggleSettings, onToggleTasks, onEntitySendMessage, onEntityViewDetails, isArchived }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
@@ -668,6 +670,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           onReact={isArchived ? undefined : handleReact}
           onRetryOutbox={isArchived ? undefined : handleRetryOutbox}
           onCancelStream={onCancelStream}
+          onEntitySendMessage={onEntitySendMessage}
+          onEntityViewDetails={onEntityViewDetails}
           thinkingEntity={botThinking ? botParticipant : undefined}
           progress={progress}
         />

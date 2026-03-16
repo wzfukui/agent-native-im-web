@@ -671,6 +671,21 @@ export default function App() {
     setActive(convId)
   }
 
+  // ─── Entity popover actions ─────────────────────────────────────
+  const handleEntitySendMessage = (target: Entity) => {
+    setViewMode('chat')
+    setNewChatEntityId(target.id)
+    setShowNewChat(true)
+  }
+
+  const handleEntityViewDetails = (target: Entity) => {
+    if (target.entity_type === 'bot' || target.entity_type === 'service') {
+      setViewMode('bots')
+      setSelectedBotId(target.id)
+      loadBotEntities()
+    }
+  }
+
   // ─── Disable bot (soft delete) ──────────────────────────────
   const handleDisableBot = async (botId: number) => {
     try {
@@ -929,6 +944,8 @@ export default function App() {
                       typingEntities={typingMap.get(activeConv.id)}
                       onToggleSettings={() => { setShowSettings((prev) => !prev); setShowTasks(false) }}
                       onToggleTasks={() => { setShowTasks((prev) => !prev); setShowSettings(false) }}
+                      onEntitySendMessage={handleEntitySendMessage}
+                      onEntityViewDetails={handleEntityViewDetails}
                       isArchived={isArchivedView}
                     />
                     </ErrorBoundary>

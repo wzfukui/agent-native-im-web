@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 import { cn, entityDisplayName, formatTime, formatFileSize, authenticatedFileUrl } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { EntityPopoverCard } from '@/components/entity/EntityPopoverCard'
 import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
 import { HandoverCard } from './HandoverCard'
@@ -98,10 +99,12 @@ interface Props {
   onReply?: (msg: Message) => void
   onReact?: (msgId: number, emoji: string) => void
   onRetryOutbox?: (tempId: string) => void
+  onEntitySendMessage?: (entity: import('@/lib/types').Entity) => void
+  onEntityViewDetails?: (entity: import('@/lib/types').Entity) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, showSender = true }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
   const authUrl = (url: string | undefined) => authenticatedFileUrl(url, token)
@@ -110,6 +113,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   const [showQuickReact, setShowQuickReact] = useState(false)
   const [collapsed, setCollapsed] = useState(true)
   const [isOverflow, setIsOverflow] = useState(false)
+  const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const layers = message.layers || {}
 
@@ -341,7 +345,15 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
       {/* Avatar (or spacer for alignment) */}
       {!isSelf && (
         showSender
-          ? <EntityAvatar entity={message.sender} size="sm" className="mt-0.5" />
+          ? <EntityAvatar
+              entity={message.sender}
+              size="sm"
+              className="mt-0.5"
+              onClick={message.sender ? (e) => {
+                const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                setPopoverAnchor(rect)
+              } : undefined}
+            />
           : <div className="w-8 flex-shrink-0" />
       )}
 
@@ -589,6 +601,17 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         url={lightboxImage.url}
         alt={lightboxImage.alt}
         onClose={() => setLightboxImage(null)}
+      />
+    )}
+
+    {/* Entity Popover */}
+    {popoverAnchor && message.sender && (
+      <EntityPopoverCard
+        entity={message.sender}
+        anchorRect={popoverAnchor}
+        onClose={() => setPopoverAnchor(null)}
+        onSendMessage={onEntitySendMessage}
+        onViewDetails={onEntityViewDetails}
       />
     )}
   </>
