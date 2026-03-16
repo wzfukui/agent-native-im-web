@@ -249,11 +249,13 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   cleanStaleProgress: () =>
     set((s) => {
       const now = Date.now()
+      const keys = Object.keys(s.progress)
+      if (keys.length === 0) return s
+      const staleKeys = keys.filter((k) => now - s.progress[Number(k)].received_at >= 30_000)
+      if (staleKeys.length === 0) return s
       const fresh: Record<number, ProgressEntry> = {}
       for (const [k, v] of Object.entries(s.progress)) {
-        if (now - v.received_at < 30_000) {
-          fresh[Number(k)] = v
-        }
+        if (now - v.received_at < 30_000) fresh[Number(k)] = v
       }
       return { progress: fresh }
     }),
