@@ -189,7 +189,7 @@ export const listEntities = (token: string) =>
   request<Entity[]>('GET', '/api/v1/entities', token)
 
 export const createEntity = (token: string, name: string, metadata?: Record<string, unknown>) =>
-  request<{ entity: Entity; bootstrap_key: string; markdown_doc: string }>('POST', '/api/v1/entities', token, {
+  request<{ entity: Entity; api_key: string; bootstrap_key?: string; markdown_doc: string }>('POST', '/api/v1/entities', token, {
     name,
     ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
   })

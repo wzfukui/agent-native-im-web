@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
-import { cn } from '@/lib/utils'
 import { extractError, reportError } from '@/lib/errors'
 import { AvatarPicker } from './AvatarPicker'
 import { X, Plus, Loader2 } from 'lucide-react'
@@ -20,7 +19,8 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
-  const [autoApprove, setAutoApprove] = useState(true)
+  // autoApprove kept in metadata for backward compat with older backends
+  const autoApprove = true
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
@@ -46,7 +46,7 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
           const avatarRes = await api.updateEntity(token, entity.id, { avatar_url: avatarUrl })
           if (avatarRes.ok && avatarRes.data) entity = avatarRes.data
         }
-        onCreated({ entity, key: res.data.bootstrap_key, doc: res.data.markdown_doc })
+        onCreated({ entity, key: res.data.api_key || res.data.bootstrap_key || '', doc: res.data.markdown_doc })
       } else {
         const parsed = extractError(res)
         setError(parsed.message)
@@ -113,26 +113,6 @@ export function CreateAgentDialog({ onClose, onCreated }: Props) {
               className="w-full h-9 mt-1 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-bot)]/50 transition-colors"
             />
           </div>
-
-          {/* Auto-approve toggle */}
-          <label className="flex items-center gap-2.5 py-1 cursor-pointer group">
-            <div
-              onClick={() => setAutoApprove(!autoApprove)}
-              className={cn(
-                'w-8 h-[18px] rounded-full transition-colors flex items-center px-0.5 cursor-pointer',
-                autoApprove ? 'bg-[var(--color-bot)]' : 'bg-[var(--color-bg-hover)] border border-[var(--color-border)]',
-              )}
-            >
-              <div className={cn(
-                'w-3.5 h-3.5 rounded-full bg-white shadow-sm transition-transform',
-                autoApprove ? 'translate-x-[14px]' : 'translate-x-0',
-              )} />
-            </div>
-            <div>
-              <span className="text-xs text-[var(--color-text-primary)]">{t('bot.autoApprove')}</span>
-              <p className="text-[10px] text-[var(--color-text-muted)] leading-tight">{t('bot.autoApproveDesc')}</p>
-            </div>
-          </label>
 
           {error && (
             <p className="text-[11px] text-[var(--color-error)]">{error}</p>

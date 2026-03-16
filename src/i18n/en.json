@@ -261,6 +261,7 @@
     "apiKey": "API Key",
     "apiKeyConfigured": "Configured",
     "apiKeyMissing": "Missing",
+    "saveKeyWarning": "Save this key — it won't be shown again",
     "bootstrap": "Bootstrap",
     "bootstrapPresent": "Present",
     "bootstrapRevoked": "Revoked",

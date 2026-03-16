@@ -261,6 +261,7 @@
     "apiKey": "API 密钥",
     "apiKeyConfigured": "已配置",
     "apiKeyMissing": "未配置",
+    "saveKeyWarning": "请保存此密钥 — 之后不会再显示",
     "bootstrap": "引导密钥",
     "bootstrapPresent": "存在",
     "bootstrapRevoked": "已吊销",

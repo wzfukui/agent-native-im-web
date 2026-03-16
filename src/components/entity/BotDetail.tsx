@@ -14,7 +14,7 @@ import { generateBotQuickstart } from '@/lib/bot-quickstart'
 import {
   Bot, ArrowLeft, Wifi, WifiOff, Sparkles, FileText, User,
   MessageSquare, Users, ChevronRight, ChevronDown, ChevronUp, Loader2,
-  Hash, Calendar, Tag, Key, Copy, Check, Clock, AlertCircle,
+  Hash, Calendar, Tag, Key, Copy, Check, Clock,
   PowerOff, RotateCcw, Download, Activity, RefreshCw, Link, ExternalLink,
 } from 'lucide-react'
 
@@ -40,7 +40,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [loadingConvs, setLoadingConvs] = useState(false)
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
   const [confirmDisable, setConfirmDisable] = useState(false)
-  const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)
+  const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)  // kept for backward compat
   const [selfCheck, setSelfCheck] = useState<{ ready: boolean; recommendation: string[]; has_api_key: boolean; has_bootstrap: boolean } | null>(null)
   const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; disconnect_count: number; forced_disconnect_count?: number; last_seen?: string; hub: { total_ws_connections: number } } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
@@ -182,8 +182,6 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
 
   // Show full credential card if just created
   const showFullCreds = createdCredentials && createdCredentials.entity.id === bot.id
-  // Show pending connection card if has bootstrap but no API key (not yet approved)
-  const showPendingCreds = !showFullCreds && credStatus?.has_bootstrap && !credStatus?.has_api_key && !isOnline
   const accessToken = rotatedToken || (showFullCreds ? createdCredentials?.key : null)
   const wsUrlWithToken = accessToken
     ? `${window.location.origin.replace('https://', 'wss://').replace('http://', 'ws://')}/api/v1/ws?token=${encodeURIComponent(accessToken)}`
@@ -261,7 +259,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
               <div className="flex items-center gap-2">
                 <Key className="w-4 h-4 text-[var(--color-warning)]" />
                 <span className="text-xs font-semibold text-[var(--color-warning)]">
-                  {t('bot.bootstrapKey')} ({t('bot.awaitingApproval')})
+                  {t('bot.apiKey')} — {t('bot.saveKeyWarning')}
                 </span>
               </div>
               <button
@@ -300,11 +298,11 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
                 onClick={() => {
                   const integrationInfo = `# Agent Integration Configuration
 API Endpoint: ${window.location.origin}/api/v1
-Bootstrap Key: ${createdCredentials.key}
+API Key: ${createdCredentials.key}
 
 # Environment Variables (.env)
-IM_SERVER=${window.location.origin}
-BOOTSTRAP_KEY=${createdCredentials.key}
+AGENT_IM_BASE=${window.location.origin}/api/v1
+AGENT_IM_TOKEN=${createdCredentials.key}
 
 # Integration Documentation
 ${createdCredentials.doc}`
@@ -363,10 +361,6 @@ ${createdCredentials.doc}`
                 <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_api_key ? t('bot.apiKeyConfigured') : t('bot.apiKeyMissing')}</p>
               </div>
               <div>
-                <p className="text-[var(--color-text-muted)]">{t('bot.bootstrap')}</p>
-                <p className="text-[var(--color-text-primary)] font-medium">{selfCheck?.has_bootstrap ? t('bot.bootstrapPresent') : t('bot.bootstrapRevoked')}</p>
-              </div>
-              <div>
                 <p className="text-[var(--color-text-muted)]">{t('bot.connections')}</p>
                 <p className="text-[var(--color-text-primary)] font-medium">{diagnostics?.connections ?? 0}</p>
               </div>
@@ -411,50 +405,6 @@ ${createdCredentials.doc}`
                 {t('bot.regenerateToken')}
               </button>
             </div>
-          </div>
-        )}
-
-        {/* ── Pending connection notice (owner only) ── */}
-        {isOwner && showPendingCreds && (
-          <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-warning)]/4">
-            <div className="flex items-center gap-2 mb-1.5">
-              <AlertCircle className="w-4 h-4 text-[var(--color-warning)]" />
-              <span className="text-xs font-semibold text-[var(--color-warning)]">{t('bot.pendingConnection')}</span>
-            </div>
-            <p className="text-xs text-[var(--color-text-secondary)] leading-relaxed mb-2">
-              {t('bot.pendingConnectionDesc')}
-            </p>
-            {credStatus?.bootstrap_prefix && (
-              <p className="text-xs text-[var(--color-text-muted)]">
-                {t('bot.keyPrefix')}: <code className="font-mono text-[var(--color-text-primary)]">{credStatus.bootstrap_prefix}****</code>
-              </p>
-            )}
-            <p className="text-xs text-[var(--color-text-muted)] italic mt-1">{t('bot.keyLostHint')}</p>
-            <button
-              className="mt-3 px-4 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white hover:opacity-90 transition-opacity"
-              onClick={async () => {
-                try {
-                  const res = await api.approveConnection(token, bot.id) as { ok: boolean; data?: { permanent_key?: string } }
-                  if (res.ok && res.data?.permanent_key) {
-                    setRotatedToken(res.data.permanent_key)
-                    handleCopy(res.data.permanent_key, 'approved-key')
-                  } else {
-                    // If already approved or no key returned, regenerate to get one
-                    const regen = await api.regenerateEntityToken(token, bot.id)
-                    if (regen.ok && regen.data?.api_key) {
-                      setRotatedToken(regen.data.api_key)
-                      handleCopy(regen.data.api_key, 'rotated-token')
-                    }
-                  }
-                  // Refresh credential status
-                  api.getEntityCredentials(token, bot.id).then((res) => {
-                    if (res.ok && res.data) setCredStatus(res.data)
-                  })
-                } catch {}
-              }}
-            >
-              {t('bot.approveAndIssueKey')}
-            </button>
           </div>
         )}
 
