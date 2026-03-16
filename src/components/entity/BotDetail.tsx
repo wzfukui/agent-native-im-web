@@ -82,7 +82,9 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     return () => { cancelled = true }
   }, [bot?.id, token])
 
-  // Load credential status + entity status
+  const isOwner = !!(bot && myEntity && bot.owner_id === myEntity.id)
+
+  // Load credential status + entity status (owner-only APIs)
   useEffect(() => {
     if (!bot) return
     let cancelled = false
@@ -91,22 +93,24 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setDiagnostics(null)
     setLastSeen(null)
 
-    api.getEntityCredentials(token, bot.id).then((res) => {
-      if (!cancelled && res.ok && res.data) setCredStatus(res.data)
-    }).catch(() => {})
-    api.getEntitySelfCheck(token, bot.id).then((res) => {
-      if (!cancelled && res.ok && res.data) setSelfCheck(res.data)
-    }).catch(() => {})
-    api.getEntityDiagnostics(token, bot.id).then((res) => {
-      if (!cancelled && res.ok && res.data) setDiagnostics(res.data)
-    }).catch(() => {})
+    if (isOwner) {
+      api.getEntityCredentials(token, bot.id).then((res) => {
+        if (!cancelled && res.ok && res.data) setCredStatus(res.data)
+      }).catch(() => {})
+      api.getEntitySelfCheck(token, bot.id).then((res) => {
+        if (!cancelled && res.ok && res.data) setSelfCheck(res.data)
+      }).catch(() => {})
+      api.getEntityDiagnostics(token, bot.id).then((res) => {
+        if (!cancelled && res.ok && res.data) setDiagnostics(res.data)
+      }).catch(() => {})
+    }
 
     api.getEntityStatus(token, bot.id).then((res) => {
       if (!cancelled && res.ok && res.data?.last_seen) setLastSeen(res.data.last_seen)
     }).catch(() => {})
 
     return () => { cancelled = true }
-  }, [bot?.id, token])
+  }, [bot?.id, token, isOwner])
 
   const handleCopy = async (text: string, label: string) => {
     try {
@@ -250,8 +254,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
       {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto">
 
-        {/* ── Credential banner (just created) ── */}
-        {showFullCreds && createdCredentials && (
+        {/* ── Credential banner (just created, owner only) ── */}
+        {isOwner && showFullCreds && createdCredentials && (
           <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-warning)]/4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -336,8 +340,8 @@ ${createdCredentials.doc}`
           </div>
         )}
 
-        {/* ── Status overview — flat key-value, no nested cards ── */}
-        {(selfCheck || diagnostics) && (
+        {/* ── Status overview — flat key-value, owner only ── */}
+        {isOwner && (selfCheck || diagnostics) && (
           <div className="px-5 py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
@@ -410,8 +414,8 @@ ${createdCredentials.doc}`
           </div>
         )}
 
-        {/* ── Pending connection notice ── */}
-        {showPendingCreds && (
+        {/* ── Pending connection notice (owner only) ── */}
+        {isOwner && showPendingCreds && (
           <div className="px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-warning)]/4">
             <div className="flex items-center gap-2 mb-1.5">
               <AlertCircle className="w-4 h-4 text-[var(--color-warning)]" />
@@ -429,8 +433,8 @@ ${createdCredentials.doc}`
           </div>
         )}
 
-        {/* ── Access pack — consolidated ── */}
-        {(accessToken || !showFullCreds) && (
+        {/* ── Access pack — consolidated (owner only) ── */}
+        {isOwner && (accessToken || !showFullCreds) && (
           <div className="px-5 py-4 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-2 mb-3">
               <Key className="w-4 h-4 text-[var(--color-accent)]" />
@@ -479,8 +483,8 @@ ${createdCredentials.doc}`
 
         {/* ── Agent info — no card wrapper ── */}
         <div className="px-5 py-4 border-b border-[var(--color-border)]">
-          {/* Avatar change */}
-          {!isDisabled && (
+          {/* Avatar change (owner only) */}
+          {isOwner && !isDisabled && (
             <div className="flex items-center gap-3 mb-4">
               <AvatarPicker
                 currentUrl={bot.avatar_url}
@@ -552,7 +556,7 @@ ${createdCredentials.doc}`
 
           {/* Actions */}
           <div className="flex gap-2 mt-4">
-            {isDisabled ? (
+            {isOwner && isDisabled ? (
               <button
                 onClick={() => onReactivate(bot.id)}
                 className="py-2 px-4 rounded-lg bg-[var(--color-success)]/12 hover:bg-[var(--color-success)]/18 text-[var(--color-success)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
@@ -562,20 +566,24 @@ ${createdCredentials.doc}`
               </button>
             ) : (
               <>
-                <button
-                  onClick={() => onStartChat(bot.id)}
-                  className="py-2 px-4 rounded-lg bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/18 text-[var(--color-accent)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  {t('conversation.newChat')}
-                </button>
-                <button
-                  onClick={() => setConfirmDisable(true)}
-                  className="py-2 px-3 rounded-lg hover:bg-[var(--color-warning)]/10 text-[var(--color-text-muted)] hover:text-[var(--color-warning)] text-xs flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
-                >
-                  <PowerOff className="w-3.5 h-3.5" />
-                  {t('bot.disableAgent')}
-                </button>
+                {!isDisabled && (
+                  <button
+                    onClick={() => onStartChat(bot.id)}
+                    className="py-2 px-4 rounded-lg bg-[var(--color-accent)]/10 hover:bg-[var(--color-accent)]/18 text-[var(--color-accent)] text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    {t('conversation.newChat')}
+                  </button>
+                )}
+                {isOwner && !isDisabled && (
+                  <button
+                    onClick={() => setConfirmDisable(true)}
+                    className="py-2 px-3 rounded-lg hover:bg-[var(--color-warning)]/10 text-[var(--color-text-muted)] hover:text-[var(--color-warning)] text-xs flex items-center gap-1.5 cursor-pointer transition-colors ml-auto"
+                  >
+                    <PowerOff className="w-3.5 h-3.5" />
+                    {t('bot.disableAgent')}
+                  </button>
+                )}
               </>
             )}
           </div>
