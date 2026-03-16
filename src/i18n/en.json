@@ -270,7 +270,8 @@
     "recDisabled": "Entity is disabled, reactivate it first",
     "recBootstrapOnly": "Agent is still using bootstrap key, complete approval to issue permanent key",
     "recNoCreds": "No credentials found, recreate or re-approve this agent",
-    "recOffline": "Agent is offline, verify network and WebSocket handshake"
+    "recOffline": "Agent is offline, verify network and WebSocket handshake",
+    "approveAndIssueKey": "Approve & Issue API Key"
   },
   "error": {
     "guidance": {

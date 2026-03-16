@@ -270,7 +270,8 @@
     "recDisabled": "实体已停用，请先重新启用",
     "recBootstrapOnly": "Agent 仍在使用引导密钥，请完成审批以签发永久密钥",
     "recNoCreds": "未找到凭据，请重新创建或重新审批此 Agent",
-    "recOffline": "Agent 离线，请检查网络和 WebSocket 握手"
+    "recOffline": "Agent 离线，请检查网络和 WebSocket 握手",
+    "approveAndIssueKey": "审批并签发 API 密钥"
   },
   "error": {
     "guidance": {
@@ -429,13 +430,13 @@
   "entityPopover": {
     "bot": "Bot",
     "service": "Service",
-    "user": "\u7528\u6237",
-    "active": "\u6d3b\u8dc3",
-    "disabled": "\u5df2\u505c\u7528",
-    "pending": "\u5f85\u5ba1\u6279",
-    "joined": "\u52a0\u5165\u4e8e",
-    "sendMessage": "\u53d1\u6d88\u606f",
-    "viewDetails": "\u67e5\u770b\u8be6\u60c5"
+    "user": "用户",
+    "active": "活跃",
+    "disabled": "已停用",
+    "pending": "待审批",
+    "joined": "加入于",
+    "sendMessage": "发消息",
+    "viewDetails": "查看详情"
   },
   "forgotPassword": {
     "title": "重置密码",

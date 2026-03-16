@@ -430,6 +430,31 @@ ${createdCredentials.doc}`
               </p>
             )}
             <p className="text-xs text-[var(--color-text-muted)] italic mt-1">{t('bot.keyLostHint')}</p>
+            <button
+              className="mt-3 px-4 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white hover:opacity-90 transition-opacity"
+              onClick={async () => {
+                try {
+                  const res = await api.approveConnection(token, bot.id) as { ok: boolean; data?: { permanent_key?: string } }
+                  if (res.ok && res.data?.permanent_key) {
+                    setRotatedToken(res.data.permanent_key)
+                    handleCopy(res.data.permanent_key, 'approved-key')
+                  } else {
+                    // If already approved or no key returned, regenerate to get one
+                    const regen = await api.regenerateEntityToken(token, bot.id)
+                    if (regen.ok && regen.data?.api_key) {
+                      setRotatedToken(regen.data.api_key)
+                      handleCopy(regen.data.api_key, 'rotated-token')
+                    }
+                  }
+                  // Refresh credential status
+                  api.getEntityCredentials(token, bot.id).then((res) => {
+                    if (res.ok && res.data) setCredStatus(res.data)
+                  })
+                } catch {}
+              }}
+            >
+              {t('bot.approveAndIssueKey')}
+            </button>
           </div>
         )}
 
