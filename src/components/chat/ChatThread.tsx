@@ -306,7 +306,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       sender: myEntity,
       content_type: contentType,
       layers: {
-        summary: text.length > 100 ? text.substring(0, 100) + '...' : text,
+        summary: text,
         data: { body: text },
       },
       created_at: new Date().toISOString(),
@@ -343,7 +343,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         conversation_id: conversation.id,
         content_type: contentType,
         layers: {
-          summary: text.length > 100 ? text.substring(0, 100) + '...' : text,
+          summary: text,
           data: { body: text },
         },
         attachments: hasAttachments ? uploadedAttachments : undefined,
@@ -394,7 +394,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       conversation_id: item.conversation_id,
       content_type: item.content_type || 'text',
       layers: {
-        summary: item.text.length > 100 ? item.text.slice(0, 100) + '...' : item.text,
+        summary: item.text,
         data: { body: item.text },
       },
       mentions: item.mentions,
