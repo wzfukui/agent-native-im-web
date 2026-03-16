@@ -334,15 +334,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
       className={cn(
         'flex gap-2.5 max-w-[85%] group transition-opacity duration-300',
         isSelf ? 'ml-auto flex-row-reverse' : '',
-        isMentioned ? 'relative' : '',
         message.client_state === 'sending' ? 'opacity-60' : '',
       )}
       style={{ animation: 'slide-up 0.2s cubic-bezier(0.16,1,0.3,1)' }}
     >
-      {/* Mention highlight bar */}
-      {isMentioned && !isSelf && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 rounded-full bg-[var(--color-accent)]" />
-      )}
       {/* Avatar (or spacer for alignment) */}
       {!isSelf && (
         showSender
@@ -392,6 +387,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
               isSelf
                 ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
                 : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
+              isMentioned && !isSelf && 'border-l-2 border-l-[var(--color-accent)] bg-[var(--color-accent)]/5',
             )}
           >
             {/* Collapsible content wrapper */}
