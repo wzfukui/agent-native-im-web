@@ -1,6 +1,7 @@
-import { cn, getInitials, entityColor, useAuthFileUrl } from '@/lib/utils'
+import { cn, getInitials, entityColor, isBotOrService, authenticatedFileUrl } from '@/lib/utils'
 import type { Entity } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
+import { useAuthStore } from '@/store/auth'
 import { Bot, User } from 'lucide-react'
 
 interface Props {
@@ -15,9 +16,10 @@ const dotSize = { xs: 'w-2 h-2', sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-
 
 export function EntityAvatar({ entity, size = 'md', showStatus = false, className }: Props) {
   const online = usePresenceStore((s) => entity ? s.online.has(entity.id) : false)
-  const avatarUrl = useAuthFileUrl(entity?.avatar_url)
+  const token = useAuthStore((s) => s.token)
+  const avatarUrl = authenticatedFileUrl(entity?.avatar_url, token)
   const color = entityColor(entity)
-  const isBot = entity?.entity_type === 'bot' || entity?.entity_type === 'service'
+  const isBot = isBotOrService(entity)
 
   return (
     <div className={cn('relative flex-shrink-0', className)}>

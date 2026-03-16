@@ -13,14 +13,8 @@ export interface PendingFile {
   url?: string
 }
 
-/** Pre-uploaded attachment data passed from composer to send handler. */
-export interface UploadedAttachment {
-  type: string
-  url: string
-  filename: string
-  mime_type: string
-  size: number
-}
+/** Pre-uploaded attachment — stricter subset of Attachment with all fields required. */
+export interface UploadedAttachment extends Required<Pick<Attachment, 'type' | 'url' | 'filename' | 'mime_type' | 'size'>> {}
 
 interface Props {
   conversationId?: number

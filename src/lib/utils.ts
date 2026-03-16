@@ -1,7 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import type { Entity } from './types'
-import { useAuthStore } from '@/store/auth'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -17,6 +16,10 @@ export function getInitials(name: string): string {
 export function entityDisplayName(entity?: Entity | null): string {
   if (!entity) return 'Unknown'
   return entity.display_name || entity.name
+}
+
+export function isBotOrService(entity?: { entity_type?: string } | null): boolean {
+  return entity?.entity_type === 'bot' || entity?.entity_type === 'service'
 }
 
 export function entityColor(entity?: Entity | null): string {
@@ -82,8 +85,3 @@ export function authenticatedFileUrl(url: string | undefined | null, token: stri
   return `${url}${separator}token=${encodeURIComponent(token)}`
 }
 
-/** React hook: resolves an authenticated file URL using the current auth token. */
-export function useAuthFileUrl(url: string | undefined | null): string {
-  const token = useAuthStore((s) => s.token)
-  return authenticatedFileUrl(url, token)
-}

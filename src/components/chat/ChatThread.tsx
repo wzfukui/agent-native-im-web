@@ -10,8 +10,9 @@ import { usePresenceStore } from '@/store/presence'
 import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import type { Conversation, ActiveStream, Message } from '@/lib/types'
-import { entityDisplayName, cn } from '@/lib/utils'
+import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
 import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
+import { DotsAnimation } from '@/components/ui/DotsAnimation'
 import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
@@ -72,7 +73,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   // Find bot participant(s) for thinking indicator
   const botParticipant = useMemo(() => {
     const bot = conversation.participants?.find(
-      (p) => p.entity_id !== myEntity.id && (p.entity?.entity_type === 'bot' || p.entity?.entity_type === 'service')
+      (p) => p.entity_id !== myEntity.id && isBotOrService(p.entity)
     )
     return bot?.entity
   }, [conversation.participants, myEntity.id])
@@ -94,31 +95,45 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     setBotThinking(false)
   }, [])
 
-  // Clear thinking when a bot message arrives
-  useEffect(() => {
-    if (!botThinking || messages.length === 0) return
-    const lastMsg = messages[messages.length - 1]
-    if (lastMsg.sender_id !== myEntity.id && (lastMsg.sender_type === 'bot' || lastMsg.sender_type === 'service')) {
-      stopBotThinking()
-    }
-  }, [messages.length, botThinking, myEntity.id, stopBotThinking])
+  // Active streams for this conversation
+  const convStreams = useMemo<ActiveStream[]>(
+    () => Object.values(streams).filter((s) => s?.conversation_id === conversation.id),
+    [streams, conversation.id],
+  )
 
-  // Clear thinking when bot starts typing/processing (typing indicator takes over)
+  // Consolidated: clear botThinking when a bot message arrives, typing starts, streaming starts, or conversation switches
   useEffect(() => {
-    if (!botThinking || !typingEntities || typingEntities.size === 0) return
-    const now = Date.now()
-    for (const [eid, v] of typingEntities) {
-      if (eid !== myEntity.id && v.expiresAt > now) {
+    if (!botThinking) return
+
+    // Bot message arrived
+    if (messages.length > 0) {
+      const lastMsg = messages[messages.length - 1]
+      if (lastMsg.sender_id !== myEntity.id && (lastMsg.sender_type === 'bot' || lastMsg.sender_type === 'service')) {
         stopBotThinking()
-        break
+        return
       }
     }
-  }, [typingEntities, botThinking, myEntity.id, stopBotThinking])
 
-  // Clear thinking on conversation switch
-  useEffect(() => {
+    // Typing indicator takes over
+    if (typingEntities && typingEntities.size > 0) {
+      const now = Date.now()
+      for (const [eid, v] of typingEntities) {
+        if (eid !== myEntity.id && v.expiresAt > now) {
+          stopBotThinking()
+          return
+        }
+      }
+    }
+
+    // Streaming started
+    if (convStreams.length > 0) {
+      stopBotThinking()
+      return
+    }
+
+    // Cleanup on conversation switch
     return () => stopBotThinking()
-  }, [conversation.id, stopBotThinking])
+  }, [messages.length, botThinking, myEntity.id, stopBotThinking, typingEntities, convStreams.length, conversation.id])
 
   // Typing/processing indicator
   const typingInfo = useMemo(() => {
@@ -144,19 +159,6 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (typingNames.length === 1) return { text: t('message.isTyping', { name: typingNames[0] }), isProcessing: false }
     return { text: t('message.areTyping', { names: typingNames.slice(0, 2).join(', ') }), isProcessing: false }
   }, [typingEntities, myEntity.id])
-
-  // Active streams for this conversation
-  const convStreams = useMemo<ActiveStream[]>(
-    () => Object.values(streams).filter((s) => s?.conversation_id === conversation.id),
-    [streams, conversation.id],
-  )
-
-  // Clear thinking when streaming starts (bot is actively responding)
-  useEffect(() => {
-    if (botThinking && convStreams.length > 0) {
-      stopBotThinking()
-    }
-  }, [convStreams.length, botThinking, stopBotThinking])
 
   // Save draft before switching away, restore on switch
   const prevConvIdRef = useRef<number | null>(null)
@@ -216,10 +218,16 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     return () => { cancelled = true }
   }, [conversation.id, token])
 
-  // Persist in-memory messages for offline read
+  // Persist in-memory messages for offline read (debounced to batch IndexedDB writes)
+  const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length === 0) return
+    if (cacheTimerRef.current) clearTimeout(cacheTimerRef.current)
+    cacheTimerRef.current = setTimeout(() => {
       void cacheMessages(conversation.id, messages)
+    }, 3000)
+    return () => {
+      if (cacheTimerRef.current) clearTimeout(cacheTimerRef.current)
     }
   }, [conversation.id, messages])
 
@@ -500,20 +508,23 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (isArchived) return // Block file drop for archived conversations
     const droppedFiles = Array.from(e.dataTransfer.files)
     if (droppedFiles.length === 0) return
-    // Upload dropped files first, then send
-    const uploaded: UploadedAttachment[] = []
-    for (const file of droppedFiles) {
-      const url = await handleFileUpload(file)
-      if (url) {
-        uploaded.push({
+    // Upload dropped files concurrently
+    const results = await Promise.allSettled(
+      droppedFiles.map(async (file) => {
+        const url = await handleFileUpload(file)
+        if (!url) throw new Error('Upload failed')
+        return {
           type: file.type.startsWith('image/') ? 'image' : 'file',
           url,
           filename: file.name,
           mime_type: file.type,
           size: file.size,
-        })
-      }
-    }
+        } as UploadedAttachment
+      })
+    )
+    const uploaded = results
+      .filter((r): r is PromiseFulfilledResult<UploadedAttachment> => r.status === 'fulfilled')
+      .map((r) => r.value)
     if (uploaded.length > 0) {
       handleSend('', uploaded)
     }
@@ -677,11 +688,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           typingInfo.isProcessing ? 'text-[var(--color-bot)]' : 'text-[var(--color-text-muted)]',
         )}>
           {typingInfo.isProcessing && (
-            <span className="flex gap-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" style={{ animationDelay: '0.2s' }} />
-              <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-bot)] animate-pulse" style={{ animationDelay: '0.4s' }} />
-            </span>
+            <DotsAnimation size="sm" />
           )}
           {typingInfo.text}
         </div>
