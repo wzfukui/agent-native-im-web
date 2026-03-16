@@ -5,10 +5,11 @@ import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
 import { AvatarPicker } from '@/components/entity/AvatarPicker'
 import { cn } from '@/lib/utils'
 import { buildInfo } from '@/lib/build-info'
+import { usePwaInstall } from '@/hooks/usePwaInstall'
 import * as api from '@/lib/api'
 import {
   User, Lock, Palette, Globe, ChevronLeft,
-  Check, Loader2, Eye, EyeOff, Smartphone, LogOut, Info, Copy,
+  Check, Loader2, Eye, EyeOff, Smartphone, LogOut, Info, Copy, Download,
 } from 'lucide-react'
 
 type Section = 'profile' | 'security' | 'devices' | 'theme' | 'language' | 'about'
@@ -41,6 +42,8 @@ export function UserSettingsPage({ onBack }: Props) {
   const [passError, setPassError] = useState('')
   const [passSuccess, setPassSuccess] = useState('')
   const [aboutCopied, setAboutCopied] = useState(false)
+  const { canInstall, isInstalled, promptInstall } = usePwaInstall()
+  const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
 
 
   const handleSaveProfile = async () => {
@@ -619,6 +622,28 @@ export function UserSettingsPage({ onBack }: Props) {
                 {t('settings.copyVersionInfo')}
               </button>
               {aboutCopied && <p className="text-xs text-[var(--color-success)]">{t('common.copied')}</p>}
+
+              {/* PWA Install — remove when migrating to React Native */}
+              <div className="border-t border-[var(--color-border)] pt-6 mt-6 space-y-3">
+                {canInstall && (
+                  <>
+                    <p className="text-xs text-[var(--color-text-muted)]">{t('pwa.installDescription')}</p>
+                    <button
+                      onClick={promptInstall}
+                      className="h-9 px-4 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-xs font-medium inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                      {t('pwa.installApp')}
+                    </button>
+                  </>
+                )}
+                {isInstalled && (
+                  <p className="text-xs text-[var(--color-success)]">{t('pwa.installed')}</p>
+                )}
+                {!canInstall && !isInstalled && isIos && (
+                  <p className="text-xs text-[var(--color-text-muted)]">{t('pwa.iosInstallHint')}</p>
+                )}
+              </div>
 
             </div>
           )}

@@ -439,6 +439,13 @@
     "sendMessage": "发消息",
     "viewDetails": "查看详情"
   },
+  "pwa": {
+    "installApp": "安装应用",
+    "installDescription": "添加到主屏幕以便快速访问",
+    "iosInstallHint": "点击「分享」然后选择「添加到主屏幕」",
+    "installed": "应用已安装",
+    "offlineReady": "已准备好离线使用"
+  },
   "forgotPassword": {
     "title": "重置密码",
     "description": "请联系管理员重置你的密码。",

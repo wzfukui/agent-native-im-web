@@ -439,6 +439,13 @@
     "sendMessage": "Message",
     "viewDetails": "Details"
   },
+  "pwa": {
+    "installApp": "Install App",
+    "installDescription": "Add to home screen for quick access",
+    "iosInstallHint": "Tap Share then Add to Home Screen",
+    "installed": "App Installed",
+    "offlineReady": "Ready for offline use"
+  },
   "forgotPassword": {
     "title": "Reset Password",
     "description": "Contact your administrator to reset your password.",

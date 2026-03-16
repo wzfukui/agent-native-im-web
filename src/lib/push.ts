@@ -28,9 +28,8 @@ export async function registerPushNotifications(token: string): Promise<boolean>
       return false
     }
 
-    // Register service worker
-    const registration = await navigator.serviceWorker.register('/sw.js')
-    await navigator.serviceWorker.ready
+    // Wait for service worker (registered by vite-plugin-pwa)
+    const registration = await navigator.serviceWorker.ready
 
     // Subscribe to push
     const subscription = await registration.pushManager.subscribe({

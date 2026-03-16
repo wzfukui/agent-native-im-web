@@ -383,3 +383,31 @@
 .artifact-mermaid .edgePath .path { stroke: var(--color-text-muted) !important; }
 .artifact-mermaid .edgeLabel { background: var(--color-bg-secondary) !important; color: var(--color-text-secondary) !important; }
 .artifact-mermaid text { fill: var(--color-text-secondary) !important; }
+
+/* PWA & Mobile Optimizations — remove when migrating to React Native */
+
+#root {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+@media (display-mode: standalone) {
+  html, body, #root { height: 100dvh; }
+  body { overscroll-behavior-y: contain; }
+}
+
+@supports (height: 100dvh) {
+  html, body, #root { height: 100dvh; }
+}
+
+@media (pointer: coarse) {
+  button, [role="button"], a { min-height: 44px; }
+}
+
+@media screen and (max-width: 768px) {
+  input, textarea, select { font-size: 16px !important; }
+}
+
+html { overscroll-behavior: none; }
