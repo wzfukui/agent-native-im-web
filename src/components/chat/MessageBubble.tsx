@@ -206,7 +206,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     switch (effectiveType) {
       case 'markdown':
         return (
-          <div className="md text-sm leading-relaxed">
+          <div className="md text-sm leading-relaxed w-full overflow-hidden">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
           </div>
         )
@@ -448,7 +448,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )}
 
         {/* Bubble + revoke */}
-        <div className={cn('flex items-center gap-1', isSelf ? 'flex-row-reverse' : '')}>
+        <div className={cn('flex items-center gap-1 w-full', isSelf ? 'flex-row-reverse' : '')}>
           <div
             className={cn(
               'rounded-2xl max-w-full min-w-0',
