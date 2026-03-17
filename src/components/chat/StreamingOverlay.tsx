@@ -44,10 +44,10 @@ export function StreamingOverlay({ streams, onCancel }: Props) {
                 <button
                   onClick={() => onCancel(stream.stream_id, stream.conversation_id)}
                   className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-error)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-error)]/10 px-2 py-1 rounded-md cursor-pointer transition-colors flex-shrink-0"
-                  title={t('streaming.stop')}
+                  title={t('chat.stopGenerating')}
                 >
                   <Square className="w-2.5 h-2.5" />
-                  {t('streaming.stop')}
+                  {t('chat.stopGenerating')}
                 </button>
               )}
             </div>

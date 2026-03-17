@@ -5,6 +5,7 @@ import { StreamingBubble } from './StreamingBubble'
 import { ThinkingBubble } from './ThinkingBubble'
 import { DotsAnimation } from '@/components/ui/DotsAnimation'
 import { Loader2 } from 'lucide-react'
+import { Square } from 'lucide-react'
 import type { Message, ActiveStream, Entity } from '@/lib/types'
 import type { ProgressEntry } from '@/store/messages'
 import type { ReadReceipt } from '@/store/conversations'
@@ -235,6 +236,22 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
             onCancel={onCancelStream}
           />
         ))}
+
+        {/* Centered Stop generating button (ChatGPT-style) */}
+        {streams && streams.length > 0 && onCancelStream && (
+          <div className="flex justify-center py-2">
+            <button
+              onClick={() => {
+                const stream = streams[streams.length - 1]
+                onCancelStream(stream.stream_id, stream.conversation_id)
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-[var(--color-text-secondary)] bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-full hover:bg-[var(--color-bg-hover)] hover:border-[var(--color-border-hover)] transition-colors cursor-pointer"
+            >
+              <Square className="w-3 h-3 fill-current" />
+              {t('chat.stopGenerating')}
+            </button>
+          </div>
+        )}
 
         {/* Progress indicator (transient, from message.progress events) */}
         {progress && (!streams || streams.length === 0) && (

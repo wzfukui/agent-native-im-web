@@ -98,7 +98,7 @@ export function StreamingBubble({ stream, sender, onCancel }: Props) {
               className="flex items-center gap-1 text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-error)] transition-colors cursor-pointer"
             >
               <Square className="w-2.5 h-2.5" />
-              {t('streaming.stop')}
+              {t('chat.stopGenerating')}
             </button>
           )}
         </div>

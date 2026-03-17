@@ -339,7 +339,7 @@ export function useWebSocketManager() {
   // ─── Cancel stream ───
   const sendCancelStream = useCallback((streamId: string, conversationId: number) => {
     wsRef.current?.send({
-      type: 'task.cancel',
+      type: 'stream.cancel',
       data: { stream_id: streamId, conversation_id: conversationId },
     })
     endStream(streamId)
