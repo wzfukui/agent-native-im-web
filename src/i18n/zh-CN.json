@@ -163,7 +163,11 @@
     "devModeDesc": "在聊天顶栏显示调试工具",
     "roleAdmin": "管理员",
     "roleMember": "成员",
-    "roleObserver": "观察者"
+    "roleObserver": "观察者",
+    "pushNotifications": "推送通知",
+    "enablePush": "启用",
+    "pushEnabled": "通知已启用",
+    "pushDisabled": "点击启用以接收消息通知"
   },
   "message": {
     "revoked": "{{name}} 撤回了一条消息",
@@ -458,11 +462,11 @@
     "refresh": "刷新"
   },
   "newConversation": {
-    "chatWithBot": "\u4E0E Bot \u5BF9\u8BDD",
-    "chatWithBotDesc": "\u4E0E Bot \u5F00\u59CB\u4E00\u5BF9\u4E00\u5BF9\u8BDD",
-    "createGroup": "\u521B\u5EFA\u7FA4\u804A",
-    "createGroupDesc": "\u521B\u5EFA\u5305\u542B Bot \u548C\u7528\u6237\u7684\u7FA4\u7EC4",
-    "createGroupButton": "\u521B\u5EFA\u7FA4\u7EC4\uFF08\u5DF2\u9009 {{count}} \u4EBA\uFF09"
+    "chatWithBot": "与 Bot 对话",
+    "chatWithBotDesc": "与 Bot 开始一对一对话",
+    "createGroup": "创建群聊",
+    "createGroupDesc": "创建包含 Bot 和用户的群组",
+    "createGroupButton": "创建群组（已选 {{count}} 人）"
   },
   "forgotPassword": {
     "title": "重置密码",

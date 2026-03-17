@@ -163,7 +163,11 @@
     "devModeDesc": "Show debug tools in chat headers",
     "roleAdmin": "Admin",
     "roleMember": "Member",
-    "roleObserver": "Observer"
+    "roleObserver": "Observer",
+    "pushNotifications": "Push Notifications",
+    "enablePush": "Enable",
+    "pushEnabled": "Notifications are enabled",
+    "pushDisabled": "Tap Enable to receive message notifications"
   },
   "message": {
     "revoked": "{{name}} revoked a message",

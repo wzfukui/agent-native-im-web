@@ -8,7 +8,7 @@ import { buildInfo } from '@/lib/build-info'
 import { usePwaInstall } from '@/hooks/usePwaInstall'
 import * as api from '@/lib/api'
 import {
-  User, Lock, Palette, Globe, ChevronLeft, ChevronRight,
+  User, Lock, Palette, Globe, ChevronLeft, ChevronRight, Bell,
   Check, Loader2, Eye, EyeOff, Smartphone, LogOut, Info, Copy, Download, ArrowLeft,
 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -747,6 +747,39 @@ export function UserSettingsPage({ onBack }: Props) {
               <span className="text-xs text-[var(--color-text-muted)] mr-1">{devices.length || ''}</span>
               <ChevronRight className="w-4 h-4 text-[var(--color-text-muted)]" />
             </button>
+          </div>
+
+          {/* Notifications section */}
+          <p className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider px-1 mb-1.5">{t('settings.notifications')}</p>
+          <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] overflow-hidden mb-6">
+            <div className="flex items-center gap-3 px-4 py-3">
+              <Bell className="w-4 h-4 text-[var(--color-accent)]" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-[var(--color-text-primary)]">{t('settings.pushNotifications')}</p>
+                <p className="text-[10px] text-[var(--color-text-muted)]">
+                  {Notification?.permission === 'granted' ? t('settings.pushEnabled') : t('settings.pushDisabled')}
+                </p>
+              </div>
+              {Notification?.permission !== 'granted' && (
+                <button
+                  onClick={async () => {
+                    const permission = await Notification.requestPermission()
+                    if (permission === 'granted') {
+                      const { registerPushNotifications } = await import('@/lib/push')
+                      await registerPushNotifications(token)
+                      // Force re-render
+                      setSection(section!)
+                    }
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  {t('settings.enablePush')}
+                </button>
+              )}
+              {Notification?.permission === 'granted' && (
+                <span className="text-xs text-[var(--color-success)]">✓</span>
+              )}
+            </div>
           </div>
 
           {/* About section */}
