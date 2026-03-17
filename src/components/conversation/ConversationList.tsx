@@ -117,9 +117,9 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
         <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t('conversation.messages')}</h2>
         <button
           onClick={onNewChat}
-          className="w-9 h-9 rounded-xl bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 flex items-center justify-center transition-colors cursor-pointer min-w-[36px]"
+          className="w-9 h-9 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
         >
-          <Plus className="w-4.5 h-4.5 text-[var(--color-accent)]" />
+          <Plus className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
 

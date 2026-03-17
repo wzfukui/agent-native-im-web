@@ -172,9 +172,9 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="w-9 h-9 rounded-xl bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 flex items-center justify-center transition-colors cursor-pointer min-w-[36px]"
+          className="w-9 h-9 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
         >
-          <Plus className="w-4.5 h-4.5 text-[var(--color-accent)]" />
+          <Plus className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
 
