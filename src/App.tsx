@@ -91,6 +91,8 @@ export default function App() {
   const handleSetViewMode = useCallback((mode: 'chat' | 'bots' | 'admin' | 'settings') => {
     setViewMode(mode)
     if (mode !== 'chat') setMobileInChat(false)
+    // Clear bot selection when entering bots view via sidebar/tab (fresh list view)
+    if (mode === 'bots') setSelectedBotId(null)
   }, [])
 
   // Tab change handler for MobileTabBar
@@ -717,7 +719,9 @@ export default function App() {
   const handleEntityViewDetails = (target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
       setBotDetailSource(viewMode === 'chat' ? 'chat' : 'bots')
-      handleSetViewMode('bots')
+      // Set bot ID BEFORE switching view mode (handleSetViewMode clears selectedBotId)
+      setViewMode('bots')
+      if (viewMode !== 'chat') setMobileInChat(false)
       setSelectedBotId(target.id)
       loadBotEntities()
     }
