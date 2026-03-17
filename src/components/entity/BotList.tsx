@@ -145,9 +145,9 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="w-8 h-8 rounded-lg bg-[var(--color-bot)]/10 hover:bg-[var(--color-bot)]/20 flex items-center justify-center transition-colors cursor-pointer"
+          className="w-9 h-9 rounded-xl bg-[var(--color-accent-dim)] hover:bg-[var(--color-accent)]/20 flex items-center justify-center transition-colors cursor-pointer min-w-[36px]"
         >
-          <Plus className="w-4 h-4 text-[var(--color-bot)]" />
+          <Plus className="w-4.5 h-4.5 text-[var(--color-accent)]" />
         </button>
       </div>
 
