@@ -623,22 +623,55 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
               d.className.includes('group') && d.className.includes('gap-2') && d.className.includes('transition-opacity')
             )
             console.log(`Found ${bubbles.length} bubble rows`)
-            bubbles.forEach((b, i) => {
+            // Deep dive on first OTHER bubble — trace every layer
+            const first = bubbles.find(b => !b.className.includes('ml-auto'))
+            if (first) {
+              console.log('🔍 DEEP TRACE — first OTHER bubble:')
+              let el: HTMLElement | null = first as HTMLElement
+              let depth = 0
+              while (el && el !== container && depth < 10) {
+                const cs = window.getComputedStyle(el)
+                const r = el.getBoundingClientRect()
+                const cls = el.className?.slice(0, 80) || el.tagName
+                console.log(
+                  `  ${'  '.repeat(depth)}L${depth}: w=${r.width.toFixed(0)} ` +
+                  `display=${cs.display} flex=${cs.flex} ` +
+                  `maxW=${cs.maxWidth} minW=${cs.minWidth} ` +
+                  `alignItems=${cs.alignItems} alignSelf=${cs.alignSelf} ` +
+                  `cls="${cls}"`
+                )
+                // Go to first child that contains the bubble
+                const bubble = el.querySelector('[class*="rounded-2xl"]')
+                if (depth === 0) {
+                  // Trace down each child
+                  for (let c = 0; c < Math.min(el.children.length, 5); c++) {
+                    const child = el.children[c] as HTMLElement
+                    const cr = child.getBoundingClientRect()
+                    const ccs = window.getComputedStyle(child)
+                    console.log(
+                      `    child[${c}]: w=${cr.width.toFixed(0)} ` +
+                      `display=${ccs.display} flex=${ccs.flex} ` +
+                      `maxW=${ccs.maxWidth} alignSelf=${ccs.alignSelf} ` +
+                      `cls="${(child.className || child.tagName).slice(0, 60)}"`
+                    )
+                  }
+                }
+                depth++
+                // Navigate to the content column (2nd child typically)
+                el = el.children.length > 1 ? el.children[1] as HTMLElement : el.children[0] as HTMLElement
+              }
+            }
+            // Also log first 3 bubbles normally
+            bubbles.slice(0, 5).forEach((b, i) => {
               const r = b.getBoundingClientRect()
               const bubble = b.querySelector('[class*="rounded-2xl"]')
               const br = bubble?.getBoundingClientRect()
               const isSelf = b.className.includes('ml-auto')
               console.log(
                 `💬 #${i} ${isSelf ? 'SELF' : 'OTHER'}: ` +
-                `row[w=${r.width.toFixed(0)}, l=${r.left.toFixed(0)}, r=${r.right.toFixed(0)}] ` +
-                `bubble[w=${br?.width.toFixed(0) ?? '?'}, l=${br?.left.toFixed(0) ?? '?'}, r=${br?.right.toFixed(0) ?? '?'}] ` +
-                `gap_right=${(containerRect.right - (br?.right ?? r.right)).toFixed(0)}px ` +
-                `gap_left=${((br?.left ?? r.left) - containerRect.left).toFixed(0)}px`
+                `row[w=${r.width.toFixed(0)}] bubble[w=${br?.width.toFixed(0) ?? '?'}] ` +
+                `gap_right=${(containerRect.right - (br?.right ?? r.right)).toFixed(0)}px`
               )
-              // Check for overflow
-              if (br && br.right > containerRect.right) {
-                console.warn(`  ⚠️ OVERFLOW by ${(br.right - containerRect.right).toFixed(0)}px!`)
-              }
             })
           }}
           className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-warning)] min-w-[32px]"
