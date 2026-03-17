@@ -488,6 +488,25 @@
     "symbols": "Symbols",
     "flags": "Flags"
   },
+  "a11y": {
+    "send": "Send message",
+    "attach": "Attach file",
+    "emoji": "Emoji picker",
+    "microphone": "Record voice message",
+    "cancelReply": "Cancel reply",
+    "cancelRecording": "Cancel recording",
+    "sendRecording": "Send recording",
+    "back": "Go back",
+    "search": "Search messages",
+    "settings": "Conversation settings",
+    "tasks": "Tasks",
+    "removeFile": "Remove file",
+    "removeMention": "Remove mention",
+    "mainContent": "Main content",
+    "navigation": "Main navigation",
+    "closeSearch": "Clear search",
+    "closeDialog": "Close dialog"
+  },
   "forgotPassword": {
     "title": "Reset Password",
     "description": "Contact your administrator to reset your password.",

@@ -33,7 +33,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
   }, [conversations, mutedIds])
 
   return (
-    <div className="w-16 flex flex-col items-center py-4 gap-3 bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)]">
+    <nav role="navigation" aria-label={t('a11y.navigation')} className="w-16 flex flex-col items-center py-4 gap-3 bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)]">
       {/* Logo — solid, no gradient */}
       <div className="w-10 h-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center mb-2">
         <Zap className="w-5 h-5 text-white" />
@@ -53,7 +53,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
       >
         <MessageSquare className="w-5 h-5" />
         {totalUnread > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
+          <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
             {totalUnread > 99 ? '99+' : totalUnread}
           </span>
         )}
@@ -99,6 +99,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
         onClick={onToggleSettings}
         className="relative group cursor-pointer"
         title={entityDisplayName(entity)}
+        aria-label={t('settings.title')}
       >
         <EntityAvatar entity={entity} size="sm" showStatus />
       </button>
@@ -114,6 +115,6 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
       >
         {wsConnected ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
       </div>
-    </div>
+    </nav>
   )
 }

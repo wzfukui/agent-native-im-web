@@ -488,6 +488,25 @@
     "symbols": "符号",
     "flags": "旗帜"
   },
+  "a11y": {
+    "send": "发送消息",
+    "attach": "添加附件",
+    "emoji": "表情选择器",
+    "microphone": "录制语音消息",
+    "cancelReply": "取消回复",
+    "cancelRecording": "取消录制",
+    "sendRecording": "发送录音",
+    "back": "返回",
+    "search": "搜索消息",
+    "settings": "会话设置",
+    "tasks": "任务",
+    "removeFile": "移除文件",
+    "removeMention": "移除提及",
+    "mainContent": "主要内容",
+    "navigation": "主导航",
+    "closeSearch": "清除搜索",
+    "closeDialog": "关闭对话框"
+  },
   "forgotPassword": {
     "title": "重置密码",
     "description": "请联系管理员重置你的密码。",

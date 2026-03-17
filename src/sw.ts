@@ -18,6 +18,21 @@ registerRoute(new NavigationRoute(handler, {
   denylist: [/^\/api\//, /^\/files\//],
 }))
 
+// Large JS/CSS chunks excluded from precache (mermaid, katex, cytoscape, etc.)
+// are cached on first use so subsequent loads are instant.
+registerRoute(
+  ({ url, request }) =>
+    url.origin === self.location.origin &&
+    (request.destination === 'script' || request.destination === 'style'),
+  new CacheFirst({
+    cacheName: 'lazy-chunks',
+    plugins: [
+      new CacheableResponsePlugin({ statuses: [0, 200] }),
+      new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 30 * 24 * 60 * 60 }),
+    ],
+  })
+)
+
 // Google Fonts stylesheets
 registerRoute(
   /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -55,10 +70,11 @@ self.addEventListener('push', (event) => {
   if (!event.data) return
 
   let payload: { title?: string; body?: string; conversation_id?: string; message_id?: string }
+  const isZh = navigator.language.startsWith('zh')
   try {
     payload = event.data.json()
   } catch {
-    payload = { title: 'New Message', body: event.data.text() }
+    payload = { title: isZh ? '新消息' : 'New Message', body: event.data.text() }
   }
 
   const options = {
@@ -73,7 +89,8 @@ self.addEventListener('push', (event) => {
     renotify: true,
   } as NotificationOptions & { renotify: boolean }
 
-  event.waitUntil(self.registration.showNotification(payload.title || 'Agent-Native IM', options))
+  const fallbackTitle = isZh ? '新消息' : 'Agent-Native IM'
+  event.waitUntil(self.registration.showNotification(payload.title || fallbackTitle, options))
 })
 
 self.addEventListener('notificationclick', (event) => {

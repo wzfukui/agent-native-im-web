@@ -42,6 +42,36 @@ export default defineConfig({
       manifest: false,
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        // Exclude heavy library chunks (mermaid, katex, cytoscape, d3, etc.)
+        // from precache. They load on-demand and get runtime-cached in sw.ts.
+        globIgnores: [
+          // Core libraries
+          '**/mermaid*',
+          '**/katex*',
+          '**/cytoscape*',
+          '**/treemap*',
+          '**/elk*',
+          '**/dagre*',
+          '**/cose-bilkent*',
+          // Diagram renderers & definitions
+          '**/*Diagram*',
+          '**/*diagram*',
+          '**/*-definition-*',
+          // Mermaid/d3 internal chunks & helpers (layout, graph, arc, etc.)
+          '**/layout-*',
+          '**/graph-*',
+          '**/arc-*',
+          '**/ordinal-*',
+          '**/linear-*',
+          '**/defaultLocale-*',
+          '**/clone-*',
+          '**/init-*',
+          '**/channel-*',
+          '**/_base*',
+          // All vendor chunk splits (mermaid/d3 internals); the main app
+          // entry is "index-*" and is not affected by this pattern.
+          '**/chunk-*',
+        ],
       },
       devOptions: {
         enabled: false,

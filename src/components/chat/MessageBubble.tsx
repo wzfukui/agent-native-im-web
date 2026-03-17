@@ -523,6 +523,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 onClick={() => onReply!(message)}
                 className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
                 title={t('chat.reply')}
+                aria-label={t('chat.reply')}
               >
                 <Reply className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
               </button>
@@ -532,6 +533,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 onClick={() => setShowQuickReact(!showQuickReact)}
                 className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
                 title={t('chat.addReaction')}
+                aria-label={t('chat.addReaction')}
               >
                 <SmilePlus className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
               </button>
@@ -541,6 +543,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 onClick={() => onRevoke!(message.id)}
                 className="w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer"
                 title={t('message.revoke')}
+                aria-label={t('message.revoke')}
               >
                 <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
               </button>

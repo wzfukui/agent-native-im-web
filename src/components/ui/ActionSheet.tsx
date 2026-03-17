@@ -60,6 +60,9 @@ export function ActionSheet({ open, onClose, items, title }: Props) {
 
       {/* Sheet */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title || t('common.cancel')}
         className={cn(
           'relative w-full max-w-lg px-3 pb-3 transition-transform duration-300 ease-out',
           animating ? 'translate-y-0' : 'translate-y-full',

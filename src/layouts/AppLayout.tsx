@@ -150,6 +150,7 @@ export function AppLayout() {
           />
         )}
 
+        <main role="main" aria-label={t('a11y.mainContent')} className="flex-1 min-w-0">
         <Outlet context={{
           ws,
           convManager,
@@ -157,6 +158,7 @@ export function AppLayout() {
           isAdmin,
           isMobile,
         }} />
+        </main>
       </div>
 
       <ConfirmDialog

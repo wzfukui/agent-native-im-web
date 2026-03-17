@@ -110,7 +110,7 @@ export function GlobalSearch({ onSelectResult, onClose }: Props) {
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Dialog */}
-      <div className="relative w-full max-w-lg bg-[var(--color-bg-primary)] rounded-2xl shadow-2xl border border-[var(--color-border)] overflow-hidden flex flex-col max-h-[70vh]">
+      <div role="dialog" aria-modal="true" aria-label={t('conversation.globalSearchTitle')} className="relative w-full max-w-lg bg-[var(--color-bg-primary)] rounded-2xl shadow-2xl border border-[var(--color-border)] overflow-hidden flex flex-col max-h-[70vh]">
         {/* Search input */}
         <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--color-border)]">
           <Search className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
@@ -124,6 +124,7 @@ export function GlobalSearch({ onSelectResult, onClose }: Props) {
           {loading && <Loader2 className="w-4 h-4 text-[var(--color-accent)] animate-spin flex-shrink-0" />}
           <button
             onClick={onClose}
+            aria-label={t('a11y.closeDialog')}
             className="w-6 h-6 rounded-full flex items-center justify-center hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors flex-shrink-0"
           >
             <X className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />

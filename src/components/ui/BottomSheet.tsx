@@ -84,6 +84,8 @@ export function BottomSheet({ open, onClose, children, className }: Props) {
       {/* Sheet */}
       <div
         ref={sheetRef}
+        role="dialog"
+        aria-modal="true"
         className={cn(
           'relative w-full max-w-lg bg-[var(--color-bg-secondary)] rounded-t-2xl shadow-2xl shadow-black/30 transition-transform duration-300 ease-out max-h-[85vh] flex flex-col',
           animating ? 'translate-y-0' : 'translate-y-full',

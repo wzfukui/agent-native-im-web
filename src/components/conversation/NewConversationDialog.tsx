@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
@@ -7,6 +7,7 @@ import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { X, Plus, Users, MessageSquare, Loader2, Check, Search } from 'lucide-react'
+import { useFocusTrap } from '@/lib/accessibility'
 
 interface Props {
   onClose: () => void
@@ -24,6 +25,8 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   const [isGroup, setIsGroup] = useState(false)
   const [creating, setCreating] = useState(false)
   const [search, setSearch] = useState('')
+  const dialogRef = useRef<HTMLDivElement>(null)
+  useFocusTrap(dialogRef as React.RefObject<HTMLElement>, true)
 
   useEffect(() => {
     // Show cached entities immediately, then refresh from network
@@ -73,17 +76,22 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="new-conv-dialog-title"
+        tabIndex={-1}
         className="w-full max-w-md bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 max-h-[70vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'slide-up 0.2s ease-out' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--color-border)]">
-          <h2 className="text-base font-semibold flex items-center gap-2">
+          <h2 id="new-conv-dialog-title" className="text-base font-semibold flex items-center gap-2">
             <MessageSquare className="w-4 h-4 text-[var(--color-accent)]" />
             {t('conversation.newChat')}
           </h2>
-          <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
+          <button onClick={onClose} aria-label={t('a11y.closeDialog')} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
             <X className="w-4 h-4 text-[var(--color-text-muted)]" />
           </button>
         </div>

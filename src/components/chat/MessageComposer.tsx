@@ -349,6 +349,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
           <button
             onClick={onCancelReply}
             className="w-5 h-5 rounded flex items-center justify-center hover:bg-[var(--color-bg-hover)] cursor-pointer flex-shrink-0"
+            aria-label={t('a11y.cancelReply')}
           >
             <X className="w-3 h-3 text-[var(--color-text-muted)]" />
           </button>
@@ -435,12 +436,14 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
             <button
               onClick={recCancel}
               className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-error)]"
+              aria-label={t('a11y.cancelRecording')}
             >
               <X className="w-4 h-4" />
             </button>
             <button
               onClick={handleRecordSend}
               className="w-8 h-8 rounded-lg bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white flex items-center justify-center flex-shrink-0 cursor-pointer transition-all shadow-sm shadow-[var(--color-accent)]/25"
+              aria-label={t('a11y.sendRecording')}
             >
               <Send className="w-4 h-4" />
             </button>
@@ -452,6 +455,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
             <button
               onClick={() => fileInputRef.current?.click()}
               className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+              aria-label={t('a11y.attach')}
             >
               <Paperclip className="w-4 h-4" />
             </button>
@@ -474,6 +478,8 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
                     ? 'text-[var(--color-accent)]'
                     : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
                 )}
+                aria-label={t('a11y.emoji')}
+                aria-expanded={showEmojiPicker}
               >
                 <Smile className="w-4 h-4" />
               </button>
@@ -522,6 +528,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
               <button
                 onClick={handleSubmit}
                 disabled={disabled || hasUploading || (!text.trim() && pendingFiles.length === 0)}
+                aria-label={t('a11y.send')}
                 className={cn(
                   'absolute inset-0 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer',
                   (text.trim() || pendingFiles.length > 0)
@@ -538,6 +545,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
                 <button
                   onClick={handleRecordStart}
                   disabled={disabled}
+                  aria-label={t('a11y.microphone')}
                   className={cn(
                     'absolute inset-0 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-all duration-200 text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
                     (!text.trim() && pendingFiles.length === 0) ? 'scale-100 opacity-100' : 'scale-75 opacity-0 pointer-events-none',

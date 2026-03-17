@@ -26,7 +26,7 @@ const updateSW = registerSW({
       toast.remove()
     })
   },
-  onOfflineReady() { console.log('PWA: offline ready') },
+  onOfflineReady() { if (import.meta.env.DEV) console.log('PWA: offline ready') },
 })
 
 // Apply saved theme on load (supports 'system' auto-switch)

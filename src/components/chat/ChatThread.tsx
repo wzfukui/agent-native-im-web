@@ -559,7 +559,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         {onBack && (
-          <button onClick={onBack} className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer min-w-[32px]">
+          <button onClick={onBack} aria-label={t('a11y.back')} className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer min-w-[32px]">
             <ArrowLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
           </button>
         )}
@@ -602,6 +602,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
               setSearching(true)
             }
           }}
+          aria-label={t('a11y.search')}
           className={cn(
             'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
             searching ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
@@ -613,6 +614,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         {onToggleTasks && !isArchived && (
           <button
             onClick={onToggleTasks}
+            aria-label={t('a11y.tasks')}
             className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
           >
             <ListTodo className="w-4 h-4" />
@@ -641,6 +643,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         {onToggleSettings && (
           <button
             onClick={onToggleSettings}
+            aria-label={t('a11y.settings')}
             className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
           >
             <Settings className="w-4 h-4" />
@@ -714,7 +717,9 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
       {/* Typing / Processing indicator */}
       {typingInfo && (
-        <div className={cn(
+        <div
+          aria-live="polite"
+          className={cn(
           'px-4 py-1 text-[11px] italic flex items-center gap-1.5',
           typingInfo.isProcessing ? 'text-[var(--color-bot)]' : 'text-[var(--color-text-muted)]',
         )}>
