@@ -782,21 +782,23 @@ export function UserSettingsPage({ onBack }: Props) {
                       btn.textContent = t('settings.enablePush')
                       btn.className = btn.className.replace('bg-[var(--color-error)]', 'bg-[var(--color-accent)]').replace('hover:bg-red-600', 'hover:opacity-90')
                     } else {
-                      // Request permission if needed
-                      if (Notification.permission === 'default') {
-                        const perm = await Notification.requestPermission()
-                        if (perm !== 'granted') {
-                          status.textContent = t('settings.pushDenied') || 'Permission denied'
+                      // Request permission if needed (Notification may not exist on iOS PWA)
+                      if (typeof Notification !== 'undefined') {
+                        if (Notification.permission === 'default') {
+                          const perm = await Notification.requestPermission()
+                          if (perm !== 'granted') {
+                            status.textContent = t('settings.pushDenied') || 'Permission denied'
+                            btn.textContent = t('settings.enablePush')
+                            btn.disabled = false
+                            return
+                          }
+                        }
+                        if (Notification.permission === 'denied') {
+                          status.textContent = t('settings.pushDenied') || 'Permission denied by system'
                           btn.textContent = t('settings.enablePush')
                           btn.disabled = false
                           return
                         }
-                      }
-                      if (Notification.permission !== 'granted') {
-                        status.textContent = t('settings.pushDenied') || 'Permission denied by system'
-                        btn.textContent = t('settings.enablePush')
-                        btn.disabled = false
-                        return
                       }
                       // Subscribe
                       const { registerPushNotifications } = await import('@/lib/push')

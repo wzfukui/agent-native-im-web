@@ -39,11 +39,14 @@ export async function registerPushNotifications(token: string): Promise<boolean>
     }
 
     // Request notification permission if not granted
-    if (Notification.permission === 'default') {
-      const perm = await Notification.requestPermission()
-      if (perm !== 'granted') return false
+    // Note: iOS PWA may not have window.Notification, use Notification only if available
+    if (typeof Notification !== 'undefined') {
+      if (Notification.permission === 'default') {
+        const perm = await Notification.requestPermission()
+        if (perm !== 'granted') return false
+      }
+      if (Notification.permission === 'denied') return false
     }
-    if (Notification.permission !== 'granted') return false
 
     // Subscribe to push with current VAPID key
     const subscription = await registration.pushManager.subscribe({
