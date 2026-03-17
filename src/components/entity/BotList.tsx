@@ -191,7 +191,7 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
         ) : (
           <>
             {/* Active bots (online first) — card grid, 2-col on desktop */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {activeBots.map((entity) => renderBotItem(entity, false))}
             </div>
 
@@ -206,7 +206,7 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
                   </span>
                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2">
                   {disabledBots.map((entity) => renderBotItem(entity, true))}
                 </div>
               </>

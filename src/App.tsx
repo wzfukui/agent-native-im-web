@@ -711,11 +711,27 @@ export default function App() {
     setShowNewChat(true)
   }
 
+  // Track where user came from when viewing bot details (to enable smart back navigation)
+  const [botDetailSource, setBotDetailSource] = useState<'bots' | 'chat' | null>(null)
+
   const handleEntityViewDetails = (target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
+      setBotDetailSource(viewMode === 'chat' ? 'chat' : 'bots')
       handleSetViewMode('bots')
       setSelectedBotId(target.id)
       loadBotEntities()
+    }
+  }
+
+  const handleBotDetailBack = () => {
+    if (botDetailSource === 'chat') {
+      // Return to the chat the user came from
+      setBotDetailSource(null)
+      setSelectedBotId(null)
+      handleSetViewMode('chat')
+    } else {
+      // Normal: return to bot list
+      setSelectedBotId(null)
     }
   }
 
@@ -1064,7 +1080,7 @@ export default function App() {
                     bot={selectedBot}
                     createdCredentials={selectedBot?.id === createdCredentials?.entity.id ? createdCredentials : null}
                     onDismissCredentials={() => setCreatedCredentials(null)}
-                    onBack={() => setSelectedBotId(null)}
+                    onBack={handleBotDetailBack}
                     onOpenConversation={handleOpenConversation}
                     onDisable={handleDisableBot}
                     onReactivate={handleReactivateBot}
