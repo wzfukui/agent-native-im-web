@@ -1,7 +1,7 @@
 import type { Conversation, Message, Entity } from './types'
 
 const DB_NAME = 'aim_cache'
-const DB_VERSION = 3
+const DB_VERSION = 4
 
 export interface OutboxMessage {
   id?: number
@@ -31,6 +31,9 @@ function openDB(): Promise<IDBDatabase> {
       }
       if (!db.objectStoreNames.contains('meta')) {
         db.createObjectStore('meta', { keyPath: 'key' })
+      }
+      if (!db.objectStoreNames.contains('entities')) {
+        db.createObjectStore('entities', { keyPath: 'id' })
       }
       if (!db.objectStoreNames.contains('outbox')) {
         const outbox = db.createObjectStore('outbox', { keyPath: 'id', autoIncrement: true })
@@ -66,7 +69,7 @@ export async function cacheConversations(convs: Conversation[]) {
     for (const c of convs) {
       store.put(c)
     }
-  } catch {}
+  } catch { /* IndexedDB may be unavailable */ }
 }
 
 export async function getCachedConversations(): Promise<Conversation[]> {
@@ -86,7 +89,7 @@ export async function cacheMessages(convId: number, msgs: Message[]) {
   try {
     const store = await tx('messages', 'readwrite')
     store.put({ key: `conv_${convId}`, messages: msgs.slice(-50) }) // cache last 50
-  } catch {}
+  } catch { /* IndexedDB may be unavailable */ }
 }
 
 export async function getCachedMessages(convId: number): Promise<Message[]> {
@@ -106,7 +109,7 @@ export async function cacheUser(user: Entity) {
   try {
     const store = await tx('meta', 'readwrite')
     store.put({ key: 'current_user', data: user })
-  } catch {}
+  } catch { /* IndexedDB may be unavailable */ }
 }
 
 export async function getCachedUser(): Promise<Entity | null> {
@@ -122,15 +125,39 @@ export async function getCachedUser(): Promise<Entity | null> {
   }
 }
 
+export async function cacheEntities(entities: Entity[]) {
+  try {
+    const store = await tx('entities', 'readwrite')
+    store.clear()
+    for (const e of entities) {
+      store.put(e)
+    }
+  } catch { /* IndexedDB may be unavailable */ }
+}
+
+export async function getCachedEntities(): Promise<Entity[]> {
+  try {
+    const store = await tx('entities', 'readonly')
+    return new Promise((resolve) => {
+      const req = store.getAll()
+      req.onsuccess = () => resolve(req.result || [])
+      req.onerror = () => resolve([])
+    })
+  } catch {
+    return []
+  }
+}
+
 export async function clearCache() {
   try {
     const db = await openDB()
-    const txn = db.transaction(['conversations', 'messages', 'meta', 'outbox'], 'readwrite')
+    const txn = db.transaction(['conversations', 'messages', 'meta', 'entities', 'outbox'], 'readwrite')
     txn.objectStore('conversations').clear()
     txn.objectStore('messages').clear()
     txn.objectStore('meta').clear()
+    txn.objectStore('entities').clear()
     txn.objectStore('outbox').clear()
-  } catch {}
+  } catch { /* IndexedDB may be unavailable */ }
 }
 
 export async function enqueueOutboxMessage(msg: OutboxMessage): Promise<number | null> {
@@ -191,7 +218,7 @@ export async function deleteOutboxMessage(id: number): Promise<void> {
   try {
     const store = await tx('outbox', 'readwrite')
     store.delete(id)
-  } catch {}
+  } catch { /* IndexedDB may be unavailable */ }
 }
 
 export async function updateOutboxMessage(id: number, patch: Partial<OutboxMessage>): Promise<void> {
@@ -203,7 +230,7 @@ export async function updateOutboxMessage(id: number, patch: Partial<OutboxMessa
       if (!current) return
       store.put({ ...current, ...patch } as OutboxMessage)
     }
-  } catch {}
+  } catch { /* IndexedDB may be unavailable */ }
 }
 
 export async function getOutboxMessageByTempId(tempId: string): Promise<OutboxMessage | null> {

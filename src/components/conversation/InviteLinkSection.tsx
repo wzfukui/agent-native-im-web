@@ -34,7 +34,15 @@ export function InviteLinkSection({ conversationId }: Props) {
     setLoading(false)
   }, [token, conversationId])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+    api.listInviteLinks(token, conversationId).then((res) => {
+      if (cancelled) return
+      if (res.ok && res.data) setLinks(Array.isArray(res.data) ? res.data : [])
+      setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [token, conversationId])
 
   const handleCreate = async () => {
     setCreating(true)

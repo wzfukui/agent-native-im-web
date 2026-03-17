@@ -15,7 +15,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, CloudOff, AlertTriangle, Clock, RotateCcw,
+  Brain, Check, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, CloudOff, Clock, RotateCcw,
 } from 'lucide-react'
 
 /** Max collapsed height in px (~10 lines of text) */
@@ -104,9 +104,10 @@ interface Props {
   onEntityViewDetails?: (entity: import('@/lib/types').Entity) => void
   onScrollToMessage?: (msgId: number) => void
   showSender?: boolean
+  isRead?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, onScrollToMessage, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, onScrollToMessage, showSender = true, isRead }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
   const authUrl = (url: string | undefined) => authenticatedFileUrl(url, token)
@@ -136,9 +137,13 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   const isBot = message.sender_type === 'bot' || message.sender_type === 'service'
   const isMentioned = myEntityId != null && message.mentions?.includes(myEntityId)
 
-  // Can revoke within 2 minutes
-  const canRevoke = isSelf && !isRevoked && onRevoke &&
-    (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000
+  // Can revoke within 2 minutes (check age lazily to avoid impure render call)
+  const canRevokeCheck = useCallback(
+    () => isSelf && !isRevoked && !!onRevoke &&
+      (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000,
+    [isSelf, isRevoked, onRevoke, message.created_at],
+  )
+  const canRevoke = canRevokeCheck()
 
   const canReply = !isRevoked && onReply
   const canReact = !isRevoked && onReact
@@ -627,6 +632,14 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 )}
               </>
             )}
+          </div>
+        )}
+
+        {/* Read receipt indicator */}
+        {isSelf && isRead && !message.temp_id && (
+          <div className="px-1 flex items-center justify-end text-[10px] text-[var(--color-text-muted)]">
+            <Check className="w-3 h-3 mr-0.5 text-[var(--color-accent)]" />
+            <span>{t('message.read')}</span>
           </div>
         )}
 

@@ -13,7 +13,7 @@ import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
 import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
 import { DotsAnimation } from '@/components/ui/DotsAnimation'
-import { MessageBubbleSkeleton } from '@/components/ui/Skeleton'
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader'
 import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo, Bug, Check } from 'lucide-react'
 import { useSettingsStore } from '@/store/settings'
 import { inspectChatBubbles, copyToClipboard } from '@/lib/layout-inspector'
@@ -66,6 +66,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const botThinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const dragCountRef = useRef(0)
   const updateConversation = useConversationsStore((s) => s.updateConversation)
+  const readReceipts = useConversationsStore((s) => s.readReceipts[conversation.id])
   const online = usePresenceStore((s) => s.online)
 
   // Determine other participant for direct chats
@@ -116,7 +117,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (messages.length > 0) {
       const lastMsg = messages[messages.length - 1]
       if (lastMsg.sender_id !== myEntity.id && (lastMsg.sender_type === 'bot' || lastMsg.sender_type === 'service')) {
-        stopBotThinking()
+        queueMicrotask(() => stopBotThinking())
         return
       }
     }
@@ -126,7 +127,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       const now = Date.now()
       for (const [eid, v] of typingEntities) {
         if (eid !== myEntity.id && v.expiresAt > now) {
-          stopBotThinking()
+          queueMicrotask(() => stopBotThinking())
           return
         }
       }
@@ -134,16 +135,16 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
     // Streaming started
     if (convStreams.length > 0) {
-      stopBotThinking()
+      queueMicrotask(() => stopBotThinking())
       return
     }
 
     // Cleanup on conversation switch
     return () => stopBotThinking()
-  }, [messages.length, botThinking, myEntity.id, stopBotThinking, typingEntities, convStreams.length, conversation.id])
+  }, [messages, botThinking, myEntity.id, stopBotThinking, typingEntities, convStreams.length, conversation.id])
 
-  // Typing/processing indicator
-  const typingInfo = useMemo(() => {
+  // Typing/processing indicator (computed via callback to avoid impure Date.now() in memo)
+  const computeTypingInfo = useCallback(() => {
     if (!typingEntities || typingEntities.size === 0) return null
     const now = Date.now()
     const typingNames: string[] = []
@@ -165,7 +166,8 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (typingNames.length === 0) return null
     if (typingNames.length === 1) return { text: t('message.isTyping', { name: typingNames[0] }), isProcessing: false }
     return { text: t('message.areTyping', { names: typingNames.slice(0, 2).join(', ') }), isProcessing: false }
-  }, [typingEntities, myEntity.id])
+  }, [typingEntities, myEntity.id, t])
+  const typingInfo = computeTypingInfo()
 
   // Save draft before switching away, restore on switch
   const prevConvIdRef = useRef<number | null>(null)
@@ -176,9 +178,9 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       const raw = localStorage.getItem(`draft:${conversation.id}`)
       if (raw) {
         const draft = JSON.parse(raw)
-        if (draft.replyTo) setReplyTo(draft.replyTo)
+        if (draft.replyTo) queueMicrotask(() => setReplyTo(draft.replyTo))
       }
-    } catch {}
+    } catch { /* corrupt draft data */ }
 
     return () => {
       // Will be saved by MessageComposer's own draft logic
@@ -188,12 +190,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   // Reset search and reply state on conversation switch
   useEffect(() => {
     if (prevConvIdRef.current !== null && prevConvIdRef.current !== conversation.id) {
-      setSearching(false)
-      setSearchQuery('')
-      setSearchResults(null)
-      // replyTo is restored from draft above, only reset if no draft
-      const raw = localStorage.getItem(`draft:${conversation.id}`)
-      if (!raw) setReplyTo(null)
+      queueMicrotask(() => {
+        setSearching(false)
+        setSearchQuery('')
+        setSearchResults(null)
+        // replyTo is restored from draft above, only reset if no draft
+        const raw = localStorage.getItem(`draft:${conversation.id}`)
+        if (!raw) setReplyTo(null)
+      })
     }
     prevConvIdRef.current = conversation.id
   }, [conversation.id])
@@ -201,7 +205,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   // Load messages
   useEffect(() => {
     let cancelled = false
-    setInitialLastRead(undefined)
+    queueMicrotask(() => setInitialLastRead(undefined))
     const load = async () => {
       setLoading(true)
       const cached = await getCachedMessages(conversation.id)
@@ -223,7 +227,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     }
     load()
     return () => { cancelled = true }
-  }, [conversation.id, token])
+  }, [conversation.id, token, setMessages, conversation.unread_count])
 
   // Persist in-memory messages for offline read (debounced to batch IndexedDB writes)
   const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -250,7 +254,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       })
     }, 300)
     return () => clearTimeout(timer)
-  }, [messages.length, conversation.id])
+  }, [messages, token, conversation.id, updateConversation])
 
   // Load more
   const handleLoadMore = useCallback(async () => {
@@ -263,15 +267,15 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       prependMessages(conversation.id, (res.data.messages || []).reverse(), res.data.has_more)
     }
     setLoading(false)
-  }, [loading, hasMore, messages, token, conversation.id])
+  }, [loading, hasMore, messages, token, conversation.id, prependMessages])
 
   // Debounced search
   useEffect(() => {
     if (!searching || !searchQuery.trim()) {
-      setSearchResults(null)
+      queueMicrotask(() => setSearchResults(null))
       return
     }
-    setSearchLoading(true)
+    queueMicrotask(() => setSearchLoading(true))
     const timeout = setTimeout(async () => {
       const res = await api.searchMessages(token, conversation.id, searchQuery.trim())
       if (res.ok && res.data) {
@@ -371,7 +375,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           await queueForOffline('failed')
         }
       }
-    } catch (error) {
+    } catch {
       if (hasAttachments) {
         removeOptimisticMessage(tempId, conversation.id)
       } else {
@@ -425,14 +429,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     if (res.ok) {
       revokeMessage(conversation.id, msgId)
     }
-  }, [token, conversation.id, isArchived])
+  }, [token, conversation.id, isArchived, revokeMessage])
 
   const handleReact = useCallback(async (msgId: number, emoji: string) => {
     const res = await api.toggleReaction(token, msgId, emoji)
     if (res.ok && res.data) {
       updateMessageReactions(conversation.id, msgId, res.data.reactions)
     }
-  }, [token, conversation.id])
+  }, [token, conversation.id, updateMessageReactions])
 
   // Send audio message
   const handleAudioSend = useCallback(async (blob: Blob, duration: number) => {
@@ -490,7 +494,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       reply_to: msgId,
     })
     if (res.ok && res.data) addMessage(res.data)
-  }, [token, conversation.id])
+  }, [token, conversation.id, addMessage])
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -675,13 +679,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
       {/* Messages */}
       {loading && messages.length === 0 ? (
-        <div className="flex-1 overflow-hidden px-4 py-3 space-y-4">
-          <MessageBubbleSkeleton align="left" />
-          <MessageBubbleSkeleton align="right" />
-          <MessageBubbleSkeleton align="left" />
-          <MessageBubbleSkeleton align="right" />
-          <MessageBubbleSkeleton align="left" />
-        </div>
+        <SkeletonLoader variant="chat-messages" />
       ) : (
         <MessageList
           messages={searchResults ?? messages}
@@ -691,6 +689,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           lastReadMessageId={searchResults ? undefined : initialLastRead}
           streams={searchResults ? undefined : convStreams}
           participants={conversation.participants}
+          readReceipts={searchResults ? undefined : readReceipts}
           onLoadMore={searchResults !== null ? undefined : handleLoadMore}
           onInteractionReply={handleInteractionReply}
           onRevoke={isArchived ? undefined : handleRevoke}

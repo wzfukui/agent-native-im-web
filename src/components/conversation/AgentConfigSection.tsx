@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
@@ -19,18 +19,16 @@ export function AgentConfigSection({ conversationId, canManage }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  const load = useCallback(async () => {
-    setLoading(true)
-    try {
-      const res = await api.listMemories(token, conversationId)
-      if (res.ok && res.data) {
-        setPrompt(res.data.prompt || '')
-      }
-    } catch { /* network error */ }
-    setLoading(false)
+  useEffect(() => {
+    let cancelled = false
+    api.listMemories(token, conversationId).then((res) => {
+      if (cancelled) return
+      if (res.ok && res.data) setPrompt(res.data.prompt || '')
+    }).catch(() => { /* network error */ }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
   }, [token, conversationId])
-
-  useEffect(() => { load() }, [load])
 
   const handleSave = async () => {
     setSaving(true)

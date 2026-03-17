@@ -33,7 +33,7 @@ function createMockWsInstance() {
 beforeEach(() => {
   vi.useFakeTimers()
   mockWsInstance = createMockWsInstance()
-  // eslint-disable-next-line @typescript-eslint/no-extraneous-class
+   
   const MockWS = class { static OPEN = 1; static CLOSED = 3; constructor() { return mockWsInstance as never } }
   vi.stubGlobal('WebSocket', MockWS)
 })

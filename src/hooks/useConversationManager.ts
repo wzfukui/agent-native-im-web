@@ -12,7 +12,7 @@ import type { Conversation } from '@/lib/types'
 export function useConversationManager() {
   const { t } = useTranslation()
   const { token, entity } = useAuthStore()
-  const { conversations, activeId, setConversations, setActive, updateConversation, removeConversation } = useConversationsStore()
+  const { conversations, activeId, setConversations, updateConversation, removeConversation } = useConversationsStore()
   const { setOnline } = usePresenceStore()
 
   const flushingOutboxRef = useRef(false)
@@ -31,7 +31,7 @@ export function useConversationManager() {
     getCachedConversations().then((cached) => {
       if (cached.length > 0) setConversations(cached)
     })
-  }, [token])
+  }, [token, setConversations])
 
   // ─── Load conversations ───
   const loadConversations = useCallback(async () => {
@@ -59,11 +59,11 @@ export function useConversationManager() {
         }
       }
     }
-  }, [token, entity?.id])
+  }, [token, entity?.id, setConversations, setOnline])
 
   useEffect(() => {
     if (token) loadConversations()
-  }, [token])
+  }, [token, loadConversations])
 
   // ─── Flush offline outbox ───
   useEffect(() => {
@@ -203,7 +203,7 @@ export function useConversationManager() {
       removeConversation(leaveConfirmId)
     }
     setLeaveConfirmId(null)
-  }, [token, leaveConfirmId])
+  }, [token, leaveConfirmId, removeConversation])
 
   const handleArchiveConversation = useCallback(async (convId: number) => {
     if (!token) return
@@ -212,7 +212,7 @@ export function useConversationManager() {
       removeConversation(convId)
       setArchiveRefresh((n) => n + 1)
     }
-  }, [token])
+  }, [token, removeConversation])
 
   const handleUnarchiveConversation = useCallback(async (convId: number) => {
     if (!token) return
@@ -235,7 +235,7 @@ export function useConversationManager() {
         updateConversation(convId, updated)
       }
     }
-  }, [token, entity, conversations])
+  }, [token, entity, conversations, updateConversation])
 
   const handleUnpinConversation = useCallback(async (convId: number) => {
     if (!token || !entity) return
@@ -249,7 +249,7 @@ export function useConversationManager() {
         updateConversation(convId, updated)
       }
     }
-  }, [token, entity, conversations])
+  }, [token, entity, conversations, updateConversation])
 
   // ─── Archived conversation view ───
   useEffect(() => {
@@ -261,6 +261,7 @@ export function useConversationManager() {
       if (res.ok && res.data) setArchivedConv(res.data)
       else setArchivedConv(null)
     })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- archivedConv included would cause infinite loop
   }, [activeId, conversations, token])
 
   const activeConv = conversations.find((c) => c.id === activeId) || archivedConv

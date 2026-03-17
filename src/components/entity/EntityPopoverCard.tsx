@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { EntityAvatar } from './EntityAvatar'
@@ -22,8 +22,9 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
   const color = entityColor(entity)
   const description = entity.metadata?.description as string | undefined
 
-  // Position the popover relative to the anchor
-  useEffect(() => {
+  // Position the popover relative to the anchor (layout effect to avoid flicker)
+   
+  useLayoutEffect(() => {
     const card = cardRef.current
     if (!card) return
 
@@ -50,7 +51,7 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
     left = Math.max(16, left)
     top = Math.max(16, top)
 
-    setPosition({ top, left })
+    queueMicrotask(() => setPosition({ top, left }))
   }, [anchorRect])
 
   // Close on escape

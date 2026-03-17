@@ -6,7 +6,7 @@ import { usePresenceStore } from '@/store/presence'
 import { useTasksStore } from '@/store/tasks'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import * as api from '@/lib/api'
-import type { WSMessage, Message, Entity, Task } from '@/lib/types'
+import type { WSMessage, Message, Task } from '@/lib/types'
 
 interface TypingEntry {
   name: string
@@ -19,7 +19,7 @@ export type TypingMap = Map<number, Map<number, TypingEntry>>
 
 export function useWebSocketManager() {
   const { token, entity, setToken, logout } = useAuthStore()
-  const { setConversations, updateConversation, setActive } = useConversationsStore()
+  const { setConversations, updateConversation, setActive, setReadReceipt } = useConversationsStore()
   const { addMessage, revokeMessage, updateMessageReactions, startStream, updateStream, endStream, setProgress, clearProgressBySender } = useMessagesStore()
   const { setOnline, setWsConnected } = usePresenceStore()
 
@@ -77,7 +77,7 @@ export function useWebSocketManager() {
 
     const ws = new AnimpWebSocket(wsUrl, token)
     wsRef.current = ws
-    setWsClient(ws)
+    queueMicrotask(() => setWsClient(ws))
 
     const unsub = ws.onMessage((msg: WSMessage) => {
       switch (msg.type) {
@@ -136,6 +136,14 @@ export function useWebSocketManager() {
         case 'message.reaction_updated': {
           const data = msg.data as { message_id: number; conversation_id: number; reactions: { emoji: string; count: number; entity_ids: number[] }[] }
           if (data) updateMessageReactions(data.conversation_id, data.message_id, data.reactions)
+          break
+        }
+
+        case 'message.read': {
+          const data = msg.data as { conversation_id?: number; entity_id?: number; message_id?: number; last_read_at?: string }
+          if (data?.conversation_id && data?.entity_id && data?.message_id) {
+            setReadReceipt(data.conversation_id, data.entity_id, data.message_id, data.last_read_at || new Date().toISOString())
+          }
           break
         }
 
@@ -254,27 +262,23 @@ export function useWebSocketManager() {
       }
     })
 
-    // On reconnect, refresh messages for all loaded conversations
-    const loadConversations = async () => {
-      const res = await api.listConversations(token)
-      if (res.ok && res.data) {
-        const convs = Array.isArray(res.data) ? res.data : []
-        setConversations(convs)
-      }
+    // Keep sinceId in sync so reconnect requests catch-up from backend
+    const syncSinceId = () => {
+      ws.sinceId = useMessagesStore.getState().latestMessageId
     }
+    // Sync periodically and on each message (addMessage updates latestMessageId)
+    const sinceIdInterval = setInterval(syncSinceId, 5000)
+    syncSinceId()
 
+    // On reconnect, refresh conversation list (catch-up messages arrive via WS since_id)
     ws.onReconnect(() => {
-      const loaded = Object.keys(useMessagesStore.getState().byConv).map(Number)
-      for (const convId of loaded) {
-        api.listMessages(token, convId).then((res) => {
-          if (res.ok && res.data) {
-            for (const msg of (res.data.messages || [])) {
-              addMessage(msg)
-            }
-          }
-        })
-      }
-      loadConversations()
+      syncSinceId()
+      api.listConversations(token).then((res) => {
+        if (res.ok && res.data) {
+          const convs = Array.isArray(res.data) ? res.data : []
+          setConversations(convs)
+        }
+      })
     })
 
     const unsubAuthFailure = ws.onAuthFailure(async () => {
@@ -316,10 +320,12 @@ export function useWebSocketManager() {
     return () => {
       unsub()
       unsubAuthFailure()
+      clearInterval(sinceIdInterval)
       ws.disconnect()
       wsRef.current = null
       setWsClient(null)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- store actions (addMessage, setOnline, etc.) are stable zustand selectors
   }, [token, entity, setToken, logout, decodeJwtExp])
 
   // ─── Typing indicator sender ───

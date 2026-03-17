@@ -4,6 +4,7 @@ import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
+import { getCachedEntities } from '@/lib/cache'
 import type { Conversation, Entity } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Loader2, Search } from 'lucide-react'
@@ -31,11 +32,18 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   // Load entities for adding members
   useEffect(() => {
     if (!showAddMember) return
+    const existing = new Set(participants.map((p) => p.entity_id))
     api.listEntities(token).then((res) => {
       if (res.ok && res.data) {
-        const existing = new Set(participants.map((p) => p.entity_id))
         setEntities((res.data as Entity[]).filter((e) => !existing.has(e.id)))
       }
+    }).catch(() => {
+      // Network failed — fall back to cached entities
+      getCachedEntities().then((cached) => {
+        if (cached.length > 0) {
+          setEntities(cached.filter((e) => !existing.has(e.id)))
+        }
+      })
     })
   }, [showAddMember, token])
 

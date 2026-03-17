@@ -6,7 +6,7 @@ function loadMutedIds(): Set<number> {
   try {
     const raw = localStorage.getItem('aim_muted_convs')
     if (raw) return new Set(JSON.parse(raw))
-  } catch {}
+  } catch { /* localStorage unavailable */ }
   return new Set()
 }
 
@@ -14,10 +14,20 @@ function saveMutedIds(ids: Set<number>) {
   localStorage.setItem('aim_muted_convs', JSON.stringify([...ids]))
 }
 
+export interface ReadReceipt {
+  entityId: number
+  messageId: number
+  lastReadAt: string
+}
+
+// readReceipts: conversationId -> entityId -> ReadReceipt
+type ReadReceiptsMap = Record<number, Record<number, ReadReceipt>>
+
 interface ConversationsState {
   conversations: Conversation[]
   activeId: number | null
   mutedIds: Set<number>
+  readReceipts: ReadReceiptsMap
   setConversations: (convs: Conversation[]) => void
   setActive: (id: number | null) => void
   updateConversation: (id: number, partial: Partial<Conversation>) => void
@@ -25,12 +35,14 @@ interface ConversationsState {
   removeConversation: (id: number) => void
   toggleMute: (id: number) => void
   isMuted: (id: number) => boolean
+  setReadReceipt: (conversationId: number, entityId: number, messageId: number, lastReadAt: string) => void
 }
 
 export const useConversationsStore = create<ConversationsState>((set, get) => ({
   conversations: [],
   activeId: null,
   mutedIds: loadMutedIds(),
+  readReceipts: {},
   setConversations: (conversations) => set({ conversations }),
   setActive: (activeId) => {
     set({ activeId })
@@ -63,4 +75,13 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
     })
   },
   isMuted: (id) => get().mutedIds.has(id),
+  setReadReceipt: (conversationId, entityId, messageId, lastReadAt) =>
+    set((s) => {
+      const convReceipts = { ...s.readReceipts[conversationId] }
+      const existing = convReceipts[entityId]
+      // Only update if this is a newer read receipt
+      if (existing && existing.messageId >= messageId) return s
+      convReceipts[entityId] = { entityId, messageId, lastReadAt }
+      return { readReceipts: { ...s.readReceipts, [conversationId]: convReceipts } }
+    }),
 }))

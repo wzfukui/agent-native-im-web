@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
+import { getCachedEntities, cacheEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 
 export function useBotManager() {
@@ -9,10 +10,25 @@ export function useBotManager() {
   const [createdCredentials, setCreatedCredentials] = useState<{ entity: Entity; key: string; doc: string } | null>(null)
   const [botListRefresh, setBotListRefresh] = useState(0)
 
+  // Load cached entities on first render for instant display
+  useEffect(() => {
+    getCachedEntities().then((cached) => {
+      if (cached.length > 0) setBotEntities(cached)
+    })
+  }, [])
+
   const loadBotEntities = useCallback(async () => {
     if (!token) return
-    const res = await api.listEntities(token)
-    if (res.ok && res.data) setBotEntities(Array.isArray(res.data) ? res.data : [])
+    try {
+      const res = await api.listEntities(token)
+      if (res.ok && res.data) {
+        const list = Array.isArray(res.data) ? res.data : []
+        setBotEntities(list)
+        if (list.length > 0) cacheEntities(list)
+      }
+    } catch {
+      // Network failed — cached data remains visible
+    }
   }, [token])
 
   const handleDisableBot = async (botId: number) => {

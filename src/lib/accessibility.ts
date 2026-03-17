@@ -2,7 +2,7 @@
  * Accessibility utilities and keyboard navigation helpers
  */
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react'
 
 /**
  * Keyboard shortcut definitions
@@ -81,10 +81,11 @@ export function matchesShortcut(event: KeyboardEvent, shortcuts: string): boolea
 export function useKeyboardShortcut(
   shortcuts: string,
   handler: (event: KeyboardEvent) => void,
-  deps: React.DependencyList = []
 ) {
   const handlerRef = useRef(handler)
-  handlerRef.current = handler
+  useLayoutEffect(() => {
+    handlerRef.current = handler
+  })
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -96,7 +97,7 @@ export function useKeyboardShortcut(
 
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [shortcuts, ...deps])
+  }, [shortcuts])
 }
 
 /**

@@ -11,7 +11,7 @@ interface Props {
   disabled?: boolean
 }
 
-export function InteractionCard({ interaction, messageId, onReply, disabled }: Props) {
+export function InteractionCard({ interaction, onReply, disabled }: Props) {
   const { t } = useTranslation()
   const [inputValue, setInputValue] = useState('')
   const [responded, setResponded] = useState<string | null>(null)

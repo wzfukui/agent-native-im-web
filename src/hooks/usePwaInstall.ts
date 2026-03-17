@@ -9,10 +9,12 @@ export function usePwaInstall() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [isInstalled, setIsInstalled] = useState(false)
 
+  // Detect installed state and listen for install events — external subscription
+   
   useEffect(() => {
     // Check if already running as installed PWA
     if (window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone) {
-      setIsInstalled(true)
+      queueMicrotask(() => setIsInstalled(true))
       return
     }
 

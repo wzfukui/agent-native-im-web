@@ -5,7 +5,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
 import { cn } from '@/lib/utils'
 import {
-  Copy, Check, Maximize2, Minimize2, Code2, ChevronDown, ChevronUp,
+  Copy, Check, Maximize2, Minimize2, Code2, ChevronUp,
   FileCode, Image as ImageIcon, GitBranch, Globe,
 } from 'lucide-react'
 

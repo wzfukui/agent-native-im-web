@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Plus, MessageSquare, Archive, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import { ConversationItem } from './ConversationItem'
-import { ConversationItemSkeleton } from '@/components/ui/Skeleton'
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
@@ -14,6 +14,7 @@ interface Props {
   myEntityId: number
   onSelect: (id: number) => void
   onNewChat: () => void
+  onGlobalSearch?: () => void
   onUpdateConversation?: (id: number, title: string) => void
   onLeave?: (id: number) => void
   onArchive?: (id: number) => void
@@ -25,7 +26,7 @@ interface Props {
   loading?: boolean
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
@@ -141,6 +142,14 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
             </button>
           )}
         </div>
+        {onGlobalSearch && (
+          <button
+            onClick={onGlobalSearch}
+            className="mt-1 w-full text-left px-3 py-1 text-[10px] text-[var(--color-accent)] hover:text-[var(--color-accent-hover)] cursor-pointer transition-colors"
+          >
+            {t('conversation.globalSearch')}
+          </button>
+        )}
       </div>
 
       {/* Pull-to-refresh indicator */}
@@ -168,11 +177,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
         onTouchEnd={handleTouchEnd}
       >
         {externalLoading && conversations.length === 0 ? (
-          <div className="space-y-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <ConversationItemSkeleton key={i} />
-            ))}
-          </div>
+          <SkeletonLoader variant="conversation-list" />
         ) : filtered.length === 0 ? (
           search ? (
             <EmptyState

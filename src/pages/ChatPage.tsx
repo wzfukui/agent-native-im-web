@@ -9,6 +9,7 @@ import { ConversationSettingsPanel } from '@/components/conversation/Conversatio
 import { TaskPanel } from '@/components/task/TaskPanel'
 import { NewConversationDialog } from '@/components/conversation/NewConversationDialog'
 import { NewConversationSheet } from '@/components/conversation/NewConversationSheet'
+import { GlobalSearch } from '@/components/conversation/GlobalSearch'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { cn } from '@/lib/utils'
 import { MessageSquare, Bot, Settings2 } from 'lucide-react'
@@ -21,12 +22,14 @@ export function ChatPage() {
   const navigate = useNavigate()
   const { ws, convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
   const entity = useAuthStore((s) => s.entity)
-  const { conversations, activeId, setActive, removeConversation, updateConversation } = useConversationsStore()
+  const { conversations, activeId, removeConversation, updateConversation } = useConversationsStore()
+  const setActive = useConversationsStore((s) => s.setActive)
 
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
   const [showSettings, setShowSettings] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
+  const [showGlobalSearch, setShowGlobalSearch] = useState(false)
 
   // Sync URL param to store
   useEffect(() => {
@@ -34,7 +37,7 @@ export function ChatPage() {
     if (urlId !== activeId) {
       setActive(urlId)
     }
-  }, [conversationId])
+  }, [conversationId, activeId, setActive])
 
   const handleSelectConversation = useCallback((id: number | null) => {
     if (id !== null) {
@@ -52,6 +55,12 @@ export function ChatPage() {
     navigate('/chat')
     setNewChatEntityId(target.id)
     setShowNewChat(true)
+  }, [navigate])
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const handleGlobalSearchResult = useCallback((conversationId: number, _messageId: number) => {
+    setShowGlobalSearch(false)
+    navigate(`/chat/${conversationId}`)
   }, [navigate])
 
   const handleEntityViewDetails = useCallback((target: Entity) => {
@@ -80,6 +89,7 @@ export function ChatPage() {
           myEntityId={entity?.id || 0}
           onSelect={handleSelectConversation}
           onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+          onGlobalSearch={() => setShowGlobalSearch(true)}
           onUpdateConversation={(id, title) => {
             updateConversation(id, { title })
           }}
@@ -175,6 +185,14 @@ export function ChatPage() {
           )
         )}
       </div>
+
+      {/* Global Search */}
+      {showGlobalSearch && (
+        <GlobalSearch
+          onSelectResult={handleGlobalSearchResult}
+          onClose={() => setShowGlobalSearch(false)}
+        />
+      )}
 
       {/* Modals */}
       {isMobile ? (

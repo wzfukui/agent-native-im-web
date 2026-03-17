@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
+import { getCachedEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
@@ -25,11 +26,19 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   const [search, setSearch] = useState('')
 
   useEffect(() => {
+    // Show cached entities immediately, then refresh from network
+    getCachedEntities().then((cached) => {
+      if (cached.length > 0) {
+        setEntities(cached.filter((e) => e.id !== myEntity.id))
+      }
+    })
     api.listEntities(token).then((res) => {
       if (res.ok && res.data) {
         const all = Array.isArray(res.data) ? res.data : []
         setEntities(all.filter((e) => e.id !== myEntity.id))
       }
+    }).catch(() => {
+      // Network failed — cached data remains visible
     })
   }, [])
 

@@ -31,8 +31,10 @@ export function MessageActionMenu({ message, isSelf, anchorRect, onClose, onRepl
   const [visible, setVisible] = useState(false)
 
   const isRevoked = !!message.revoked_at
-  const canRevoke = isSelf && !isRevoked && onRevoke &&
-    (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000
+  // Computed once at mount — message age won't change during the menu's lifetime
+  const [canRevoke] = useState(() =>
+    isSelf && !isRevoked && !!onRevoke && (Date.now() - new Date(message.created_at).getTime()) < 2 * 60 * 1000
+  )
   const canReply = !isRevoked && onReply
   const canReact = !isRevoked && onReact
   const textContent = message.layers?.data?.body as string || message.layers?.summary || ''

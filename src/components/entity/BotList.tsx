@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
+import { getCachedEntities, cacheEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
-import { BotCardSkeleton } from '@/components/ui/Skeleton'
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { CreateBotDialog } from './CreateBotDialog'
-import { Bot, Plus, Search, Loader2, Wifi, WifiOff, PowerOff } from 'lucide-react'
+import { Bot, Plus, Search, PowerOff } from 'lucide-react'
 
 interface Props {
   selectedId: number | null
@@ -18,7 +19,7 @@ interface Props {
   refreshTrigger?: number
 }
 
-export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshTrigger }: Props) {
+export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const online = usePresenceStore((s) => s.online)
@@ -29,31 +30,56 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
 
   const { setOnline } = usePresenceStore()
 
+  const fetchPresence = async (list: Entity[]) => {
+    const botIds = list.filter((e) => e.entity_type !== 'user').map((e) => e.id)
+    if (botIds.length > 0) {
+      const presRes = await api.batchPresence(token, botIds)
+      if (presRes.ok && presRes.data?.presence) {
+        for (const [idStr, isOn] of Object.entries(presRes.data.presence)) {
+          setOnline(Number(idStr), isOn as boolean)
+        }
+      }
+    }
+  }
+
   const loadEntities = async () => {
     try {
       const res = await api.listEntities(token)
       const list = res.ok && res.data ? (Array.isArray(res.data) ? res.data : []) : []
       setEntities(list)
+      setLoading(false)
+
+      // Cache entities for offline use
+      if (list.length > 0) {
+        cacheEntities(list)
+      }
 
       // Fetch presence for all bot entities so the online dot is accurate
-      const botIds = list.filter((e) => e.entity_type !== 'user').map((e) => e.id)
-      if (botIds.length > 0) {
-        const presRes = await api.batchPresence(token, botIds)
-        if (presRes.ok && presRes.data?.presence) {
-          for (const [idStr, isOn] of Object.entries(presRes.data.presence)) {
-            setOnline(Number(idStr), isOn as boolean)
-          }
-        }
-      }
+      await fetchPresence(list)
     } catch (error) {
       void error
-      setEntities([])
+      // Network failed — keep any cached data already displayed
+      if (entities.length === 0) {
+        setEntities([])
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  useEffect(() => { loadEntities() }, [refreshTrigger])
+  // Stale-while-revalidate: show cached entities instantly, then refresh from network
+  useEffect(() => {
+    let cancelled = false
+    getCachedEntities().then((cached) => {
+      if (!cancelled && cached.length > 0) {
+        setEntities(cached)
+        setLoading(false)
+      }
+    })
+    loadEntities()
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadEntities depends on token which is stable after login
+  }, [refreshTrigger])
 
   const bots = entities.filter((e) => e.entity_type !== 'user')
   const filtered = search
@@ -181,11 +207,7 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
       {/* Bot list */}
       <div className="flex-1 overflow-y-auto px-3 pb-3">
         {loading ? (
-          <div className="grid grid-cols-1 gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <BotCardSkeleton key={i} />
-            ))}
-          </div>
+          <SkeletonLoader variant="bot-list" />
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-[var(--color-text-muted)]">
             <Bot className="w-8 h-8 mb-2 opacity-40" />

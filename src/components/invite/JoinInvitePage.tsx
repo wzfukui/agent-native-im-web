@@ -29,7 +29,7 @@ export function JoinInvitePage({ code, token, onJoined, onCancel }: JoinInvitePa
       const res = await api.getInviteInfo(token, code)
       if (cancelled) return
       if (res.ok && res.data) {
-        setInviteInfo(res.data as any)
+        setInviteInfo(res.data as Record<string, unknown>)
       } else {
         setError(String(res.error || t('invite.invalidOrExpired')))
       }
@@ -37,7 +37,7 @@ export function JoinInvitePage({ code, token, onJoined, onCancel }: JoinInvitePa
     }
     load()
     return () => { cancelled = true }
-  }, [token, code])
+  }, [token, code, t])
 
   const handleJoin = async () => {
     setJoining(true)
@@ -46,7 +46,7 @@ export function JoinInvitePage({ code, token, onJoined, onCancel }: JoinInvitePa
     if (res.ok) {
       setJoined(true)
       // Use conversation ID from response (most reliable) or fallback to inviteInfo
-      const convId = (res.data as any)?.id ?? inviteInfo?.conversation?.id
+      const convId = Number((res.data as Record<string, unknown>)?.id ?? inviteInfo?.conversation?.id)
       setTimeout(() => {
         if (convId) onJoined(convId)
       }, 1000)

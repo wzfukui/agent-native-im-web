@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { UserPlus, Loader2, Zap, ArrowLeft } from 'lucide-react'
+import { UserPlus, Loader2, ArrowLeft } from 'lucide-react'
 import type { Entity } from '@/lib/types'
 import * as api from '@/lib/api'
 

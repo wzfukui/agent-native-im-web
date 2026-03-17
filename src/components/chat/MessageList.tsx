@@ -7,6 +7,7 @@ import { DotsAnimation } from '@/components/ui/DotsAnimation'
 import { Loader2 } from 'lucide-react'
 import type { Message, ActiveStream, Entity } from '@/lib/types'
 import type { ProgressEntry } from '@/store/messages'
+import type { ReadReceipt } from '@/store/conversations'
 import { formatDateSeparator } from '@/lib/utils'
 
 interface Props {
@@ -17,6 +18,7 @@ interface Props {
   lastReadMessageId?: number
   streams?: ActiveStream[]
   participants?: { entity_id: number; entity?: Entity }[]
+  readReceipts?: Record<number, ReadReceipt>
   onLoadMore?: () => void
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
@@ -30,7 +32,7 @@ interface Props {
   progress?: ProgressEntry
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, onEntitySendMessage, onEntityViewDetails, thinkingEntity, progress }: Props) {
+export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, readReceipts, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, onEntitySendMessage, onEntityViewDetails, thinkingEntity, progress }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -113,6 +115,27 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     return set
   }, [messages])
 
+  // Determine which self-message (if any) should show the "Read" indicator.
+  // Show "Read" on the last message sent by the current user that has been read by at least one other participant.
+  const readIndicatorMsgId = useMemo(() => {
+    if (!readReceipts) return null
+    // Find the highest message_id that any other participant has read
+    let maxReadMsgId = 0
+    for (const [entityId, receipt] of Object.entries(readReceipts)) {
+      if (Number(entityId) === myEntityId) continue
+      if (receipt.messageId > maxReadMsgId) maxReadMsgId = receipt.messageId
+    }
+    if (maxReadMsgId === 0) return null
+    // Find the last self-message with id <= maxReadMsgId
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const msg = messages[i]
+      if (msg.sender_id === myEntityId && msg.id > 0 && msg.id <= maxReadMsgId) {
+        return msg.id
+      }
+    }
+    return null
+  }, [readReceipts, messages, myEntityId])
+
   // Group consecutive messages from same sender
   const shouldShowSender = (msg: Message, i: number): boolean => {
     if (i === 0) return true
@@ -188,6 +211,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 isSelf={msg.sender_id === myEntityId}
                 myEntityId={myEntityId}
                 showSender={showSender}
+                isRead={readIndicatorMsgId === msg.id}
                 replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
                 onInteractionReply={onInteractionReply}
                 onRevoke={onRevoke}

@@ -1,6 +1,6 @@
 import type {
   APIResponse, LoginResponse, Entity, Conversation,
-  MessagesResponse, SearchResponse, Message, AdminStats,
+  MessagesResponse, SearchResponse, GlobalSearchResponse, Message, AdminStats,
   Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics,
 } from './types'
 import { getSessionHooks } from './auth-session'
@@ -183,6 +183,9 @@ export const revokeMessage = (token: string, msgId: number) =>
 
 export const searchMessages = (token: string, convId: number, query: string, limit = 20) =>
   request<SearchResponse>('GET', `/api/v1/conversations/${convId}/search?q=${encodeURIComponent(query)}&limit=${limit}`, token)
+
+export const searchGlobal = (token: string, query: string, limit = 20, offset = 0) =>
+  request<GlobalSearchResponse>('GET', `/api/v1/messages/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`, token)
 
 // Entities
 export const listEntities = (token: string) =>

@@ -61,8 +61,12 @@
     "online": "Online",
     "offline": "Offline",
     "searchMessages": "Search messages...",
+    "globalSearch": "Search all messages...",
+    "globalSearchTitle": "Search Messages",
     "noResults": "No results found",
     "resultsFound": "{{count}} result(s) found",
+    "loadMore": "Load more",
+    "minQueryLength": "Enter at least 2 characters",
     "typeMessage": "Type a message...",
     "composerHint": "Enter to send · Shift+Enter for new line · @mention",
     "observer": "You are an observer in this conversation",
@@ -191,7 +195,8 @@
     "collapseContent": "Show less",
     "retryNow": "Retry now",
     "tapToRetry": "Tap to retry",
-    "copyText": "Copy text"
+    "copyText": "Copy text",
+    "read": "Read"
   },
   "chat": {
     "reply": "Reply",
@@ -470,6 +475,18 @@
     "createGroup": "Create Group",
     "createGroupDesc": "Create a group with bots and users",
     "createGroupButton": "Create Group ({{count}} selected)"
+  },
+  "emoji": {
+    "search": "Search emojis...",
+    "recent": "Recently Used",
+    "smileys": "Smileys",
+    "people": "People",
+    "animals": "Animals",
+    "food": "Food",
+    "travel": "Travel",
+    "objects": "Objects",
+    "symbols": "Symbols",
+    "flags": "Flags"
   },
   "forgotPassword": {
     "title": "Reset Password",

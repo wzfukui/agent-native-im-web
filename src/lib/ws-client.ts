@@ -38,11 +38,17 @@ export class AnimpWebSocket {
 
   private deviceId: string
 
+  // Latest message ID for catch-up on reconnect
+  private _sinceId: number = 0
+
   constructor(url: string, token: string) {
     this.url = url
     this.token = token
     this.deviceId = this.getOrCreateDeviceId()
   }
+
+  /** Set the latest known message ID so reconnect can request catch-up. */
+  set sinceId(id: number) { this._sinceId = id }
 
   private getOrCreateDeviceId(): string {
     const key = 'aim_device_id'
@@ -105,12 +111,16 @@ export class AnimpWebSocket {
 
   private doConnect() {
     if (this.ws) {
-      try { this.ws.close() } catch {}
+      try { this.ws.close() } catch { /* already closed */ }
     }
     this.stopPing()
 
     const deviceInfo = (navigator.userAgent || '').substring(0, 100)
-    const wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}&device_id=${encodeURIComponent(this.deviceId)}&device_info=${encodeURIComponent(deviceInfo)}`
+    let wsUrl = `${this.url}?token=${encodeURIComponent(this.token)}&device_id=${encodeURIComponent(this.deviceId)}&device_info=${encodeURIComponent(deviceInfo)}`
+    // On reconnect, request catch-up messages since the last known ID
+    if (this.wasConnected && this._sinceId > 0) {
+      wsUrl += `&since_id=${this._sinceId}`
+    }
     this.ws = new WebSocket(wsUrl)
     let opened = false
 
@@ -137,7 +147,7 @@ export class AnimpWebSocket {
           return
         }
         this.handlers.forEach((h) => h(msg))
-      } catch {}
+      } catch { /* malformed JSON from server */ }
     }
 
     this.ws.onclose = () => {
@@ -240,7 +250,7 @@ export class AnimpWebSocket {
     window.removeEventListener('offline', this.handleOffline)
     if (this.reconnectTimer) { clearTimeout(this.reconnectTimer); this.reconnectTimer = null }
     if (this.ws) {
-      try { this.ws.close() } catch {}
+      try { this.ws.close() } catch { /* already closed */ }
       this.ws = null
     }
     this._connected = false

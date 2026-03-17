@@ -68,7 +68,15 @@ function DashboardTab({ token }: { token: string }) {
     setLoading(false)
   }, [token])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+    api.adminGetStats(token).then((res) => {
+      if (cancelled) return
+      if (res.ok && res.data) setStats(res.data)
+      setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [token])
 
   if (loading) return <div className="text-sm text-[var(--color-text-muted)]">Loading...</div>
   if (!stats) return <div className="text-sm text-[var(--color-text-muted)]">Failed to load stats</div>
@@ -122,7 +130,18 @@ function UsersTab({ token }: { token: string }) {
     setLoading(false)
   }, [token, offset])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+    api.adminListUsers(token, limit, offset).then((res) => {
+      if (cancelled) return
+      if (res.ok && res.data) {
+        setEntities(res.data.entities || [])
+        setTotal(res.data.total)
+      }
+      setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [token, offset])
 
   const handleDelete = async (id: number) => {
     const res = await api.adminDeleteUser(token, id)
@@ -218,7 +237,18 @@ function ConversationsTab({ token }: { token: string }) {
     setLoading(false)
   }, [token, offset])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+    api.adminListConversations(token, limit, offset).then((res) => {
+      if (cancelled) return
+      if (res.ok && res.data) {
+        setConvs(res.data.conversations || [])
+        setTotal(res.data.total)
+      }
+      setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [token, offset])
 
   return (
     <div className="space-y-3">

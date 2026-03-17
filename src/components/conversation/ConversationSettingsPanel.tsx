@@ -9,6 +9,7 @@ import { AgentConfigSection } from '@/components/conversation/AgentConfigSection
 import { MemorySection } from '@/components/conversation/MemorySection'
 import { InviteLinkSection } from '@/components/conversation/InviteLinkSection'
 import * as api from '@/lib/api'
+import { getCachedEntities } from '@/lib/cache'
 import type { Conversation } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
@@ -92,10 +93,18 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   const handleOpenAddMember = async () => {
     setShowAddMember(true)
     setAddMemberLoading(true)
-    const res = await api.listEntities(token)
-    if (res.ok && res.data) {
-      const existing = new Set(participants.map((p) => p.entity_id))
-      setAddableEntities((res.data as import('@/lib/types').Entity[]).filter((e) => !existing.has(e.id)))
+    const existing = new Set(participants.map((p) => p.entity_id))
+    try {
+      const res = await api.listEntities(token)
+      if (res.ok && res.data) {
+        setAddableEntities((res.data as import('@/lib/types').Entity[]).filter((e) => !existing.has(e.id)))
+      }
+    } catch {
+      // Network failed — fall back to cached entities
+      const cached = await getCachedEntities()
+      if (cached.length > 0) {
+        setAddableEntities(cached.filter((e) => !existing.has(e.id)))
+      }
     }
     setAddMemberLoading(false)
   }

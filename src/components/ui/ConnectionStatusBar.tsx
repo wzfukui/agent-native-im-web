@@ -28,9 +28,10 @@ export function ConnectionStatusBar({
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
   const wasDisconnected = useRef(false)
 
+  // Sync WS connection state -- external subscription pattern
   useEffect(() => {
     if (!ws) return
-    setConnected(ws.connected)
+    queueMicrotask(() => setConnected(ws.connected))
     let hideTimer: ReturnType<typeof setTimeout> | null = null
 
     const unsub = ws.onConnectionChange((isConnected) => {

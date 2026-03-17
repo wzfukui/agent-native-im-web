@@ -22,12 +22,15 @@ export function ActionSheet({ open, onClose, items, title }: Props) {
   const [visible, setVisible] = useState(false)
   const [animating, setAnimating] = useState(false)
 
+  // Animation sequencing: open -> mount -> animate-in, close -> animate-out -> unmount
   useEffect(() => {
     if (open) {
-      setVisible(true)
-      requestAnimationFrame(() => setAnimating(true))
+      queueMicrotask(() => {
+        setVisible(true)
+        requestAnimationFrame(() => setAnimating(true))
+      })
     } else {
-      setAnimating(false)
+      queueMicrotask(() => setAnimating(false))
       const timer = setTimeout(() => setVisible(false), 300)
       return () => clearTimeout(timer)
     }

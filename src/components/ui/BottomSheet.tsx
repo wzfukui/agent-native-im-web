@@ -17,12 +17,15 @@ export function BottomSheet({ open, onClose, children, className }: Props) {
   const currentYRef = useRef(0)
   const isDraggingRef = useRef(false)
 
+  // Animation sequencing: open -> mount -> animate-in, close -> animate-out -> unmount
   useEffect(() => {
     if (open) {
-      setVisible(true)
-      requestAnimationFrame(() => setAnimating(true))
+      queueMicrotask(() => {
+        setVisible(true)
+        requestAnimationFrame(() => setAnimating(true))
+      })
     } else {
-      setAnimating(false)
+      queueMicrotask(() => setAnimating(false))
       const timer = setTimeout(() => setVisible(false), 300)
       return () => clearTimeout(timer)
     }

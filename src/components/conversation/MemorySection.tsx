@@ -5,7 +5,7 @@ import * as api from '@/lib/api'
 import type { ConversationMemory } from '@/lib/types'
 import { useMessagesStore } from '@/store/messages'
 import {
-  Plus, Trash2, Loader2, Brain, BarChart3, Eraser,
+  Plus, Trash2, Loader2, BarChart3, Eraser,
 } from 'lucide-react'
 
 interface Props {
@@ -39,7 +39,16 @@ export function MemorySection({ conversationId, canManage }: Props) {
     setLoading(false)
   }, [token, conversationId])
 
-  useEffect(() => { load() }, [load])
+  useEffect(() => {
+    let cancelled = false
+    api.listMemories(token, conversationId).then((res) => {
+      if (cancelled) return
+      if (res.ok && res.data) setMemories(res.data.memories || [])
+    }).catch(() => { /* network error */ }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => { cancelled = true }
+  }, [token, conversationId])
 
   const handleSaveMemory = async () => {
     if (!editKey.trim() || !editContent.trim()) return

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, ZoomIn, ZoomOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -12,7 +12,8 @@ export function ImageLightbox({ url, alt = 'image', onClose }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const imgRef = useRef<HTMLImageElement>(null)
   const scale = useRef(1)
-  const isDragging = useRef(false)
+  const isDraggingRef = useRef(false)
+  const [isDragging, setIsDragging] = useState(false)
   const startPos = useRef({ x: 0, y: 0 })
   const currentPos = useRef({ x: 0, y: 0 })
 
@@ -36,21 +37,23 @@ export function ImageLightbox({ url, alt = 'image', onClose }: Props) {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.target === imgRef.current) {
-      isDragging.current = true
+      isDraggingRef.current = true
+      setIsDragging(true)
       startPos.current = { x: e.clientX - currentPos.current.x, y: e.clientY - currentPos.current.y }
       e.preventDefault()
     }
   }
 
   const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging.current && imgRef.current) {
+    if (isDraggingRef.current && imgRef.current) {
       currentPos.current = { x: e.clientX - startPos.current.x, y: e.clientY - startPos.current.y }
       imgRef.current.style.transform = `scale(${scale.current}) translate(${currentPos.current.x}px, ${currentPos.current.y}px)`
     }
   }
 
   const handleMouseUp = () => {
-    isDragging.current = false
+    isDraggingRef.current = false
+    setIsDragging(false)
   }
 
   const handleZoomIn = () => {
@@ -114,7 +117,7 @@ export function ImageLightbox({ url, alt = 'image', onClose }: Props) {
         alt={alt}
         className={cn(
           'max-w-[90vw] max-h-[90vh] object-contain transition-transform duration-200',
-          isDragging.current ? 'cursor-grabbing' : 'cursor-grab'
+          isDragging ? 'cursor-grabbing' : 'cursor-grab'
         )}
         draggable={false}
         onWheel={handleWheel}

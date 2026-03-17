@@ -8,8 +8,8 @@ import { entityDisplayName, cn } from '@/lib/utils'
 import * as api from '@/lib/api'
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types'
 import {
-  X, Plus, Check, Circle, Clock, Ban, ArrowRightLeft,
-  ChevronDown, Loader2, Trash2, Calendar, User, ArrowLeft,
+  X, Plus, Check, Clock,
+  Loader2, Trash2, Calendar, ArrowLeft,
 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
@@ -26,14 +26,6 @@ const priorityColors: Record<TaskPriority, string> = {
   low: 'bg-gray-400',
   medium: 'bg-yellow-400',
   high: 'bg-red-400',
-}
-
-const statusIcons: Record<TaskStatus, typeof Circle> = {
-  pending: Circle,
-  in_progress: Clock,
-  done: Check,
-  cancelled: Ban,
-  handed_over: ArrowRightLeft,
 }
 
 export function TaskPanel({ conversationId, participants, onClose, isArchived }: Props) {
@@ -267,7 +259,6 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
                   </span>
                 </div>
                 {items.map((task) => {
-                  const StatusIcon = statusIcons[task.status]
                   return (
                     <div key={task.id} className="px-4 py-2.5 border-b border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] group">
                       <div className="flex items-start gap-2">

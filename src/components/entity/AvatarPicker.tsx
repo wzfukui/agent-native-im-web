@@ -84,7 +84,7 @@ export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
       } else {
         reportError({ message: t('error.uploadFailed') || 'Failed to upload image' })
       }
-    } catch (error) {
+    } catch {
       reportError({ message: t('error.uploadFailed') || 'Failed to upload image' })
     }
     setUploading(false)

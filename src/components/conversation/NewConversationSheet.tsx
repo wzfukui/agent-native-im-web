@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
+import { getCachedEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -32,14 +33,27 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
 
   useEffect(() => {
     if (!open) return
-    setLoading(true)
+    let cancelled = false
+    // Schedule loading state asynchronously to satisfy React effect rules
+    queueMicrotask(() => { if (!cancelled) setLoading(true) })
+    // Show cached entities immediately, then refresh from network
+    getCachedEntities().then((cached) => {
+      if (cached.length > 0) {
+        setEntities(cached.filter((e) => e.id !== myEntity.id))
+        setLoading(false)
+      }
+    })
     api.listEntities(token).then((res) => {
       if (res.ok && res.data) {
         const all = Array.isArray(res.data) ? res.data : []
         setEntities(all.filter((e) => e.id !== myEntity.id))
       }
       setLoading(false)
+    }).catch(() => {
+      // Network failed — cached data remains visible
+      setLoading(false)
     })
+    return () => { cancelled = true }
   }, [open, token, myEntity.id])
 
   // Reset state when closing

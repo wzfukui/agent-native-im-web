@@ -61,8 +61,12 @@
     "online": "在线",
     "offline": "离线",
     "searchMessages": "搜索消息...",
+    "globalSearch": "搜索所有消息...",
+    "globalSearchTitle": "搜索消息",
     "noResults": "未找到结果",
     "resultsFound": "找到 {{count}} 条结果",
+    "loadMore": "加载更多",
+    "minQueryLength": "请输入至少 2 个字符",
     "typeMessage": "输入消息...",
     "composerHint": "Enter 发送 · Shift+Enter 换行 · @提及",
     "observer": "你是此会话的观察者",
@@ -191,7 +195,8 @@
     "collapseContent": "收起",
     "retryNow": "立即重试",
     "tapToRetry": "点击重试",
-    "copyText": "复制文本"
+    "copyText": "复制文本",
+    "read": "已读"
   },
   "chat": {
     "reply": "回复",
@@ -470,6 +475,18 @@
     "createGroup": "创建群聊",
     "createGroupDesc": "创建包含 Bot 和用户的群组",
     "createGroupButton": "创建群组（已选 {{count}} 人）"
+  },
+  "emoji": {
+    "search": "搜索表情...",
+    "recent": "最近使用",
+    "smileys": "笑脸",
+    "people": "人物",
+    "animals": "动物",
+    "food": "食物",
+    "travel": "旅行",
+    "objects": "物品",
+    "symbols": "符号",
+    "flags": "旗帜"
   },
   "forgotPassword": {
     "title": "重置密码",

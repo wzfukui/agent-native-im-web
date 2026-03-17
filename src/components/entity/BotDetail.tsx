@@ -12,7 +12,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { generateBotQuickstart } from '@/lib/bot-quickstart'
 import {
-  Bot, ArrowLeft, Wifi, WifiOff, Sparkles, FileText, User,
+  ArrowLeft, Wifi, WifiOff, Sparkles, User,
   MessageSquare, Users, ChevronRight, ChevronDown, ChevronUp, Loader2,
   Hash, Calendar, Tag, Key, Copy, Check, Clock,
   PowerOff, RotateCcw, Download, Activity, RefreshCw, Link, ExternalLink,
@@ -31,7 +31,7 @@ interface Props {
   onRefresh?: () => void
 }
 
-export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBack, onOpenConversation, onDisable, onReactivate, onHardDelete, onStartChat, onRefresh }: Props) {
+export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBack, onOpenConversation, onDisable, onReactivate, onStartChat, onRefresh }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
@@ -40,7 +40,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [loadingConvs, setLoadingConvs] = useState(false)
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
   const [confirmDisable, setConfirmDisable] = useState(false)
-  const [credStatus, setCredStatus] = useState<{ has_bootstrap: boolean; has_api_key: boolean; bootstrap_prefix: string } | null>(null)  // kept for backward compat
+  // credStatus removed — selfCheck provides the same info
   const [selfCheck, setSelfCheck] = useState<{ ready: boolean; recommendation: string[]; has_api_key: boolean; has_bootstrap: boolean } | null>(null)
   const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; disconnect_count: number; forced_disconnect_count?: number; last_seen?: string; hub: { total_ws_connections: number } } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
@@ -53,18 +53,26 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [opInfo, setOpInfo] = useState<string | null>(null)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
 
-  // Load conversations
+  // Load conversations + reset UI state when bot changes
   useEffect(() => {
     if (!bot) return
     let cancelled = false
-    setLoadingConvs(true)
-    setActiveTab('direct')
-    setConfirmDisable(false)
-    setDocExpanded(false)
-    setRotatingToken(false)
-    setRotatedToken(null)
-    setOpError(null)
-    setOpInfo(null)
+
+    // Schedule resets in microtask to avoid synchronous setState in effect body
+    queueMicrotask(() => {
+      if (cancelled) return
+      setLoadingConvs(true)
+      setActiveTab('direct')
+      setConfirmDisable(false)
+      setDocExpanded(false)
+      setRotatingToken(false)
+      setRotatedToken(null)
+      setOpError(null)
+      setOpInfo(null)
+      setSelfCheck(null)
+      setDiagnostics(null)
+      setLastSeen(null)
+    })
 
     api.listConversations(token).then((res) => {
       if (cancelled) return
@@ -80,7 +88,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     })
 
     return () => { cancelled = true }
-  }, [bot?.id, token])
+  }, [bot, token])
 
   const isOwner = !!(bot && myEntity && bot.owner_id === myEntity.id)
 
@@ -88,15 +96,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   useEffect(() => {
     if (!bot) return
     let cancelled = false
-    setCredStatus(null)
-    setSelfCheck(null)
-    setDiagnostics(null)
-    setLastSeen(null)
 
     if (isOwner) {
-      api.getEntityCredentials(token, bot.id).then((res) => {
-        if (!cancelled && res.ok && res.data) setCredStatus(res.data)
-      }).catch(() => {})
       api.getEntitySelfCheck(token, bot.id).then((res) => {
         if (!cancelled && res.ok && res.data) setSelfCheck(res.data)
       }).catch(() => {})
@@ -110,7 +111,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     }).catch(() => {})
 
     return () => { cancelled = true }
-  }, [bot?.id, token, isOwner])
+  }, [bot, token, isOwner])
 
   const handleCopy = async (text: string, label: string) => {
     try {

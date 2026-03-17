@@ -2,7 +2,7 @@ import { cn, getInitials, entityColor, isBotOrService, authenticatedFileUrl } fr
 import type { Entity } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
 import { useAuthStore } from '@/store/auth'
-import { Bot, User } from 'lucide-react'
+import { Bot } from 'lucide-react'
 
 interface Props {
   entity?: Entity | null

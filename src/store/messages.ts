@@ -20,6 +20,8 @@ interface MessagesState {
   optimistic: Record<string, Message>
   // transient progress indicators (convId -> ProgressEntry)
   progress: Record<number, ProgressEntry>
+  // highest message ID seen (for reconnect catch-up)
+  latestMessageId: number
 
   setMessages: (convId: number, msgs: Message[], hasMore: boolean) => void
   prependMessages: (convId: number, msgs: Message[], hasMore: boolean) => void
@@ -55,12 +57,17 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   streams: {},
   optimistic: {},
   progress: {},
+  latestMessageId: 0,
 
   setMessages: (convId, msgs, hasMore) =>
-    set((s) => ({
-      byConv: { ...s.byConv, [convId]: msgs },
-      hasMore: { ...s.hasMore, [convId]: hasMore },
-    })),
+    set((s) => {
+      const maxId = msgs.reduce((max, m) => Math.max(max, m.id ?? 0), s.latestMessageId)
+      return {
+        byConv: { ...s.byConv, [convId]: msgs },
+        hasMore: { ...s.hasMore, [convId]: hasMore },
+        latestMessageId: maxId,
+      }
+    }),
 
   prependMessages: (convId, msgs, hasMore) =>
     set((s) => ({
@@ -88,8 +95,10 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       // The API response will handle replacing the optimistic message
       if (optimisticMatches.length > 0) return s
 
+      const newLatest = Math.max(s.latestMessageId, msg.id ?? 0)
       return {
         byConv: { ...s.byConv, [msg.conversation_id]: [...existing, msg] },
+        latestMessageId: newLatest,
       }
     }),
 
@@ -141,11 +150,13 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       const convId = optimisticMsg.conversation_id
       const messages = s.byConv[convId] || []
       // Remove temp_id and client_state to finalize
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { temp_id: _t, client_state: _c, ...cleanMsg } = optimisticMsg
       const updatedMessages = messages.map((m) =>
         m.temp_id === tempId ? cleanMsg : m
       )
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [tempId]: _, ...restOptimistic } = s.optimistic
       return {
         optimistic: restOptimistic,
@@ -161,6 +172,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       const messages = s.byConv[convId] || []
       const updatedMessages = messages.filter((m) => m.id !== optimisticMsg.id)
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [tempId]: _, ...restOptimistic } = s.optimistic
       return {
         optimistic: restOptimistic,
@@ -217,6 +229,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
 
   endStream: (streamId, message) =>
     set((s) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [streamId]: _, ...rest } = s.streams
       if (!message) return { streams: rest }
       const existing = s.byConv[message.conversation_id] || []
@@ -234,6 +247,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
 
   clearProgress: (convId) =>
     set((s) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [convId]: _, ...rest } = s.progress
       return { progress: rest }
     }),
@@ -242,6 +256,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
     set((s) => {
       const existing = s.progress[convId]
       if (!existing || existing.sender_id !== senderId) return s
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [convId]: _, ...rest } = s.progress
       return { progress: rest }
     }),

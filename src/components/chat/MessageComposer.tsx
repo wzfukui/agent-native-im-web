@@ -1,8 +1,9 @@
 import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic, CornerUpLeft, Loader2 } from 'lucide-react'
+import { Send, Paperclip, X, Image as ImageIcon, FileText, Mic, CornerUpLeft, Loader2, Smile } from 'lucide-react'
 import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { EmojiPicker } from '@/components/ui/EmojiPicker'
 import { useAudioRecorder } from '@/lib/use-audio-recorder'
 import type { Participant, Message, Attachment } from '@/lib/types'
 
@@ -14,7 +15,7 @@ export interface PendingFile {
 }
 
 /** Pre-uploaded attachment — stricter subset of Attachment with all fields required. */
-export interface UploadedAttachment extends Required<Pick<Attachment, 'type' | 'url' | 'filename' | 'mime_type' | 'size'>> {}
+export type UploadedAttachment = Required<Pick<Attachment, 'type' | 'url' | 'filename' | 'mime_type' | 'size'>>
 
 interface Props {
   conversationId?: number
@@ -68,6 +69,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     setPendingFiles([])
     setMentionIds([])
     prevConvIdRef.current = conversationId
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only trigger on conversation switch, not on text/replyTo changes
   }, [conversationId])
 
   // @mention autocomplete state
@@ -75,6 +77,8 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   const [mentionIndex, setMentionIndex] = useState(0)
   const [mentionStart, setMentionStart] = useState(-1) // cursor position of '@'
 
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
+  const emojiButtonRef = useRef<HTMLButtonElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const mentionRef = useRef<HTMLDivElement>(null)
@@ -135,6 +139,26 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
       }
     }, 0)
   }, [text, mentionStart])
+
+  const insertEmoji = useCallback((emoji: string) => {
+    const ta = textareaRef.current
+    if (ta) {
+      const start = ta.selectionStart
+      const end = ta.selectionEnd
+      const before = text.slice(0, start)
+      const after = text.slice(end)
+      const newText = before + emoji + after
+      setText(newText)
+      // Set cursor after inserted emoji
+      setTimeout(() => {
+        const cursorPos = start + emoji.length
+        ta.focus()
+        ta.setSelectionRange(cursorPos, cursorPos)
+      }, 0)
+    } else {
+      setText((prev) => prev + emoji)
+    }
+  }, [text])
 
   const uploadedAttachments: UploadedAttachment[] = useMemo(() =>
     pendingFiles
@@ -401,8 +425,8 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
                     key={i}
                     className="flex-1 rounded-full bg-red-400/60"
                     style={{
-                      height: `${6 + Math.sin((Date.now() / 200 + i) * 0.8) * 8}px`,
-                      transition: 'height 0.15s',
+                      height: `${6 + Math.sin((i + 1) * 0.8) * 8}px`,
+                      animation: `pulse 0.8s ease-in-out ${i * 0.04}s infinite alternate`,
                     }}
                   />
                 ))}
@@ -438,6 +462,30 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
               onChange={handleFileSelect}
               className="hidden"
             />
+
+            {/* Emoji button */}
+            <div className="relative flex-shrink-0">
+              <button
+                ref={emojiButtonRef}
+                onClick={() => setShowEmojiPicker((v) => !v)}
+                className={cn(
+                  'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors',
+                  showEmojiPicker
+                    ? 'text-[var(--color-accent)]'
+                    : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
+                )}
+              >
+                <Smile className="w-4 h-4" />
+              </button>
+              {showEmojiPicker && (
+                <EmojiPicker
+                  onSelect={insertEmoji}
+                  onClose={() => setShowEmojiPicker(false)}
+                  anchorRef={emojiButtonRef}
+                  position="above"
+                />
+              )}
+            </div>
 
             {/* Textarea */}
             <textarea

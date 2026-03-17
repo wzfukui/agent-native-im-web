@@ -74,8 +74,10 @@ export function AppLayout() {
 
   // ─── Admin detection ───
   const [isAdmin, setIsAdmin] = useState(false)
+  // Detect admin status on token change — async check
+   
   useEffect(() => {
-    if (!token) { setIsAdmin(false); return }
+    if (!token) { queueMicrotask(() => setIsAdmin(false)); return }
     api.adminGetStats(token).then((res) => setIsAdmin(res.ok === true))
   }, [token])
 

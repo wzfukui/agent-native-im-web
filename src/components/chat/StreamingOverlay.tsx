@@ -1,4 +1,3 @@
-import { cn } from '@/lib/utils'
 import type { ActiveStream } from '@/lib/types'
 import { Loader2, Brain, ChevronDown, ChevronUp, Square } from 'lucide-react'
 import { useState } from 'react'

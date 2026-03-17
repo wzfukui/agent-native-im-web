@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { Plus } from 'lucide-react'
+import { EmojiPicker } from '@/components/ui/EmojiPicker'
 import type { ReactionSummary } from '@/lib/types'
 
-const QUICK_EMOJIS = ['👍', '❤️', '😂', '🎉', '🤔', '👀']
+const QUICK_EMOJIS = ['\uD83D\uDC4D', '\u2764\uFE0F', '\uD83D\uDE02', '\uD83C\uDF89', '\uD83E\uDD14', '\uD83D\uDC40']
 
 interface Props {
   reactions: ReactionSummary[]
@@ -14,6 +15,8 @@ interface Props {
 
 export function ReactionBar({ reactions, myEntityId, isSelf, onReact }: Props) {
   const [showPicker, setShowPicker] = useState(false)
+  const [showFullPicker, setShowFullPicker] = useState(false)
+  const addButtonRef = useRef<HTMLButtonElement>(null)
 
   return (
     <div className={cn('flex items-center gap-1 flex-wrap', isSelf ? 'justify-end' : '')}>
@@ -39,13 +42,14 @@ export function ReactionBar({ reactions, myEntityId, isSelf, onReact }: Props) {
       {/* Add reaction button */}
       <div className="relative">
         <button
+          ref={addButtonRef}
           onClick={() => setShowPicker(!showPicker)}
           className="w-6 h-6 rounded-full flex items-center justify-center text-[var(--color-text-muted)] hover:bg-[var(--color-bg-tertiary)] transition-colors cursor-pointer opacity-0 group-hover:opacity-100"
         >
           <Plus className="w-3 h-3" />
         </button>
 
-        {showPicker && (
+        {showPicker && !showFullPicker && (
           <>
             <div className="fixed inset-0 z-10" onClick={() => setShowPicker(false)} />
             <div className={cn(
@@ -61,8 +65,33 @@ export function ReactionBar({ reactions, myEntityId, isSelf, onReact }: Props) {
                   {emoji}
                 </button>
               ))}
+              {/* More button to open full picker */}
+              <button
+                onClick={() => setShowFullPicker(true)}
+                className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-xs cursor-pointer text-[var(--color-text-muted)]"
+              >
+                <Plus className="w-3.5 h-3.5" />
+              </button>
             </div>
           </>
+        )}
+
+        {showPicker && showFullPicker && (
+          <div className={cn('absolute z-20', isSelf ? 'right-0' : 'left-0')}>
+            <EmojiPicker
+              onSelect={(emoji) => {
+                onReact(emoji)
+                setShowPicker(false)
+                setShowFullPicker(false)
+              }}
+              onClose={() => {
+                setShowPicker(false)
+                setShowFullPicker(false)
+              }}
+              anchorRef={addButtonRef}
+              position="above"
+            />
+          </div>
         )}
       </div>
     </div>
