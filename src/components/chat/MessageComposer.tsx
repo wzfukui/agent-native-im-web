@@ -410,7 +410,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
 
       {/* Input area */}
       <div className="group/input">
-      <div className="flex items-end gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl px-3 py-2 focus-within:border-[var(--color-accent)]/50 transition-colors">
+      <div className="flex items-end gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl px-3 py-1.5 focus-within:border-[var(--color-accent)]/50 transition-colors">
         {recState === 'recording' ? (
           /* Recording UI */
           <>

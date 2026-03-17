@@ -35,7 +35,7 @@ interface SettingsState {
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
-  theme: loadSetting<Theme>('aim_theme', 'dark'),
+  theme: loadSetting<Theme>('aim_theme', 'light'),
   locale: loadSetting<Locale>('aim_locale', 'en'),
   devMode: loadSetting<boolean>('aim_dev_mode', false),
   setTheme: (theme) => {
