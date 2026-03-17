@@ -451,7 +451,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         <div className={cn('flex items-center gap-1 w-full', isSelf ? 'flex-row-reverse' : '')}>
           <div
             className={cn(
-              'rounded-2xl max-w-full min-w-0',
+              'rounded-2xl max-w-full min-w-0 flex-1',
               (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
               isSelf
                 ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
