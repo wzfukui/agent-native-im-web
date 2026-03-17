@@ -448,7 +448,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         )}
 
         {/* Bubble + revoke */}
-        <div className={cn('flex items-center gap-1 w-full', isSelf ? 'flex-row-reverse' : '')}>
+        <div className={cn('relative flex items-center w-full', isSelf ? 'flex-row-reverse' : '')}>
           <div
             className={cn(
               'rounded-2xl max-w-full min-w-0 flex-1',
@@ -512,7 +512,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           </div>
 
           {/* Action buttons */}
-          <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all flex-shrink-0 relative', isSelf ? 'flex-row-reverse' : '')}>
+          <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all absolute top-0', isSelf ? 'flex-row-reverse right-full mr-1' : 'left-full ml-1')}>
             {canReply && (
               <button
                 onClick={() => onReply!(message)}
