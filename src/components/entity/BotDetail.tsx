@@ -224,7 +224,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
       <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         <button
           onClick={onBack}
-          className="lg:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer"
+          className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-[var(--color-text-muted)]" />
         </button>

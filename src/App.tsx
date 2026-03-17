@@ -27,6 +27,8 @@ import { registerPushNotifications } from '@/lib/push'
 import type { WSMessage, Message, Entity, Task, Conversation } from '@/lib/types'
 import { Zap, MessageSquare, Bot, Settings2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { MobileTabBar, type MobileTab } from '@/components/layout/MobileTabBar'
 import { cacheConversations, getCachedConversations } from '@/lib/cache'
 import { listOutboxMessages, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
@@ -70,6 +72,32 @@ export default function App() {
   const [outboxLastSyncAt, setOutboxLastSyncAt] = useState<string | null>(null)
   const [outboxLastError, setOutboxLastError] = useState<string | null>(null)
   const [inviteCode, setInviteCode] = useState<string | null>(null)
+  const isMobile = useIsMobile()
+  const [mobileInChat, setMobileInChat] = useState(false)
+
+  // ─── Mobile navigation helpers ──────────────────────────────
+  const handleSelectConversation = useCallback((id: number | null) => {
+    setActive(id)
+    if (id !== null && isMobile) setMobileInChat(true)
+  }, [isMobile, setActive])
+
+  const handleBackFromChat = useCallback(() => {
+    setActive(null)
+    setMobileInChat(false)
+  }, [setActive])
+
+  // Sync mobileInChat with viewMode changes
+  const handleSetViewMode = useCallback((mode: 'chat' | 'bots' | 'admin' | 'settings') => {
+    setViewMode(mode)
+    if (mode !== 'chat') setMobileInChat(false)
+  }, [])
+
+  // Tab change handler for MobileTabBar
+  const handleMobileTabChange = useCallback((tab: MobileTab) => {
+    if (tab === 'chat') handleSetViewMode('chat')
+    else if (tab === 'bots') handleSetViewMode('bots')
+    else if (tab === 'settings') handleSetViewMode('settings')
+  }, [handleSetViewMode])
 
   // ─── Global error handler ────────────────────────────────────
   const pushError = useCallback((parsed: ParsedError) => {
@@ -104,7 +132,10 @@ export default function App() {
     const convMatch = hash.match(/^#c=(\d+)$/)
     if (convMatch) {
       const convId = Number(convMatch[1])
-      if (convId > 0) setActive(convId)
+      if (convId > 0) {
+        setActive(convId)
+        if (window.innerWidth < 768) setMobileInChat(true)
+      }
     }
   }, [])
 
@@ -481,6 +512,7 @@ export default function App() {
               setConversations(convs)
               if (useConversationsStore.getState().activeId === convData.conversation_id) {
                 setActive(null)
+                setMobileInChat(false)
               }
             } else {
               if (token) {
@@ -660,27 +692,27 @@ export default function App() {
 
   // ─── New chat from bot panel ───────────────────────────────────
   const handleStartChatFromBot = (entityId: number) => {
-    setViewMode('chat')
+    handleSetViewMode('chat')
     setNewChatEntityId(entityId)
     setShowNewChat(true)
   }
 
   // ─── Open conversation from bot detail ────────────────────────
   const handleOpenConversation = (convId: number) => {
-    setViewMode('chat')
-    setActive(convId)
+    handleSetViewMode('chat')
+    handleSelectConversation(convId)
   }
 
   // ─── Entity popover actions ─────────────────────────────────────
   const handleEntitySendMessage = (target: Entity) => {
-    setViewMode('chat')
+    handleSetViewMode('chat')
     setNewChatEntityId(target.id)
     setShowNewChat(true)
   }
 
   const handleEntityViewDetails = (target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
-      setViewMode('bots')
+      handleSetViewMode('bots')
       setSelectedBotId(target.id)
       loadBotEntities()
     }
@@ -813,7 +845,7 @@ export default function App() {
         onJoined={(convId) => {
           setInviteCode(null)
           window.history.replaceState({}, '', '/')
-          loadConversations().then(() => setActive(convId))
+          loadConversations().then(() => handleSelectConversation(convId))
         }}
         onCancel={() => {
           setInviteCode(null)
@@ -849,6 +881,10 @@ export default function App() {
   // ─── Selected bot entity ────────────────────────────────────────
   const selectedBot = botEntities.find((e) => e.id === selectedBotId) || null
 
+  // ─── Derived: should mobile tab bar be visible? ───────────────
+  const showMobileTabBar = isMobile && !mobileInChat
+  const mobileTab: MobileTab = viewMode === 'bots' ? 'bots' : viewMode === 'settings' ? 'settings' : 'chat'
+
   // ─── Main layout ───────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
@@ -862,45 +898,52 @@ export default function App() {
         onRetryNow={retryOutboxNow}
       />
       <div className="flex-1 flex min-h-0">
-      {/* Icon sidebar */}
-      <Sidebar
-        botMode={viewMode === 'bots'}
-        adminMode={viewMode === 'admin'}
-        settingsMode={viewMode === 'settings'}
-        isAdmin={isAdmin}
-        onToggleBots={() => setViewMode(viewMode === 'bots' ? 'chat' : 'bots')}
-        onToggleAdmin={() => setViewMode(viewMode === 'admin' ? 'chat' : 'admin')}
-        onToggleChat={() => setViewMode('chat')}
-        onToggleSettings={() => setViewMode(viewMode === 'settings' ? 'chat' : 'settings')}
-      />
+      {/* Icon sidebar — hidden on mobile */}
+      {!isMobile && (
+        <Sidebar
+          botMode={viewMode === 'bots'}
+          adminMode={viewMode === 'admin'}
+          settingsMode={viewMode === 'settings'}
+          isAdmin={isAdmin}
+          onToggleBots={() => handleSetViewMode(viewMode === 'bots' ? 'chat' : 'bots')}
+          onToggleAdmin={() => handleSetViewMode(viewMode === 'admin' ? 'chat' : 'admin')}
+          onToggleChat={() => handleSetViewMode('chat')}
+          onToggleSettings={() => handleSetViewMode(viewMode === 'settings' ? 'chat' : 'settings')}
+        />
+      )}
 
       {viewMode === 'admin' ? (
         <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
           <ErrorBoundary>
-            <AdminPanel onBack={() => setViewMode('chat')} />
+            <AdminPanel onBack={() => handleSetViewMode('chat')} />
           </ErrorBoundary>
         </div>
       ) : viewMode === 'settings' ? (
         <ErrorBoundary>
           <div className="flex-1 h-full" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
-          <UserSettingsPage onBack={() => setViewMode('chat')} />
+          <UserSettingsPage onBack={() => handleSetViewMode('chat')} />
           </div>
         </ErrorBoundary>
       ) : (
         <>
           {/* Left panel: ConversationList or BotList */}
+          {/* On mobile: full width, hidden when in a chat */}
+          {/* On desktop: fixed 288px width, hidden when detail selected on small screens */}
           <div className={cn(
-            'w-72 border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0',
-            viewMode === 'chat'
-              ? (activeId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col')
-              : (selectedBotId ? 'hidden lg:flex lg:flex-col' : 'flex flex-col'),
+            'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0',
+            isMobile ? 'w-full' : 'w-72',
+            isMobile
+              ? (mobileInChat ? 'hidden' : 'flex flex-col')
+              : (viewMode === 'chat'
+                  ? (activeId ? 'hidden md:flex md:flex-col' : 'flex flex-col')
+                  : (selectedBotId ? 'hidden md:flex md:flex-col' : 'flex flex-col')),
           )}>
             {viewMode === 'chat' ? (
               <ConversationList
                 conversations={conversations}
                 activeId={activeId}
                 myEntityId={entity.id}
-                onSelect={setActive}
+                onSelect={handleSelectConversation}
                 onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
                 onUpdateConversation={(id, title) => {
                   // Just update local state, ConversationItem already called the API
@@ -929,7 +972,11 @@ export default function App() {
           </div>
 
           {/* Right panel: ChatThread or BotDetail */}
-          <div className="flex-1 min-w-0 flex">
+          {/* On mobile: full-screen overlay when in chat */}
+          <div className={cn(
+            'flex-1 min-w-0 flex',
+            isMobile && mobileInChat && 'mobile-chat-panel',
+          )}>
             {viewMode === 'chat' ? (
               activeConv ? (
                 <>
@@ -938,7 +985,7 @@ export default function App() {
                     <ChatThread
                       key={activeConv.id}
                       conversation={activeConv}
-                      onBack={() => setActive(null)}
+                      onBack={handleBackFromChat}
                       onCancelStream={handleCancelStream}
                       onTyping={handleTyping}
                       typingEntities={typingMap.get(activeConv.id)}
@@ -971,6 +1018,8 @@ export default function App() {
                   )}
                 </>
               ) : (
+                /* Empty state — only shown on desktop (mobile shows full-screen list) */
+                !isMobile && (
                 <div className="flex-1 h-full flex flex-col items-center justify-center" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
                   <p className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] mb-1.5">
                     {conversations.length === 0 ? t('app.welcomeTitle') : 'Agent-Native IM'}
@@ -987,14 +1036,14 @@ export default function App() {
                       <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep2Action')}</span>
                     </button>
                     <button
-                      onClick={() => setViewMode('bots')}
+                      onClick={() => handleSetViewMode('bots')}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
                     >
                       <Bot className="w-4 h-4 text-[var(--color-bot)] flex-shrink-0" />
                       <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep1Action')}</span>
                     </button>
                     <button
-                      onClick={() => setViewMode('settings')}
+                      onClick={() => handleSetViewMode('settings')}
                       className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
                     >
                       <Settings2 className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
@@ -1002,6 +1051,7 @@ export default function App() {
                     </button>
                   </div>
                 </div>
+                )
               )
             ) : (
               <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
@@ -1032,7 +1082,7 @@ export default function App() {
           onClose={() => setShowNewChat(false)}
           onCreated={(convId) => {
             setShowNewChat(false)
-            loadConversations().then(() => setActive(convId))
+            loadConversations().then(() => handleSelectConversation(convId))
           }}
         />
       )}
@@ -1049,6 +1099,11 @@ export default function App() {
 
       <ErrorToast errors={errorToasts} onDismiss={dismissError} />
       </div>
+
+      {/* Mobile bottom tab bar */}
+      {showMobileTabBar && (
+        <MobileTabBar activeTab={mobileTab} onTabChange={handleMobileTabChange} />
+      )}
     </div>
   )
 }

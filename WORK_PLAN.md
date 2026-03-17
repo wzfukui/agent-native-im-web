@@ -13,35 +13,35 @@
 - 后端 entity_type 保持 `bot`/`service`/`user` 不变
 
 ### 1.1 后端（agent-native-im）
-- [ ] 1.1.1 扫描所有 handler/model/docs 中 "agent" 出现的位置
-- [ ] 1.1.2 API 文档（api-reference.md, bot-api.md）: "Agent" → "Bot"
-- [ ] 1.1.3 Onboarding guide: "Agent 接入" → "Bot 接入"
-- [ ] 1.1.4 代码注释/变量名: 评估是否需要改（内部用 agent 可接受，面向用户的必须改）
-- [ ] 1.1.5 Skill template endpoint: 检查用语
-- [ ] 1.1.6 Error messages: "agent" 相关提示文案
+- [x] 1.1.1 扫描所有 handler/model/docs 中 "agent" 出现的位置
+- [x] 1.1.2 API 文档（api-reference.md, bot-api.md）: "Agent" → "Bot"
+- [x] 1.1.3 Onboarding guide: "Agent 接入" → "Bot 接入"
+- [x] 1.1.4 代码注释/变量名: 评估是否需要改（内部用 agent 可接受，面向用户的必须改）
+- [x] 1.1.5 Skill template endpoint: 检查用语
+- [x] 1.1.6 Error messages: "agent" 相关提示文案
 
 ### 1.2 前端（agent-native-im-web）
-- [ ] 1.2.1 CreateAgentDialog → CreateBotDialog（文件名 + 组件名）
-- [ ] 1.2.2 "Agent" 相关 i18n keys 全部改为 "Bot"（en.json + zh-CN.json）
-- [ ] 1.2.3 BotDetail 页面: "Agent 接入包" → "Bot 接入包" 等
-- [ ] 1.2.4 BotList 页面: 确认所有文案用 "Bot"
-- [ ] 1.2.5 Settings 页面: 如有 "Agent" 引用需修改
-- [ ] 1.2.6 ConversationSettings: 参与者类型标签用 "Bot" 不用 "Agent"
+- [x] 1.2.1 CreateAgentDialog → CreateBotDialog（文件名 + 组件名）
+- [x] 1.2.2 "Agent" 相关 i18n keys 全部改为 "Bot"（en.json + zh-CN.json）
+- [x] 1.2.3 BotDetail 页面: "Agent 接入包" → "Bot 接入包" 等
+- [x] 1.2.4 BotList 页面: 确认所有文案用 "Bot"
+- [x] 1.2.5 Settings 页面: 如有 "Agent" 引用需修改
+- [x] 1.2.6 ConversationSettings: 参与者类型标签用 "Bot" 不用 "Agent"
 
 ### 1.3 OpenClaw 插件（extensions/ani）
-- [ ] 1.3.1 README: 确认用 "Bot" 描述 ANI 实体，"Agent" 仅指 OpenClaw agent
-- [ ] 1.3.2 工具描述: ani_send_file 的 description 用 "Bot" 不用 "Agent"
-- [ ] 1.3.3 System prompt 中的措辞: "You are {name}" 不加 "agent"
+- [x] 1.3.1 README: 确认用 "Bot" 描述 ANI 实体，"Agent" 仅指 OpenClaw agent
+- [x] 1.3.2 工具描述: ani_send_file 的 description 用 "Bot" 不用 "Agent"
+- [x] 1.3.3 System prompt 中的措辞: "You are {name}" 不加 "agent"
 
 ### 1.4 Python SDK（agent-native-im-sdk-python）
-- [ ] 1.4.1 README/docs: "Agent" → "Bot"（在描述 ANI 实体时）
-- [ ] 1.4.2 类名评估: `Bot` 类已经正确，检查注释/docstring
-- [ ] 1.4.3 示例代码: 确认用 "Bot" 描述
+- [x] 1.4.1 README/docs: "Agent" → "Bot"（在描述 ANI 实体时）
+- [x] 1.4.2 类名评估: `Bot` 类已经正确，检查注释/docstring
+- [x] 1.4.3 示例代码: 确认用 "Bot" 描述
 
 ### 1.5 SuperBody 知识库
-- [ ] 1.5.1 company/products.md: 产品描述中区分 Bot/Agent
-- [ ] 1.5.2 CLAUDE.md: 如有相关描述需更新
-- [ ] 1.5.3 daily-log: 不需要回溯修改
+- [x] 1.5.1 ✅ 无需修改（products.md 中 Agent 指 DeepSOC Multi-Agent，非 ANI） company/products.md: 产品描述中区分 Bot/Agent
+- [x] 1.5.2 ✅ 无需修改 CLAUDE.md: 如有相关描述需更新
+- [x] 1.5.3 ✅ 不回溯 daily-log: 不需要回溯修改
 
 ---
 
@@ -120,11 +120,11 @@
 
 | Phase | 状态 | 开始时间 | 完成时间 |
 |-------|------|---------|---------|
-| 1.1 后端术语统一 | ⬜ 未开始 | | |
-| 1.2 前端术语统一 | ⬜ 未开始 | | |
-| 1.3 插件术语统一 | ⬜ 未开始 | | |
-| 1.4 SDK 术语统一 | ⬜ 未开始 | | |
-| 1.5 知识库更新 | ⬜ 未开始 | | |
+| 1.1 后端术语统一 | ✅ 完成 | | |
+| 1.2 前端术语统一 | ✅ 完成 | | |
+| 1.3 插件术语统一 | ✅ 完成 | | |
+| 1.4 SDK 术语统一 | ✅ 完成 | | |
+| 1.5 知识库更新 | ✅ 完成 | | |
 | 2.1 布局架构重构 | ⬜ 未开始 | | |
 | 2.2 会话列表优化 | ⬜ 未开始 | | |
 | 2.3 新建会话流程 | ⬜ 未开始 | | |

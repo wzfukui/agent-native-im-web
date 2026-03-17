@@ -411,3 +411,24 @@
 }
 
 html { overscroll-behavior: none; }
+
+/* ─── Mobile layout (<768px) — Discord-style full-screen views ─── */
+
+.mobile-tab-bar {
+  flex-shrink: 0;
+}
+
+@media screen and (max-width: 767px) {
+  /* Full-screen chat panel on mobile */
+  .mobile-chat-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: var(--color-bg-primary);
+  }
+
+  /* Make back button always visible on mobile (override md:hidden when in mobile chat) */
+  .mobile-chat-panel button[class*="md:hidden"] {
+    display: flex !important;
+  }
+}
