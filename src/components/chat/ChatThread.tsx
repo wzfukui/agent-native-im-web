@@ -613,16 +613,21 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         {/* Debug button — logs bubble layout info */}
         <button
           onClick={() => {
-            const container = document.querySelector('[class*="overflow-y-auto"]')
-            if (!container) { console.log('no container found'); return }
+            const container = document.getElementById('chat-message-list')
+            if (!container) { console.log('❌ no #chat-message-list found'); return }
             const containerRect = container.getBoundingClientRect()
             console.log(`📦 Container: width=${containerRect.width}px, left=${containerRect.left}px, right=${containerRect.right}px`)
-            const bubbles = container.querySelectorAll('[class*="flex gap"]')
+            // Find all message rows (they have gap-2 and group classes)
+            const allDivs = container.querySelectorAll('div')
+            const bubbles = Array.from(allDivs).filter(d =>
+              d.className.includes('group') && d.className.includes('gap-2') && d.className.includes('transition-opacity')
+            )
+            console.log(`Found ${bubbles.length} bubble rows`)
             bubbles.forEach((b, i) => {
               const r = b.getBoundingClientRect()
               const bubble = b.querySelector('[class*="rounded-2xl"]')
               const br = bubble?.getBoundingClientRect()
-              const isSelf = b.classList.contains('ml-auto')
+              const isSelf = b.className.includes('ml-auto')
               console.log(
                 `💬 #${i} ${isSelf ? 'SELF' : 'OTHER'}: ` +
                 `row[w=${r.width.toFixed(0)}, l=${r.left.toFixed(0)}, r=${r.right.toFixed(0)}] ` +

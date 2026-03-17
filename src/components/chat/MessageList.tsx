@@ -131,6 +131,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     <div
       ref={containerRef}
       onScroll={handleScroll}
+      id="chat-message-list"
       className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3"
     >
       {/* Load more */}
