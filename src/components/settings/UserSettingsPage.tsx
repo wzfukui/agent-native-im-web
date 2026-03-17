@@ -629,6 +629,55 @@ export function UserSettingsPage({ onBack }: Props) {
               )}
             </div>
 
+            {/* Push Notifications */}
+            <div className="border-t border-[var(--color-border)] pt-6 mt-6">
+              <div className="flex items-center gap-3">
+                <Bell className="w-4 h-4 text-[var(--color-accent)]" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('settings.pushNotifications')}</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)]" id="push-status-desktop">
+                    {t('settings.pushDisabled')}
+                  </p>
+                </div>
+                <button
+                  id="push-toggle-btn-desktop"
+                  onClick={async () => {
+                    const btn = document.getElementById('push-toggle-btn-desktop') as HTMLButtonElement
+                    const status = document.getElementById('push-status-desktop')
+                    if (!btn || !status) return
+                    btn.disabled = true
+                    btn.textContent = '...'
+                    try {
+                      const reg = await navigator.serviceWorker?.ready
+                      const existing = reg ? await reg.pushManager?.getSubscription() : null
+                      if (existing) {
+                        await existing.unsubscribe()
+                        await api.unregisterPush(token, existing.endpoint)
+                        status.textContent = t('settings.pushDisabled')
+                        btn.textContent = t('settings.enablePush')
+                      } else {
+                        if (typeof Notification !== 'undefined') {
+                          if (Notification.permission === 'default') {
+                            const perm = await Notification.requestPermission()
+                            if (perm !== 'granted') { status.textContent = t('settings.pushDenied'); btn.textContent = t('settings.enablePush'); btn.disabled = false; return }
+                          }
+                          if (Notification.permission === 'denied') { status.textContent = t('settings.pushDenied'); btn.textContent = t('settings.enablePush'); btn.disabled = false; return }
+                        }
+                        const { registerPushNotifications } = await import('@/lib/push')
+                        const ok = await registerPushNotifications(token)
+                        status.textContent = ok ? t('settings.pushEnabled') : (t('settings.pushFailed') || 'Failed')
+                        btn.textContent = ok ? t('settings.disablePush') : t('settings.enablePush')
+                      }
+                    } catch (err) { status.textContent = `Error: ${err}`; btn.textContent = t('settings.enablePush') }
+                    btn.disabled = false
+                  }}
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white cursor-pointer hover:opacity-90 transition-opacity"
+                >
+                  {t('settings.enablePush')}
+                </button>
+              </div>
+            </div>
+
             {/* Developer Mode toggle */}
             <div className="border-t border-[var(--color-border)] pt-6 mt-6">
               <label className="flex items-center justify-between gap-3 cursor-pointer">
