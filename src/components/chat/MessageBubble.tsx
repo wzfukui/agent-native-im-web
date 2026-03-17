@@ -372,8 +372,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     <div
       ref={bubbleRef}
       className={cn(
-        'flex gap-2.5 max-w-[98%] md:max-w-[85%] group transition-opacity duration-300',
-        isSelf ? 'ml-auto flex-row-reverse' : '',
+        'flex gap-2 md:gap-2.5 group transition-opacity duration-300',
+        isSelf
+          ? 'ml-auto flex-row-reverse max-w-[calc(100%-42px)] md:max-w-[85%]'
+          : 'max-w-[calc(100%-8px)] md:max-w-[85%]',
         message.client_state === 'sending' ? 'opacity-60' : '',
       )}
       style={{ animation: 'slide-up 0.2s cubic-bezier(0.16,1,0.3,1)' }}
