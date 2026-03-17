@@ -42,6 +42,7 @@ async function fetchWithAuthRetry<T>(
   const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers,
+    credentials: 'include',
     body: body ? JSON.stringify(body) : undefined,
   })
 
@@ -63,6 +64,7 @@ async function request<T>(method: string, path: string, token?: string, body?: u
   const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: body ? JSON.stringify(body) : undefined,
   })
   return parseAPIResponse<T>(res)
@@ -73,6 +75,7 @@ async function requestQuiet<T>(method: string, path: string, token?: string, bod
   const res = await fetch(`${baseUrl}${path}`, {
     method,
     headers: token ? authHeaders(token) : { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: body ? JSON.stringify(body) : undefined,
   })
   return parseAPIResponse<T>(res, true)
@@ -86,6 +89,7 @@ async function tryRefreshToken(oldToken: string): Promise<string | null> {
       const res = await fetch(`${baseUrl}/api/v1/auth/refresh`, {
         method: 'POST',
         headers: authHeaders(oldToken),
+        credentials: 'include',
       })
       const payload = await parseAPIResponse<{ token: string }>(res)
       if (res.ok && payload.ok && payload.data?.token) {
@@ -126,6 +130,9 @@ export const getMe = (token: string) =>
 
 export const refreshToken = (token: string) =>
   request<{ token: string }>('POST', '/api/v1/auth/refresh', token)
+
+export const logout = (token: string) =>
+  request('POST', '/api/v1/auth/logout', token)
 
 // Conversations
 export const listConversations = (token: string, archived = false) =>
@@ -263,6 +270,7 @@ export async function uploadFile(token: string, file: File): Promise<APIResponse
     return fetch(`${baseUrl}/api/v1/files/upload`, {
       method: 'POST',
       headers: { Authorization: `Bearer ${accessToken}` },
+      credentials: 'include',
       body: form,
     })
   }

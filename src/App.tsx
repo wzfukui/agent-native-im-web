@@ -8,6 +8,7 @@ import { ChatPage } from '@/pages/ChatPage'
 import { BotsPage } from '@/pages/BotsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { AdminPage } from '@/pages/AdminPage'
+import * as api from '@/lib/api'
 
 /** Redirect old #c=xxx hash URLs to /chat/xxx */
 function HashRedirect() {
@@ -27,10 +28,47 @@ function HashRedirect() {
   return null
 }
 
+/** On page load, try to restore session from HttpOnly cookie (if no sessionStorage token). */
+function SessionRestore() {
+  const token = useAuthStore((s) => s.token)
+  const entity = useAuthStore((s) => s.entity)
+  const sessionChecked = useAuthStore((s) => s.sessionChecked)
+  const { setAuth, setSessionChecked } = useAuthStore()
+
+  useEffect(() => {
+    if (sessionChecked) return
+    // If we already have a token + entity from sessionStorage, no need to check cookie
+    if (token && entity) {
+      setSessionChecked()
+      return
+    }
+    // Try to validate session via cookie (GET /me with credentials: include)
+    api.getMe('').then((res) => {
+      if (res.ok && res.data) {
+        // Cookie is valid — restore session. We use a placeholder token since
+        // the cookie handles auth; sessionStorage token is a convenience for
+        // the current tab only.
+        const placeholder = '__cookie_session__'
+        setAuth(placeholder, res.data)
+      }
+    }).catch(() => {}).finally(() => {
+      setSessionChecked()
+    })
+  }, [token, entity, sessionChecked, setAuth, setSessionChecked])
+
+  return null
+}
+
 /** Guard: redirect unauthenticated users to login */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
   const entity = useAuthStore((s) => s.entity)
+  const sessionChecked = useAuthStore((s) => s.sessionChecked)
+
+  // Wait for session restore attempt before redirecting
+  if (!sessionChecked) {
+    return null // or a loading spinner
+  }
 
   if (!token || !entity) {
     return <Navigate to="/login" replace />
@@ -42,6 +80,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <HashRedirect />
+      <SessionRestore />
       <Routes>
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
