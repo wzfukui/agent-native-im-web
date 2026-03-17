@@ -88,7 +88,9 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         opt => opt.conversation_id === msg.conversation_id &&
                opt.sender_id === msg.sender_id &&
                // Check if timestamps are within 5 seconds of each other
-               Math.abs(new Date(opt.created_at).getTime() - new Date(msg.created_at).getTime()) < 5000
+               Math.abs(new Date(opt.created_at).getTime() - new Date(msg.created_at).getTime()) < 5000 &&
+               // Also match content to avoid suppressing different messages sent rapidly
+               (opt.layers?.summary || '').trim() === (msg.layers?.summary || '').trim()
       )
 
       // If we found a matching optimistic message, don't add the WebSocket message
@@ -237,6 +239,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
       return {
         streams: rest,
         byConv: { ...s.byConv, [message.conversation_id]: [...existing, message] },
+        latestMessageId: message ? Math.max(s.latestMessageId, message.id ?? 0) : s.latestMessageId,
       }
     }),
 
