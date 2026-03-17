@@ -12,8 +12,8 @@ import * as api from '@/lib/api'
 import type { Conversation } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
-  X, UserMinus, Bell, BellOff, Crown, Shield, Eye,
-  Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2, Copy, ArrowLeft,
+  X, UserMinus, UserPlus, Bell, BellOff, Crown, Shield, Eye,
+  Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2, Copy, ArrowLeft, Search,
 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
@@ -44,6 +44,10 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
   const [idCopied, setIdCopied] = useState(false)
   const [idCopyError, setIdCopyError] = useState<string | null>(null)
+  const [showAddMember, setShowAddMember] = useState(false)
+  const [addableEntities, setAddableEntities] = useState<import('@/lib/types').Entity[]>([])
+  const [addMemberSearch, setAddMemberSearch] = useState('')
+  const [addMemberLoading, setAddMemberLoading] = useState(false)
   const publicId = (conversation.metadata as Record<string, unknown> | undefined)?.public_id
   const displayConversationId = (typeof publicId === 'string' && publicId) || conversation.public_id || String(conversation.id)
 
@@ -83,6 +87,26 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
 
   const handleSubscriptionChange = async (mode: string) => {
     await api.updateSubscription(token, conversation.id, mode)
+  }
+
+  const handleOpenAddMember = async () => {
+    setShowAddMember(true)
+    setAddMemberLoading(true)
+    const res = await api.listEntities(token)
+    if (res.ok && res.data) {
+      const existing = new Set(participants.map((p) => p.entity_id))
+      setAddableEntities((res.data as import('@/lib/types').Entity[]).filter((e) => !existing.has(e.id)))
+    }
+    setAddMemberLoading(false)
+  }
+
+  const handleAddMember = async (entityId: number) => {
+    setAddMemberLoading(true)
+    await api.addParticipant(token, conversation.id, entityId, 'member')
+    setShowAddMember(false)
+    setAddMemberSearch('')
+    setAddMemberLoading(false)
+    // Refresh happens through parent via websocket events
   }
 
   const handleLeave = async () => {
@@ -344,6 +368,64 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
               </div>
             ))}
           </div>
+
+          {/* Add member inline */}
+          {canManage && isGroup && !isArchived && (
+            showAddMember ? (
+              <div className="mt-2 space-y-2">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                  <input
+                    value={addMemberSearch}
+                    onChange={(e) => setAddMemberSearch(e.target.value)}
+                    placeholder={t('conversation.search')}
+                    autoFocus
+                    className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
+                  />
+                </div>
+                {addMemberLoading ? (
+                  <div className="flex justify-center py-2">
+                    <Loader2 className="w-4 h-4 text-[var(--color-text-muted)] animate-spin" />
+                  </div>
+                ) : (
+                  <div className="max-h-36 overflow-y-auto space-y-0.5">
+                    {addableEntities.filter((e) => {
+                      if (!addMemberSearch) return true
+                      const q = addMemberSearch.toLowerCase()
+                      return entityDisplayName(e).toLowerCase().includes(q) || e.name.toLowerCase().includes(q)
+                    }).map((e) => (
+                      <button
+                        key={e.id}
+                        onClick={() => handleAddMember(e.id)}
+                        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors text-left"
+                      >
+                        <EntityAvatar entity={e} size="xs" />
+                        <span className="text-xs text-[var(--color-text-primary)] truncate flex-1">{entityDisplayName(e)}</span>
+                        <span className="text-[9px] text-[var(--color-text-muted)]">{e.entity_type}</span>
+                      </button>
+                    ))}
+                    {addableEntities.length === 0 && (
+                      <p className="text-[10px] text-[var(--color-text-muted)] text-center py-2">{t('common.noEntities')}</p>
+                    )}
+                  </div>
+                )}
+                <button
+                  onClick={() => { setShowAddMember(false); setAddMemberSearch('') }}
+                  className="w-full text-[10px] text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] py-1 cursor-pointer"
+                >
+                  {t('common.cancel')}
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={handleOpenAddMember}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 cursor-pointer transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                {t('common.addMember')}
+              </button>
+            )
+          )}
         </div>
 
         {/* Actions */}

@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 
-export type Theme = 'dark' | 'midnight' | 'light' | 'green' | 'rose' | 'ocean' | 'amber' | 'violet' | 'light-rose' | 'light-ocean' | 'light-green'
+export type Theme = 'system' | 'dark' | 'midnight' | 'light' | 'green' | 'rose' | 'ocean' | 'amber' | 'violet' | 'light-rose' | 'light-ocean' | 'light-green'
 export type Locale = 'en' | 'zh-CN'
 
 function loadSetting<T>(key: string, fallback: T): T {
@@ -10,6 +10,19 @@ function loadSetting<T>(key: string, fallback: T): T {
   } catch {
     return fallback
   }
+}
+
+/** Resolve the effective CSS theme for `data-theme` based on system preference */
+function resolveSystemTheme(): 'dark' | 'light' {
+  if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
+    return 'light'
+  }
+  return 'dark'
+}
+
+function applyTheme(theme: Theme) {
+  const effective = theme === 'system' ? resolveSystemTheme() : theme
+  document.documentElement.dataset.theme = effective
 }
 
 interface SettingsState {
@@ -24,7 +37,7 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   locale: loadSetting<Locale>('aim_locale', 'en'),
   setTheme: (theme) => {
     localStorage.setItem('aim_theme', JSON.stringify(theme))
-    document.documentElement.dataset.theme = theme
+    applyTheme(theme)
     set({ theme })
   },
   setLocale: (locale) => {
@@ -32,3 +45,14 @@ export const useSettingsStore = create<SettingsState>((set) => ({
     set({ locale })
   },
 }))
+
+// Listen for OS color scheme changes when theme is "system"
+if (typeof window !== 'undefined') {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)')
+  mq.addEventListener('change', () => {
+    const currentTheme = useSettingsStore.getState().theme
+    if (currentTheme === 'system') {
+      applyTheme('system')
+    }
+  })
+}

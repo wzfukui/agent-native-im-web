@@ -36,6 +36,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
+import { InstallBanner } from '@/components/ui/InstallBanner'
 import { JoinInvitePage } from '@/components/invite/JoinInvitePage'
 import { setGlobalErrorHandler, getErrorMessage, type ParsedError } from '@/lib/errors'
 import { setSessionHooks } from '@/lib/auth-session'
@@ -75,6 +76,7 @@ export default function App() {
   const [inviteCode, setInviteCode] = useState<string | null>(null)
   const isMobile = useIsMobile()
   const [mobileInChat, setMobileInChat] = useState(false)
+  const [convsLoading, setConvsLoading] = useState(true)
 
   // ─── Mobile navigation helpers ──────────────────────────────
   const handleSelectConversation = useCallback((id: number | null) => {
@@ -313,7 +315,9 @@ export default function App() {
   // ─── Load conversations ────────────────────────────────────────
   const loadConversations = useCallback(async () => {
     if (!token) return
+    setConvsLoading(true)
     const res = await api.listConversations(token)
+    setConvsLoading(false)
     if (res.ok && res.data) {
       const convs = Array.isArray(res.data) ? res.data : []
       setConversations(convs)
@@ -909,6 +913,7 @@ export default function App() {
   // ─── Main layout ───────────────────────────────────────────────
   return (
     <div className="h-full flex flex-col">
+      <InstallBanner />
       <ConnectionStatusBar
         ws={wsClient}
         authIssue={authHandshakeIssue}
@@ -976,6 +981,7 @@ export default function App() {
                 onUnpin={handleUnpinConversation}
                 onRefresh={loadConversations}
                 archiveRefresh={archiveRefresh}
+                loading={convsLoading}
               />
             ) : (
               <BotList

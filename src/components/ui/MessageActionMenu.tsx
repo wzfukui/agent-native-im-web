@@ -16,6 +16,13 @@ interface Props {
 }
 
 const QUICK_EMOJIS = ['\uD83D\uDC4D', '\u2764\uFE0F', '\uD83D\uDE02', '\uD83C\uDF89', '\uD83E\uDD14', '\uD83D\uDC40']
+const EXTENDED_EMOJIS = [
+  '\uD83D\uDE0A', '\uD83D\uDE0D', '\uD83E\uDD70', '\uD83D\uDE18', '\uD83D\uDE09', '\uD83D\uDE1C', '\uD83E\uDD2A', '\uD83E\uDD29',
+  '\uD83D\uDE21', '\uD83D\uDE31', '\uD83E\uDD2F', '\uD83D\uDE22', '\uD83D\uDE2D', '\uD83E\uDD7A', '\uD83D\uDE33', '\uD83D\uDE07',
+  '\uD83D\uDC4E', '\u270A', '\uD83D\uDC4A', '\uD83D\uDC4F', '\uD83D\uDE4C', '\uD83E\uDD1D', '\uD83D\uDE4F', '\uD83D\uDCAA',
+  '\u2B50', '\uD83D\uDD25', '\uD83D\uDCA5', '\uD83D\uDCAF', '\u2705', '\u274C', '\uD83D\uDE80', '\u2728',
+  '\uD83C\uDF39', '\uD83C\uDF3B', '\uD83C\uDF3A', '\uD83C\uDF38', '\uD83C\uDF40', '\uD83C\uDF1E', '\uD83C\uDF19', '\uD83C\uDF08',
+]
 
 export function MessageActionMenu({ message, isSelf, anchorRect, onClose, onReply, onReact, onRevoke, onCopyText }: Props) {
   const { t } = useTranslation()
@@ -79,18 +86,32 @@ export function MessageActionMenu({ message, isSelf, anchorRect, onClose, onRepl
         )}
         style={{ transformOrigin: isSelf ? 'bottom right' : 'bottom left' }}
       >
-        {/* Quick emoji row */}
+        {/* Quick emoji row + expanded grid */}
         {canReact && showEmojis && (
-          <div className="flex items-center gap-0.5 px-2 py-2 border-b border-[var(--color-border)]">
-            {QUICK_EMOJIS.map((emoji) => (
-              <button
-                key={emoji}
-                onClick={() => { onReact!(message.id, emoji); onClose() }}
-                className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors text-lg cursor-pointer"
-              >
-                {emoji}
-              </button>
-            ))}
+          <div className="border-b border-[var(--color-border)]">
+            <div className="flex items-center gap-0.5 px-2 py-2">
+              {QUICK_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => { onReact!(message.id, emoji); onClose() }}
+                  className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors text-lg cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+            {/* Extended emoji grid */}
+            <div className="grid grid-cols-8 gap-0.5 px-2 pb-2 max-h-[120px] overflow-y-auto">
+              {EXTENDED_EMOJIS.map((emoji) => (
+                <button
+                  key={emoji}
+                  onClick={() => { onReact!(message.id, emoji); onClose() }}
+                  className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-sm cursor-pointer"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useMemo } from 'react'
+import { useEffect, useRef, useMemo, useCallback, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageBubble } from './MessageBubble'
 import { StreamingBubble } from './StreamingBubble'
@@ -36,6 +36,17 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
   const containerRef = useRef<HTMLDivElement>(null)
   const prevLengthRef = useRef(0)
   const isNearBottomRef = useRef(true)
+  const [highlightedMsgId, setHighlightedMsgId] = useState<number | null>(null)
+
+  // Scroll to a specific message and briefly highlight it
+  const handleScrollToMessage = useCallback((msgId: number) => {
+    const el = document.getElementById(`msg-${msgId}`)
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      setHighlightedMsgId(msgId)
+      setTimeout(() => setHighlightedMsgId(null), 1500)
+    }
+  }, [])
 
   // Track whether user is near bottom (for auto-scroll during streaming)
   const handleScroll = () => {
@@ -152,7 +163,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
           const gapClass = i === 0 ? '' : showSender ? 'mt-3' : 'mt-1'
 
           return (
-            <div key={msg.id} className={gapClass}>
+            <div key={msg.id} id={`msg-${msg.id}`} className={`${gapClass}${highlightedMsgId === msg.id ? ' msg-highlight-flash' : ''}`}>
               {showDateSep && (
                 <div className="flex items-center justify-center gap-3 py-3 mx-auto max-w-[60%]">
                   <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, var(--color-border), transparent)' }} />
@@ -184,6 +195,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 onRetryOutbox={onRetryOutbox}
                 onEntitySendMessage={onEntitySendMessage}
                 onEntityViewDetails={onEntityViewDetails}
+                onScrollToMessage={handleScrollToMessage}
               />
             </div>
           )

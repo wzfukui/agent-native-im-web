@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Search, Plus, MessageSquare, Archive, ChevronDown, ChevronRight, Loader2 } from 'lucide-react'
 import { ConversationItem } from './ConversationItem'
+import { ConversationItemSkeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
@@ -21,9 +22,10 @@ interface Props {
   onUnpin?: (id: number) => void
   onRefresh?: () => Promise<void>
   archiveRefresh?: number
+  loading?: boolean
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
@@ -165,7 +167,13 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
       >
-        {filtered.length === 0 ? (
+        {externalLoading && conversations.length === 0 ? (
+          <div className="space-y-0.5">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <ConversationItemSkeleton key={i} />
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
           search ? (
             <EmptyState
               icon={<Search className="w-7 h-7" />}

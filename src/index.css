@@ -322,9 +322,22 @@
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+@keyframes msg-highlight {
+  0% { background: var(--color-accent-dim); }
+  100% { background: transparent; }
+}
+.msg-highlight-flash {
+  animation: msg-highlight 1.5s ease-out;
+  border-radius: 12px;
+}
 @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--color-bg-tertiary) 25%, var(--color-bg-hover) 50%, var(--color-bg-tertiary) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
 /* Smooth deceleration for typing dots — no bounce */
 @keyframes typing-dot {
   0%, 100% { opacity: 0.3; transform: scale(0.85); }
@@ -373,9 +386,10 @@
 .md hr { border: none; border-top: 1px solid var(--color-border); margin: 0.6rem 0; }
 
 /* Artifact rendering */
-.artifact-container { min-width: 280px; max-width: 100%; }
+.artifact-container { min-width: 0; max-width: 100%; overflow-x: auto; }
 .artifact-code .md pre { margin: 0; border: none; border-radius: 0; }
 .artifact-code .md pre code { font-size: 0.82em; }
+.artifact-mermaid { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .artifact-mermaid svg { max-width: 100%; height: auto; }
 .artifact-mermaid .node rect,
 .artifact-mermaid .node circle,
@@ -408,6 +422,9 @@
 
 @media screen and (max-width: 768px) {
   input, textarea, select { font-size: 16px !important; }
+  .artifact-container { min-width: 0; max-width: calc(100vw - 48px); }
+  .md pre { max-width: calc(100vw - 80px); }
+  .md table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 }
 
 html { overscroll-behavior: none; }

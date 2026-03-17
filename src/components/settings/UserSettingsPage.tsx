@@ -224,7 +224,7 @@ export function UserSettingsPage({ onBack }: Props) {
     { id: 'violet', label: t('settings.themeViolet'), bg: '#180d1f', sidebar: '#140a1a', bubble: '#281a33', bubbleSelf: '#a855f7', text: '#f3e8ff', gradient: 'radial-gradient(ellipse 70% 50% at 30% 0%, rgba(168,85,247,0.12) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 75% 5%, rgba(139,92,246,0.08) 0%, transparent 45%)' },
   ]
   // Current theme label for the settings row
-  const currentThemeLabel = [...lightThemes, ...darkThemes].find((th) => th.id === theme)?.label || theme
+  const currentThemeLabel = theme === 'system' ? t('settings.themeSystem') : ([...lightThemes, ...darkThemes].find((th) => th.id === theme)?.label || theme)
   const currentLocaleLabel = locale === 'zh-CN' ? '中文' : 'English'
 
   // ── Section content renderer (shared between mobile and desktop) ──
@@ -422,6 +422,23 @@ export function UserSettingsPage({ onBack }: Props) {
         return (
           <div className="space-y-8">
             {!isMobile && <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.theme')}</h3>}
+
+            {/* System auto theme */}
+            <button
+              onClick={() => setTheme('system')}
+              className={cn(
+                'w-full flex items-center justify-between px-4 py-3.5 rounded-xl border cursor-pointer transition-all',
+                theme === 'system'
+                  ? 'border-[var(--color-accent)] bg-[var(--color-accent)]/5'
+                  : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]',
+              )}
+            >
+              <div className="text-left">
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('settings.themeSystem')}</p>
+                <p className="text-[10px] text-[var(--color-text-muted)]">{t('settings.themeSystemDesc')}</p>
+              </div>
+              {theme === 'system' && <Check className="w-4 h-4 text-[var(--color-accent)]" />}
+            </button>
 
             {/* Light themes group */}
             <div className="space-y-3">

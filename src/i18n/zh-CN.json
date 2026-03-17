@@ -116,6 +116,8 @@
     "themeLightRose": "玫瑰",
     "themeLightOcean": "海洋",
     "themeLightGreen": "鼠尾草",
+    "themeSystem": "跟随系统",
+    "themeSystemDesc": "自动跟随设备的亮色/暗色设置",
     "themeGroupLight": "亮色",
     "themeGroupDark": "暗色",
     "profile": "个人信息",
@@ -179,6 +181,7 @@
     "expandMore": "展开全部",
     "collapseContent": "收起",
     "retryNow": "立即重试",
+    "tapToRetry": "点击重试",
     "copyText": "复制文本"
   },
   "chat": {
@@ -448,7 +451,9 @@
     "installDescription": "添加到主屏幕以便快速访问",
     "iosInstallHint": "点击「分享」然后选择「添加到主屏幕」",
     "installed": "应用已安装",
-    "offlineReady": "已准备好离线使用"
+    "offlineReady": "已准备好离线使用",
+    "newVersionAvailable": "有新版本可用",
+    "refresh": "刷新"
   },
   "newConversation": {
     "chatWithBot": "\u4E0E Bot \u5BF9\u8BDD",

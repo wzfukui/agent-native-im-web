@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Conversation, Entity } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Loader2 } from 'lucide-react'
+import { X, UserPlus, UserMinus, Bell, BellOff, Crown, Shield, Loader2, Search } from 'lucide-react'
 
 interface Props {
   conversation: Conversation
@@ -22,6 +22,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   const [entities, setEntities] = useState<Entity[]>([])
   const [loading, setLoading] = useState(false)
   const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
+  const [addSearch, setAddSearch] = useState('')
 
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
@@ -157,7 +158,18 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
         {canManage && (
           <div className="border-t border-[var(--color-border)]">
             {showAddMember ? (
-              <div className="p-3 space-y-2 max-h-48 overflow-y-auto">
+              <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
+                {/* Search filter for add member */}
+                <div className="relative mb-1">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                  <input
+                    value={addSearch}
+                    onChange={(e) => setAddSearch(e.target.value)}
+                    placeholder={t('conversation.search')}
+                    autoFocus
+                    className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)]/50"
+                  />
+                </div>
                 {loading && (
                   <div className="flex justify-center py-2">
                     <Loader2 className="w-4 h-4 text-[var(--color-text-muted)] animate-spin" />
@@ -166,7 +178,11 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                 {entities.length === 0 && !loading && (
                   <p className="text-xs text-[var(--color-text-muted)] text-center py-2">{t('common.noEntities')}</p>
                 )}
-                {entities.map((e) => (
+                {entities.filter((e) => {
+                  if (!addSearch) return true
+                  const q = addSearch.toLowerCase()
+                  return entityDisplayName(e).toLowerCase().includes(q) || e.name.toLowerCase().includes(q)
+                }).map((e) => (
                   <button
                     key={e.id}
                     onClick={() => handleAdd(e.id)}

@@ -15,7 +15,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, CloudOff, AlertTriangle,
+  Brain, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, CloudOff, AlertTriangle, Clock, RotateCcw,
 } from 'lucide-react'
 
 /** Max collapsed height in px (~10 lines of text) */
@@ -102,10 +102,11 @@ interface Props {
   onRetryOutbox?: (tempId: string) => void
   onEntitySendMessage?: (entity: import('@/lib/types').Entity) => void
   onEntityViewDetails?: (entity: import('@/lib/types').Entity) => void
+  onScrollToMessage?: (msgId: number) => void
   showSender?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, showSender = true }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, onScrollToMessage, showSender = true }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
   const authUrl = (url: string | undefined) => authenticatedFileUrl(url, token)
@@ -421,17 +422,25 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           </div>
         )}
 
-        {/* Reply indicator */}
+        {/* Reply indicator — clickable to scroll to original */}
         {message.reply_to && (
           <div className={cn('flex items-center gap-1.5 px-1 text-[10px]', isSelf ? 'flex-row-reverse' : '')}>
             <CornerUpLeft className="w-3 h-3 text-[var(--color-text-muted)] flex-shrink-0" />
             {replyMessage ? (
-              <div className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--color-bg-tertiary)] border-l-2 border-[var(--color-accent)]/40 max-w-[200px]">
+              <button
+                onClick={() => onScrollToMessage?.(message.reply_to!)}
+                className="flex items-center gap-1 px-2 py-0.5 rounded bg-[var(--color-bg-tertiary)] border-l-2 border-[var(--color-accent)]/40 max-w-[200px] cursor-pointer hover:bg-[var(--color-bg-hover)] transition-colors text-left"
+              >
                 <span className="font-medium text-[var(--color-accent)] truncate">{entityDisplayName(replyMessage.sender)}</span>
                 <span className="text-[var(--color-text-muted)] truncate">{(replyMessage.layers?.summary || '').slice(0, 50)}</span>
-              </div>
+              </button>
             ) : (
-              <span className="text-[var(--color-text-muted)]">{t('message.replyTo', { id: message.reply_to })}</span>
+              <button
+                onClick={() => onScrollToMessage?.(message.reply_to!)}
+                className="text-[var(--color-text-muted)] cursor-pointer hover:text-[var(--color-accent)] transition-colors"
+              >
+                {t('message.replyTo', { id: message.reply_to })}
+              </button>
             )}
           </div>
         )}
@@ -529,23 +538,38 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
                 <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
               </button>
             )}
-            {/* Quick emoji picker */}
+            {/* Quick emoji picker with extended grid */}
             {showQuickReact && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowQuickReact(false)} />
                 <div className={cn(
-                  'absolute z-20 bottom-full mb-1 flex items-center gap-0.5 px-2 py-1.5 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg',
+                  'absolute z-20 bottom-full mb-1 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg overflow-hidden',
                   isSelf ? 'right-0' : 'left-0',
                 )}>
-                  {['👍', '❤️', '😂', '🎉', '🤔', '👀'].map((emoji) => (
-                    <button
-                      key={emoji}
-                      onClick={() => { onReact!(message.id, emoji); setShowQuickReact(false) }}
-                      className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-base cursor-pointer"
-                    >
-                      {emoji}
-                    </button>
-                  ))}
+                  <div className="flex items-center gap-0.5 px-2 py-1.5">
+                    {['\uD83D\uDC4D', '\u2764\uFE0F', '\uD83D\uDE02', '\uD83C\uDF89', '\uD83E\uDD14', '\uD83D\uDC40'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => { onReact!(message.id, emoji); setShowQuickReact(false) }}
+                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-base cursor-pointer"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-8 gap-0.5 px-2 pb-2 max-h-[100px] overflow-y-auto border-t border-[var(--color-border)] pt-1">
+                    {['\uD83D\uDE0A', '\uD83D\uDE0D', '\uD83E\uDD70', '\uD83D\uDE18', '\uD83D\uDE09', '\uD83D\uDE1C', '\uD83E\uDD29', '\uD83D\uDE07',
+                      '\uD83D\uDC4E', '\u270A', '\uD83D\uDC4A', '\uD83D\uDC4F', '\uD83D\uDE4F', '\uD83D\uDCAA', '\u2B50', '\uD83D\uDD25',
+                      '\uD83D\uDCAF', '\u2705', '\u274C', '\uD83D\uDE80', '\u2728', '\uD83C\uDF39', '\uD83C\uDF1E', '\uD83C\uDF08'].map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => { onReact!(message.id, emoji); setShowQuickReact(false) }}
+                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-sm cursor-pointer"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </>
             )}
@@ -567,6 +591,12 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         {/* Local delivery status for optimistic/offline messages */}
         {isSelf && message.temp_id && message.client_state && (
           <div className="px-1 flex items-center gap-1.5 text-[10px] text-[var(--color-text-muted)]">
+            {message.client_state === 'sending' && (
+              <>
+                <Clock className="w-3 h-3 text-[var(--color-text-muted)]" />
+                <span>{t('message.sending')}</span>
+              </>
+            )}
             {message.client_state === 'queued' && (
               <>
                 <CloudOff className="w-3 h-3" />
@@ -583,14 +613,14 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
             )}
             {message.client_state === 'failed' && (
               <>
-                <AlertTriangle className="w-3 h-3 text-amber-500" />
-                <span>{t('message.deliveryFailed')}</span>
+                <RotateCcw className="w-3 h-3 text-[var(--color-error)]" />
+                <span className="text-[var(--color-error)]">{t('message.deliveryFailed')}</span>
                 {canRetryOutbox && (
                   <button
                     onClick={() => onRetryOutbox!(message.temp_id!)}
-                    className="ml-1 underline hover:text-[var(--color-accent)] cursor-pointer"
+                    className="ml-1 text-[var(--color-error)] underline hover:text-[var(--color-accent)] cursor-pointer"
                   >
-                    {t('message.retryNow')}
+                    {t('message.tapToRetry')}
                   </button>
                 )}
               </>

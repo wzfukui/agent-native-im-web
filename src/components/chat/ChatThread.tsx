@@ -13,6 +13,7 @@ import type { Conversation, ActiveStream, Message } from '@/lib/types'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
 import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
 import { DotsAnimation } from '@/components/ui/DotsAnimation'
+import { MessageBubbleSkeleton } from '@/components/ui/Skeleton'
 import { Search, Users, ArrowLeft, Loader2, X, Settings, ListTodo } from 'lucide-react'
 
 const EMPTY_MESSAGES: Message[] = []
@@ -650,8 +651,12 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
       {/* Messages */}
       {loading && messages.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-6 h-6 text-[var(--color-text-muted)]" style={{ animation: 'spin 1s linear infinite' }} />
+        <div className="flex-1 overflow-hidden px-4 py-3 space-y-4">
+          <MessageBubbleSkeleton align="left" />
+          <MessageBubbleSkeleton align="right" />
+          <MessageBubbleSkeleton align="left" />
+          <MessageBubbleSkeleton align="right" />
+          <MessageBubbleSkeleton align="left" />
         </div>
       ) : (
         <MessageList

@@ -116,6 +116,8 @@
     "themeLightRose": "Rose",
     "themeLightOcean": "Ocean",
     "themeLightGreen": "Sage",
+    "themeSystem": "System",
+    "themeSystemDesc": "Follow your device's light/dark setting",
     "themeGroupLight": "Light",
     "themeGroupDark": "Dark",
     "profile": "Profile",
@@ -179,6 +181,7 @@
     "expandMore": "Show more",
     "collapseContent": "Show less",
     "retryNow": "Retry now",
+    "tapToRetry": "Tap to retry",
     "copyText": "Copy text"
   },
   "chat": {
@@ -448,7 +451,9 @@
     "installDescription": "Add to home screen for quick access",
     "iosInstallHint": "Tap Share then Add to Home Screen",
     "installed": "App Installed",
-    "offlineReady": "Ready for offline use"
+    "offlineReady": "Ready for offline use",
+    "newVersionAvailable": "New version available",
+    "refresh": "Refresh"
   },
   "newConversation": {
     "chatWithBot": "Chat with Bot",

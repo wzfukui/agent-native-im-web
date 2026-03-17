@@ -5,6 +5,7 @@ import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
+import { BotCardSkeleton } from '@/components/ui/Skeleton'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { CreateBotDialog } from './CreateBotDialog'
 import { Bot, Plus, Search, Loader2, Wifi, WifiOff, PowerOff } from 'lucide-react'
@@ -180,8 +181,10 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
       {/* Bot list */}
       <div className="flex-1 overflow-y-auto px-3 pb-3">
         {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="w-5 h-5 text-[var(--color-text-muted)] animate-spin" />
+          <div className="grid grid-cols-1 gap-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <BotCardSkeleton key={i} />
+            ))}
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-12 text-[var(--color-text-muted)]">
