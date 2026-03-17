@@ -13,8 +13,9 @@ import type { Conversation } from '@/lib/types'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import {
   X, UserMinus, Bell, BellOff, Crown, Shield, Eye,
-  Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2, Copy,
+  Pencil, Check, LogOut, Archive, VolumeX, Volume2, Loader2, Copy, ArrowLeft,
 } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 interface Props {
   conversation: Conversation
@@ -25,6 +26,7 @@ interface Props {
 
 export function ConversationSettingsPanel({ conversation, onClose, onLeave, isArchived }: Props) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
   const updateConversation = useConversationsStore((s) => s.updateConversation)
@@ -111,15 +113,27 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   }
 
   return (
-    <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0">
+    <div className={cn(
+      'border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0',
+      isMobile ? 'fixed inset-0 z-50 w-full border-l-0' : 'w-80',
+    )} style={isMobile ? { animation: 'slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1)' } : undefined}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--color-border)]">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-          {t('settings.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
-        </h3>
-        <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
-          <X className="w-4 h-4 text-[var(--color-text-muted)]" />
-        </button>
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
+              <ArrowLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            </button>
+          )}
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {t('settings.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
+          </h3>
+        </div>
+        {!isMobile && (
+          <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
+            <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+          </button>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">

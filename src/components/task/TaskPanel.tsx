@@ -9,8 +9,9 @@ import * as api from '@/lib/api'
 import type { Task, TaskStatus, TaskPriority } from '@/lib/types'
 import {
   X, Plus, Check, Circle, Clock, Ban, ArrowRightLeft,
-  ChevronDown, Loader2, Trash2, Calendar, User,
+  ChevronDown, Loader2, Trash2, Calendar, User, ArrowLeft,
 } from 'lucide-react'
+import { useIsMobile } from '@/hooks/useIsMobile'
 
 const EMPTY_TASKS: Task[] = []
 
@@ -37,6 +38,7 @@ const statusIcons: Record<TaskStatus, typeof Circle> = {
 
 export function TaskPanel({ conversationId, participants, onClose, isArchived }: Props) {
   const { t } = useTranslation()
+  const isMobile = useIsMobile()
   const token = useAuthStore((s) => s.token)!
   const tasks = useTasksStore((s) => s.byConv[conversationId] ?? EMPTY_TASKS)
   const setTasks = useTasksStore((s) => s.setTasks)
@@ -137,12 +139,22 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
   }
 
   return (
-    <div className="w-80 border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0">
+    <div className={cn(
+      'border-l border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex flex-col h-full overflow-hidden flex-shrink-0',
+      isMobile ? 'fixed inset-0 z-50 w-full border-l-0' : 'w-80',
+    )} style={isMobile ? { animation: 'slide-in-right 0.25s cubic-bezier(0.16, 1, 0.3, 1)' } : undefined}>
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-4 border-b border-[var(--color-border)]">
-        <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
-          {t('task.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
-        </h3>
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <button onClick={onClose} className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
+              <ArrowLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
+            </button>
+          )}
+          <h3 className="text-sm font-semibold text-[var(--color-text-primary)]">
+            {t('task.title')}{isArchived && <span className="text-xs text-[var(--color-text-muted)] ml-2">({t('common.archived')})</span>}
+          </h3>
+        </div>
         <div className="flex items-center gap-1">
           {!isArchived && (
             <button
@@ -152,9 +164,11 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
               <Plus className="w-4 h-4" />
             </button>
           )}
-          <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
-            <X className="w-4 h-4 text-[var(--color-text-muted)]" />
-          </button>
+          {!isMobile && (
+            <button onClick={onClose} className="w-7 h-7 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
+              <X className="w-4 h-4 text-[var(--color-text-muted)]" />
+            </button>
+          )}
         </div>
       </div>
 

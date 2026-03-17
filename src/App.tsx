@@ -977,6 +977,7 @@ export default function App() {
           <div className={cn(
             'flex-1 min-w-0 flex',
             isMobile && mobileInChat && 'mobile-chat-panel',
+            isMobile && viewMode === 'bots' && selectedBotId && 'mobile-chat-panel',
           )}>
             {viewMode === 'chat' ? (
               activeConv ? (
