@@ -610,6 +610,37 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
             <ListTodo className="w-4 h-4" />
           </button>
         )}
+        {/* Debug button — logs bubble layout info */}
+        <button
+          onClick={() => {
+            const container = document.querySelector('[class*="overflow-y-auto"]')
+            if (!container) { console.log('no container found'); return }
+            const containerRect = container.getBoundingClientRect()
+            console.log(`📦 Container: width=${containerRect.width}px, left=${containerRect.left}px, right=${containerRect.right}px`)
+            const bubbles = container.querySelectorAll('[class*="flex gap"]')
+            bubbles.forEach((b, i) => {
+              const r = b.getBoundingClientRect()
+              const bubble = b.querySelector('[class*="rounded-2xl"]')
+              const br = bubble?.getBoundingClientRect()
+              const isSelf = b.classList.contains('ml-auto')
+              console.log(
+                `💬 #${i} ${isSelf ? 'SELF' : 'OTHER'}: ` +
+                `row[w=${r.width.toFixed(0)}, l=${r.left.toFixed(0)}, r=${r.right.toFixed(0)}] ` +
+                `bubble[w=${br?.width.toFixed(0) ?? '?'}, l=${br?.left.toFixed(0) ?? '?'}, r=${br?.right.toFixed(0) ?? '?'}] ` +
+                `gap_right=${(containerRect.right - (br?.right ?? r.right)).toFixed(0)}px ` +
+                `gap_left=${((br?.left ?? r.left) - containerRect.left).toFixed(0)}px`
+              )
+              // Check for overflow
+              if (br && br.right > containerRect.right) {
+                console.warn(`  ⚠️ OVERFLOW by ${(br.right - containerRect.right).toFixed(0)}px!`)
+              }
+            })
+          }}
+          className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-warning)] min-w-[32px]"
+          title="Debug bubbles"
+        >
+          🐛
+        </button>
         {onToggleSettings && (
           <button
             onClick={onToggleSettings}
