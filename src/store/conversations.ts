@@ -34,12 +34,7 @@ export const useConversationsStore = create<ConversationsState>((set, get) => ({
   setConversations: (conversations) => set({ conversations }),
   setActive: (activeId) => {
     set({ activeId })
-    // Persist to URL hash for refresh survival
-    if (activeId) {
-      window.history.replaceState({}, '', `#c=${activeId}`)
-    } else {
-      window.history.replaceState({}, '', window.location.pathname + window.location.search)
-    }
+    // URL management is now handled by react-router
   },
   updateConversation: (id, partial) =>
     set((s) => {
