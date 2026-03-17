@@ -159,6 +159,8 @@
     "integrationCheckDesc": "Copy this script to quickly verify API auth and WebSocket handshake for a bot token.",
     "copyIntegrationCheck": "Copy self-check script",
     "removeMemberConfirm": "Remove {{name}} from this conversation?",
+    "devMode": "Developer Mode",
+    "devModeDesc": "Show debug tools in chat headers",
     "roleAdmin": "Admin",
     "roleMember": "Member",
     "roleObserver": "Observer"

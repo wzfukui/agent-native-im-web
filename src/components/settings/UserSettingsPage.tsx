@@ -25,7 +25,7 @@ export function UserSettingsPage({ onBack }: Props) {
   const token = useAuthStore((s) => s.token)!
   const setAuth = useAuthStore((s) => s.setAuth)
   const logout = useAuthStore((s) => s.logout)
-  const { theme, locale, setTheme, setLocale } = useSettingsStore()
+  const { theme, locale, devMode, setTheme, setLocale, setDevMode } = useSettingsStore()
   const isMobile = useIsMobile()
 
   const [section, setSection] = useState<Section | null>(isMobile ? null : 'profile')
@@ -627,6 +627,30 @@ export function UserSettingsPage({ onBack }: Props) {
               {!canInstall && !isInstalled && isIos && (
                 <p className="text-xs text-[var(--color-text-muted)]">{t('pwa.iosInstallHint')}</p>
               )}
+            </div>
+
+            {/* Developer Mode toggle */}
+            <div className="border-t border-[var(--color-border)] pt-6 mt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('settings.devMode')}</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)]">{t('settings.devModeDesc')}</p>
+                </div>
+                <button
+                  onClick={() => setDevMode(!devMode)}
+                  className={cn(
+                    'relative w-10 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0',
+                    devMode ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]',
+                  )}
+                  role="switch"
+                  aria-checked={devMode}
+                >
+                  <span className={cn(
+                    'absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform',
+                    devMode ? 'translate-x-[18px]' : 'translate-x-0.5',
+                  )} />
+                </button>
+              </div>
             </div>
           </div>
         )

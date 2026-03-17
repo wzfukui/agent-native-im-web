@@ -28,13 +28,16 @@ function applyTheme(theme: Theme) {
 interface SettingsState {
   theme: Theme
   locale: Locale
+  devMode: boolean
   setTheme: (theme: Theme) => void
   setLocale: (locale: Locale) => void
+  setDevMode: (devMode: boolean) => void
 }
 
 export const useSettingsStore = create<SettingsState>((set) => ({
   theme: loadSetting<Theme>('aim_theme', 'dark'),
   locale: loadSetting<Locale>('aim_locale', 'en'),
+  devMode: loadSetting<boolean>('aim_dev_mode', false),
   setTheme: (theme) => {
     localStorage.setItem('aim_theme', JSON.stringify(theme))
     applyTheme(theme)
@@ -43,6 +46,10 @@ export const useSettingsStore = create<SettingsState>((set) => ({
   setLocale: (locale) => {
     localStorage.setItem('aim_locale', JSON.stringify(locale))
     set({ locale })
+  },
+  setDevMode: (devMode) => {
+    localStorage.setItem('aim_dev_mode', JSON.stringify(devMode))
+    set({ devMode })
   },
 }))
 

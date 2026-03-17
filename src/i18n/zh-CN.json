@@ -159,6 +159,8 @@
     "integrationCheckDesc": "复制脚本后可快速验证 Bot Token 的 API 鉴权与 WebSocket 握手。",
     "copyIntegrationCheck": "复制自检脚本",
     "removeMemberConfirm": "确定要将 {{name}} 从此会话中移除吗？",
+    "devMode": "开发者模式",
+    "devModeDesc": "在聊天顶栏显示调试工具",
     "roleAdmin": "管理员",
     "roleMember": "成员",
     "roleObserver": "观察者"
