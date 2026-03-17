@@ -411,7 +411,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
 
       {/* Input area */}
       <div className="group/input">
-      <div className="flex items-end gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl px-3 py-1.5 focus-within:border-[var(--color-accent)]/50 transition-colors">
+      <div className="flex items-center gap-2 bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-xl px-3 py-1.5 focus-within:border-[var(--color-accent)]/50 transition-colors">
         {recState === 'recording' ? (
           /* Recording UI */
           <>
@@ -519,7 +519,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
               placeholder={placeholder || t('conversation.typeMessage')}
               disabled={disabled}
               rows={1}
-              className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[96px] py-1"
+              className="flex-1 self-end bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[96px] py-1"
             />
 
             {/* Send or Mic button — smooth transition */}

@@ -137,7 +137,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left cursor-pointer group',
+          'w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-left cursor-pointer group',
           active
             ? 'bg-[var(--color-bg-active)] shadow-sm'
             : 'hover:bg-[var(--color-bg-hover)]',

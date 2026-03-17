@@ -60,8 +60,8 @@ export function BotsPage() {
     <>
       {/* Left panel: BotList */}
       <div className={cn(
-        'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0',
-        isMobile ? 'w-full' : 'w-72',
+        'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
+        isMobile ? 'w-full h-full' : 'w-72',
         isMobile
           ? (selectedBotId ? 'hidden' : 'flex flex-col')
           : (selectedBotId ? 'hidden md:flex md:flex-col' : 'flex flex-col'),

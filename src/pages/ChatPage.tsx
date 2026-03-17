@@ -77,8 +77,8 @@ export function ChatPage() {
     <>
       {/* Left panel: ConversationList */}
       <div className={cn(
-        'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0',
-        isMobile ? 'w-full' : 'w-72',
+        'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
+        isMobile ? 'w-full h-full' : 'w-72',
         isMobile
           ? (conversationId ? 'hidden' : 'flex flex-col')
           : (activeId ? 'hidden md:flex md:flex-col' : 'flex flex-col'),
