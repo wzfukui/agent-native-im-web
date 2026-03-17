@@ -1056,6 +1056,8 @@ export default function App() {
                 )
               )
             ) : (
+              /* Bot detail: on mobile only show when a bot is selected */
+              (selectedBot || !isMobile) ? (
               <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
                 <ErrorBoundary>
                   <BotDetail
@@ -1072,6 +1074,7 @@ export default function App() {
                   />
                 </ErrorBoundary>
               </div>
+              ) : null
             )}
           </div>
         </>
