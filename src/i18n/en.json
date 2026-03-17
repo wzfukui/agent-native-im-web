@@ -53,6 +53,9 @@
     "newChat": "New Chat",
     "search": "Search conversations...",
     "noConversations": "No conversations yet",
+    "noConversationsDesc": "Start a new conversation to get going",
+    "pullToRefresh": "Pull to refresh",
+    "refreshing": "Refreshing...",
     "noMatches": "No matches",
     "participants": "{{count}} participants",
     "online": "Online",
@@ -175,7 +178,8 @@
     "deliveryFailed": "Delivery failed",
     "expandMore": "Show more",
     "collapseContent": "Show less",
-    "retryNow": "Retry now"
+    "retryNow": "Retry now",
+    "copyText": "Copy text"
   },
   "chat": {
     "reply": "Reply",
@@ -445,6 +449,13 @@
     "iosInstallHint": "Tap Share then Add to Home Screen",
     "installed": "App Installed",
     "offlineReady": "Ready for offline use"
+  },
+  "newConversation": {
+    "chatWithBot": "Chat with Bot",
+    "chatWithBotDesc": "Start a direct conversation with a bot",
+    "createGroup": "Create Group",
+    "createGroupDesc": "Create a group with bots and users",
+    "createGroupButton": "Create Group ({{count}} selected)"
   },
   "forgotPassword": {
     "title": "Reset Password",

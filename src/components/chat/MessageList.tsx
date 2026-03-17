@@ -139,7 +139,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
       )}
 
       {/* Messages */}
-      <div className="space-y-2.5">
+      <div>
         {messages.map((msg, i) => {
           const showDateSep = dateSepIndices.has(i)
           const showDivider = lastReadMessageId != null &&
@@ -147,9 +147,12 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
             messages[i - 1].id === lastReadMessageId &&
             msg.id !== lastReadMessageId &&
             msg.sender_id !== myEntityId
+          const showSender = shouldShowSender(msg, i)
+          // gap-1 between same-sender consecutive messages, gap-3 between different senders
+          const gapClass = i === 0 ? '' : showSender ? 'mt-3' : 'mt-1'
 
           return (
-            <div key={msg.id}>
+            <div key={msg.id} className={gapClass}>
               {showDateSep && (
                 <div className="flex items-center justify-center gap-3 py-3 mx-auto max-w-[60%]">
                   <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, var(--color-border), transparent)' }} />
@@ -172,7 +175,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 message={msg}
                 isSelf={msg.sender_id === myEntityId}
                 myEntityId={myEntityId}
-                showSender={shouldShowSender(msg, i)}
+                showSender={showSender}
                 replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
                 onInteractionReply={onInteractionReply}
                 onRevoke={onRevoke}

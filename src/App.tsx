@@ -21,6 +21,7 @@ import { UserSettingsPage } from '@/components/settings/UserSettingsPage'
 import { BotList } from '@/components/entity/BotList'
 import { BotDetail } from '@/components/entity/BotDetail'
 import { NewConversationDialog } from '@/components/conversation/NewConversationDialog'
+import { NewConversationSheet } from '@/components/conversation/NewConversationSheet'
 import { AdminPanel } from '@/components/admin/AdminPanel'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import { registerPushNotifications } from '@/lib/push'
@@ -946,7 +947,6 @@ export default function App() {
                 onSelect={handleSelectConversation}
                 onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
                 onUpdateConversation={(id, title) => {
-                  // Just update local state, ConversationItem already called the API
                   updateConversation(id, { title })
                 }}
                 onLeave={handleLeaveConversation}
@@ -954,6 +954,7 @@ export default function App() {
                 onUnarchive={handleUnarchiveConversation}
                 onPin={handlePinConversation}
                 onUnpin={handleUnpinConversation}
+                onRefresh={loadConversations}
                 archiveRefresh={archiveRefresh}
               />
             ) : (
@@ -1075,9 +1076,10 @@ export default function App() {
         </>
       )}
 
-      {/* Modals */}
-      {showNewChat && (
-        <NewConversationDialog
+      {/* Modals — use bottom sheet on mobile, dialog on desktop */}
+      {isMobile ? (
+        <NewConversationSheet
+          open={showNewChat}
           preselectedEntityId={newChatEntityId}
           onClose={() => setShowNewChat(false)}
           onCreated={(convId) => {
@@ -1085,6 +1087,17 @@ export default function App() {
             loadConversations().then(() => handleSelectConversation(convId))
           }}
         />
+      ) : (
+        showNewChat && (
+          <NewConversationDialog
+            preselectedEntityId={newChatEntityId}
+            onClose={() => setShowNewChat(false)}
+            onCreated={(convId) => {
+              setShowNewChat(false)
+              loadConversations().then(() => handleSelectConversation(convId))
+            }}
+          />
+        )
       )}
 
       <ConfirmDialog

@@ -1,6 +1,6 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
-import { cn, entityDisplayName, formatTime, truncate, isBotOrService } from '@/lib/utils'
+import { cn, entityDisplayName, formatRelativeTime, truncate, isBotOrService } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useConversationsStore } from '@/store/conversations'
 import type { Conversation } from '@/lib/types'
@@ -23,13 +23,14 @@ interface Props {
 }
 
 export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, onLeave, onArchive, onUnarchive, onPin, onUnpin, isArchived }: Props) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [isEditing, setIsEditing] = useState(false)
   const [editTitle, setEditTitle] = useState(conv.title || '')
   const [saving, setSaving] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 })
   const menuRef = useRef<HTMLDivElement>(null)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const token = useAuthStore((s) => s.token)
   const toggleMute = useConversationsStore((s) => s.toggleMute)
   const isMuted = useConversationsStore((s) => s.isMuted)
@@ -49,7 +50,6 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         onUpdate?.(conv.id, editTitle.trim())
         setIsEditing(false)
       }
-      // If failed, keep edit mode open so user doesn't lose input
     } catch (e) {
       void e
     } finally {
@@ -57,33 +57,47 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
     }
   }
 
-  const handleContextMenu = (e: React.MouseEvent) => {
-    e.preventDefault()
+  const openMenuAt = useCallback((x: number, y: number) => {
+    const menuWidth = 180
+    const menuHeight = 200
 
-    // Calculate position with viewport boundary detection
-    const menuWidth = 180 // approximate menu width
-    const menuHeight = 200 // approximate max menu height
-
-    let x = e.clientX
-    let y = e.clientY
-
-    // Check right boundary
-    if (x + menuWidth > window.innerWidth) {
-      x = window.innerWidth - menuWidth - 10
-    }
-
-    // Check bottom boundary
-    if (y + menuHeight > window.innerHeight) {
-      y = window.innerHeight - menuHeight - 10
-    }
-
-    // Ensure minimum offset from edges
+    if (x + menuWidth > window.innerWidth) x = window.innerWidth - menuWidth - 10
+    if (y + menuHeight > window.innerHeight) y = window.innerHeight - menuHeight - 10
     x = Math.max(10, x)
     y = Math.max(10, y)
 
     setMenuPos({ x, y })
     setShowMenu(true)
+  }, [])
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault()
+    openMenuAt(e.clientX, e.clientY)
   }
+
+  // Long-press support for mobile
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0]
+    const x = touch.clientX
+    const y = touch.clientY
+    longPressTimerRef.current = setTimeout(() => {
+      openMenuAt(x, y)
+    }, 500)
+  }, [openMenuAt])
+
+  const handleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
+  const handleTouchMove = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
 
   // Close menu on click outside
   useEffect(() => {
@@ -101,28 +115,40 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
   const displayEntity = isGroup ? null : otherParticipant
   const title = conv.title || entityDisplayName(otherParticipant)
   const lastMsg = conv.last_message
-  const lastText = lastMsg?.layers?.summary || (lastMsg?.content_type === 'image' ? '[Image]' : lastMsg?.content_type === 'file' ? '[File]' : '')
+  const lastText = lastMsg?.layers?.summary || (lastMsg?.content_type === 'image' ? '[Image]' : lastMsg?.content_type === 'file' ? '[File]' : lastMsg?.content_type === 'audio' ? '[Audio]' : '')
   const hasUnread = !muted && (conv.unread_count || 0) > 0
+  const unreadCount = conv.unread_count || 0
+
+  // Build sender prefix for last message preview
+  const lastMsgSenderName = (() => {
+    if (!lastMsg?.sender) return ''
+    if (lastMsg.sender_id === myEntityId) return i18n.language.startsWith('zh') ? '你' : 'You'
+    const name = entityDisplayName(lastMsg.sender)
+    // Use first word or first 4 chars for Chinese names
+    return name.length > 6 ? name.slice(0, 6) : name
+  })()
 
   return (
     <>
       <button
-        onClick={onClick}
+        onClick={showMenu ? undefined : onClick}
         onContextMenu={handleContextMenu}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left cursor-pointer group',
+          'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left cursor-pointer group',
           active
             ? 'bg-[var(--color-bg-active)] shadow-sm'
             : 'hover:bg-[var(--color-bg-hover)]',
-          hasUnread && !active && 'border-l-2 border-[var(--color-accent)]',
         )}
       >
+        {/* Avatar — 40px */}
         {isGroup ? (
           <div className="relative w-10 h-10 flex-shrink-0">
             <div className="w-10 h-10 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center">
               <Users className="w-4.5 h-4.5 text-[var(--color-accent)]" />
             </div>
-            {/* Agent indicator dot */}
             {conv.participants?.some((p) => isBotOrService(p.entity)) && (
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[var(--color-bot)] border-2 border-[var(--color-bg-secondary)] flex items-center justify-center">
                 <span className="text-[7px] text-white font-bold">
@@ -175,9 +201,10 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
                 {muted && <VolumeX className="w-3 h-3 text-[var(--color-text-muted)] flex-shrink-0" />}
               </span>
             )}
+            {/* Smart relative time */}
             {lastMsg && (
               <span className="text-[10px] text-[var(--color-text-muted)] whitespace-nowrap flex-shrink-0">
-                {formatTime(lastMsg.created_at)}
+                {formatRelativeTime(lastMsg.created_at, i18n.language)}
               </span>
             )}
             {!isEditing && (
@@ -189,25 +216,29 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
               </button>
             )}
           </div>
-          {lastText && (
-            <p className={cn('text-xs truncate mt-0.5 leading-relaxed', hasUnread ? 'text-[var(--color-text-secondary)]' : 'text-[var(--color-text-muted)]')}>
-              {lastMsg?.sender && lastMsg.sender_id !== myEntityId && (
-                <span className="text-[var(--color-text-secondary)]">
-                  {entityDisplayName(lastMsg.sender).split(' ')[0]}:&nbsp;
+          {/* Last message preview with sender name */}
+          {lastText ? (
+            <p className={cn('text-xs truncate mt-0.5 leading-relaxed', hasUnread ? 'text-[var(--color-text-secondary)] font-medium' : 'text-[var(--color-text-muted)]')}>
+              {lastMsgSenderName && (
+                <span className={cn(hasUnread ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]')}>
+                  {lastMsgSenderName}:&nbsp;
                 </span>
               )}
-              {truncate(lastText, 50)}
+              {truncate(lastText, 45)}
             </p>
+          ) : (
+            <p className="text-xs text-[var(--color-text-muted)]/50 mt-0.5">&nbsp;</p>
           )}
         </div>
 
-        {!muted && (conv.unread_count || 0) > 0 && (
-          <span className="min-w-5 h-5 px-1.5 rounded-full bg-[var(--color-accent)] text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0">
-            {(conv.unread_count || 0) > 99 ? '99+' : conv.unread_count}
+        {/* Unread badge — red for visibility */}
+        {!muted && unreadCount > 0 && (
+          <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center flex-shrink-0 shadow-sm shadow-red-500/30">
+            {unreadCount > 99 ? '99+' : unreadCount}
           </span>
         )}
-        {muted && (conv.unread_count || 0) > 0 && (
-          <span className="w-2 h-2 rounded-full bg-[var(--color-text-muted)] flex-shrink-0" />
+        {muted && unreadCount > 0 && (
+          <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-text-muted)]/50 flex-shrink-0" />
         )}
       </button>
 

@@ -243,7 +243,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   const autoResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const ta = e.target
     ta.style.height = 'auto'
-    ta.style.height = Math.min(ta.scrollHeight, 120) + 'px'
+    ta.style.height = Math.min(ta.scrollHeight, 96) + 'px'
     const value = ta.value
     setText(value)
     emitTyping()
@@ -465,40 +465,49 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
               placeholder={placeholder || t('conversation.typeMessage')}
               disabled={disabled}
               rows={1}
-              className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[120px] py-1"
+              className="flex-1 bg-transparent text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] resize-none focus:outline-none leading-relaxed max-h-[96px] py-1"
             />
 
-            {/* Send or Mic button */}
-            {text.trim() || pendingFiles.length > 0 ? (
+            {/* Send or Mic button — smooth transition */}
+            <div className="relative w-8 h-8 flex-shrink-0">
+              {/* Send button — visible when there's content */}
               <button
                 onClick={handleSubmit}
-                disabled={disabled || hasUploading}
+                disabled={disabled || hasUploading || (!text.trim() && pendingFiles.length === 0)}
                 className={cn(
-                  'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all cursor-pointer shadow-sm',
-                  hasUploading
-                    ? 'bg-[var(--color-accent)]/50 text-white/70'
-                    : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white shadow-[var(--color-accent)]/25',
+                  'absolute inset-0 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer',
+                  (text.trim() || pendingFiles.length > 0)
+                    ? hasUploading
+                      ? 'bg-[var(--color-accent)]/50 text-white/70 scale-100 opacity-100'
+                      : 'bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white shadow-sm shadow-[var(--color-accent)]/25 scale-100 opacity-100'
+                    : 'scale-75 opacity-0 pointer-events-none',
                 )}
               >
                 {hasUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
               </button>
-            ) : onAudioSend ? (
-              <button
-                onClick={handleRecordStart}
-                disabled={disabled}
-                className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
-              >
-                <Mic className="w-4 h-4" />
-              </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled
-                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-all"
-              >
-                <Send className="w-4 h-4" />
-              </button>
-            )}
+              {/* Mic button — visible when empty */}
+              {onAudioSend && (
+                <button
+                  onClick={handleRecordStart}
+                  disabled={disabled}
+                  className={cn(
+                    'absolute inset-0 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-all duration-200 text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
+                    (!text.trim() && pendingFiles.length === 0) ? 'scale-100 opacity-100' : 'scale-75 opacity-0 pointer-events-none',
+                  )}
+                >
+                  <Mic className="w-4 h-4" />
+                </button>
+              )}
+              {/* Disabled send button when no audio */}
+              {!onAudioSend && !text.trim() && pendingFiles.length === 0 && (
+                <button
+                  disabled
+                  className="absolute inset-0 rounded-lg flex items-center justify-center text-[var(--color-text-muted)]/40 transition-all"
+                >
+                  <Send className="w-4 h-4" />
+                </button>
+              )}
+            </div>
           </>
         )}
       </div>

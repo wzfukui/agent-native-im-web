@@ -550,39 +550,38 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       {/* Header */}
       <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         {onBack && (
-          <button onClick={onBack} className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer">
+          <button onClick={onBack} className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer min-w-[32px]">
             <ArrowLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
           </button>
         )}
 
-        {isGroup ? (
-          <div className="w-9 h-9 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center">
-            <Users className="w-4 h-4 text-[var(--color-accent)]" />
-          </div>
-        ) : (
-          <EntityAvatar entity={otherParticipant} size="sm" showStatus />
-        )}
+        {/* Clickable title area — opens settings/detail panel */}
+        <button
+          onClick={() => isGroup ? setShowMembers(true) : onToggleSettings?.()}
+          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          {isGroup ? (
+            <div className="w-9 h-9 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center flex-shrink-0">
+              <Users className="w-4 h-4 text-[var(--color-accent)]" />
+            </div>
+          ) : (
+            <EntityAvatar entity={otherParticipant} size="sm" showStatus />
+          )}
 
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
-            {conversation.title || entityDisplayName(otherParticipant)}
-          </h3>
-          <p className="text-[11px] text-[var(--color-text-muted)]">
-            {isGroup
-              ? (
-                  <button
-                    onClick={() => setShowMembers(true)}
-                    className="hover:text-[var(--color-accent)] transition-colors cursor-pointer"
-                  >
-                    {t('conversation.participants', { count: conversation.participants?.length || 0 })}
-                  </button>
-                )
-              : isOtherOnline ? (
-                  <span className="text-[var(--color-success)]">{t('common.online')}</span>
-                ) : t('common.offline')
-            }
-          </p>
-        </div>
+          <div className="flex-1 min-w-0 text-left">
+            <h3 className="text-sm font-semibold text-[var(--color-text-primary)] truncate">
+              {conversation.title || entityDisplayName(otherParticipant)}
+            </h3>
+            <p className="text-[11px] text-[var(--color-text-muted)]">
+              {isGroup
+                ? t('conversation.participants', { count: conversation.participants?.length || 0 })
+                : isOtherOnline ? (
+                    <span className="text-[var(--color-success)]">{t('common.online')}</span>
+                  ) : t('common.offline')
+              }
+            </p>
+          </div>
+        </button>
 
         <button
           onClick={() => {
@@ -595,7 +594,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
             }
           }}
           className={cn(
-            'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors',
+            'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
             searching ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
           )}
         >
@@ -605,7 +604,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         {onToggleTasks && !isArchived && (
           <button
             onClick={onToggleTasks}
-            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
           >
             <ListTodo className="w-4 h-4" />
           </button>
@@ -613,7 +612,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         {onToggleSettings && (
           <button
             onClick={onToggleSettings}
-            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
           >
             <Settings className="w-4 h-4" />
           </button>

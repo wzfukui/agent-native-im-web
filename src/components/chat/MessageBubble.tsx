@@ -10,6 +10,7 @@ import { InteractionCard } from './InteractionCard'
 import { ArtifactRenderer } from './ArtifactRenderer'
 import { HandoverCard } from './HandoverCard'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
+import { MessageActionMenu } from '@/components/ui/MessageActionMenu'
 import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
@@ -114,6 +115,9 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   const [collapsed, setCollapsed] = useState(true)
   const [isOverflow, setIsOverflow] = useState(false)
   const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null)
+  const [actionMenuRect, setActionMenuRect] = useState<DOMRect | null>(null)
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const bubbleRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const layers = message.layers || {}
 
@@ -138,6 +142,36 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   const canReply = !isRevoked && onReply
   const canReact = !isRevoked && onReact
   const canRetryOutbox = isSelf && !!message.temp_id && message.client_state !== 'sending' && !!onRetryOutbox
+
+  // Long-press handler for mobile action menu
+  const handleBubbleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (isRevoked) return
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    longPressTimerRef.current = setTimeout(() => {
+      setActionMenuRect(rect)
+    }, 500)
+  }, [isRevoked])
+
+  const handleBubbleTouchEnd = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
+  const handleBubbleTouchMove = useCallback(() => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
+  }, [])
+
+  const handleBubbleContextMenu = useCallback((e: React.MouseEvent) => {
+    if (isRevoked) return
+    e.preventDefault()
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+    setActionMenuRect(rect)
+  }, [isRevoked])
 
   // Revoked message
   if (isRevoked) {
@@ -335,12 +369,17 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
   return (
     <>
     <div
+      ref={bubbleRef}
       className={cn(
         'flex gap-2.5 max-w-[85%] group transition-opacity duration-300',
         isSelf ? 'ml-auto flex-row-reverse' : '',
         message.client_state === 'sending' ? 'opacity-60' : '',
       )}
       style={{ animation: 'slide-up 0.2s cubic-bezier(0.16,1,0.3,1)' }}
+      onContextMenu={handleBubbleContextMenu}
+      onTouchStart={handleBubbleTouchStart}
+      onTouchEnd={handleBubbleTouchEnd}
+      onTouchMove={handleBubbleTouchMove}
     >
       {/* Avatar (or spacer for alignment) */}
       {!isSelf && (
@@ -359,7 +398,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
 
       <div className={cn('space-y-0.5', isSelf ? 'items-end' : 'items-start', 'flex flex-col')}>
         {/* Sender name + time */}
-        {showSender && (
+        {showSender ? (
           <div className={cn('flex items-center gap-2 px-1', isSelf ? 'flex-row-reverse' : '')}>
             {!isSelf && (
               <span className={cn(
@@ -370,6 +409,13 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
               </span>
             )}
             <span className="text-[10px] text-[var(--color-text-muted)] opacity-40 group-hover:opacity-100 transition-opacity">
+              {formatTime(message.created_at)}
+            </span>
+          </div>
+        ) : (
+          /* Timestamp on hover only for grouped messages */
+          <div className={cn('flex items-center px-1 h-0 overflow-visible', isSelf ? 'justify-end' : '')}>
+            <span className="text-[10px] text-[var(--color-text-muted)] opacity-0 group-hover:opacity-60 transition-opacity">
               {formatTime(message.created_at)}
             </span>
           </div>
@@ -612,6 +658,19 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         onClose={() => setPopoverAnchor(null)}
         onSendMessage={onEntitySendMessage}
         onViewDetails={onEntityViewDetails}
+      />
+    )}
+
+    {/* Long-press / right-click action menu */}
+    {actionMenuRect && (
+      <MessageActionMenu
+        message={message}
+        isSelf={isSelf}
+        anchorRect={actionMenuRect}
+        onClose={() => setActionMenuRect(null)}
+        onReply={onReply}
+        onReact={onReact}
+        onRevoke={canRevoke ? onRevoke : undefined}
       />
     )}
   </>

@@ -68,6 +68,34 @@ export function formatDateSeparator(iso: string, todayLabel = 'Today', yesterday
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
+/**
+ * Smart relative time format for conversation list.
+ * Returns: "just now" / "3m" / "2h" / "Yesterday" / "3/15" / "2025/3/15"
+ */
+export function formatRelativeTime(iso: string, locale = 'en'): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const diffMs = now.getTime() - d.getTime()
+  const diffSec = Math.floor(diffMs / 1000)
+  const diffMin = Math.floor(diffSec / 60)
+  const diffHour = Math.floor(diffMin / 60)
+
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
+  const diffDays = Math.round((today.getTime() - msgDay.getTime()) / 86400000)
+
+  const isZh = locale.startsWith('zh')
+
+  if (diffSec < 60) return isZh ? '\u521A\u521A' : 'now'
+  if (diffMin < 60) return isZh ? `${diffMin}\u5206\u524D` : `${diffMin}m`
+  if (diffDays === 0) return isZh ? `${diffHour}\u5C0F\u65F6\u524D` : `${diffHour}h`
+  if (diffDays === 1) return isZh ? '\u6628\u5929' : 'Yesterday'
+  if (d.getFullYear() === now.getFullYear()) {
+    return `${d.getMonth() + 1}/${d.getDate()}`
+  }
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`
+}
+
 export function truncate(str: string, max: number): string {
   if (str.length <= max) return str
   return str.slice(0, max - 1) + '\u2026'

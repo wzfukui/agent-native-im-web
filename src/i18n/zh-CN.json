@@ -53,6 +53,9 @@
     "newChat": "新会话",
     "search": "搜索会话...",
     "noConversations": "暂无会话",
+    "noConversationsDesc": "开始一段新对话吧",
+    "pullToRefresh": "下拉刷新",
+    "refreshing": "刷新中...",
     "noMatches": "无匹配结果",
     "participants": "{{count}} 位参与者",
     "online": "在线",
@@ -175,7 +178,8 @@
     "deliveryFailed": "发送失败",
     "expandMore": "展开全部",
     "collapseContent": "收起",
-    "retryNow": "立即重试"
+    "retryNow": "立即重试",
+    "copyText": "复制文本"
   },
   "chat": {
     "reply": "回复",
@@ -445,6 +449,13 @@
     "iosInstallHint": "点击「分享」然后选择「添加到主屏幕」",
     "installed": "应用已安装",
     "offlineReady": "已准备好离线使用"
+  },
+  "newConversation": {
+    "chatWithBot": "\u4E0E Bot \u5BF9\u8BDD",
+    "chatWithBotDesc": "\u4E0E Bot \u5F00\u59CB\u4E00\u5BF9\u4E00\u5BF9\u8BDD",
+    "createGroup": "\u521B\u5EFA\u7FA4\u804A",
+    "createGroupDesc": "\u521B\u5EFA\u5305\u542B Bot \u548C\u7528\u6237\u7684\u7FA4\u7EC4",
+    "createGroupButton": "\u521B\u5EFA\u7FA4\u7EC4\uFF08\u5DF2\u9009 {{count}} \u4EBA\uFF09"
   },
   "forgotPassword": {
     "title": "重置密码",
