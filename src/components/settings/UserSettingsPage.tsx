@@ -756,29 +756,69 @@ export function UserSettingsPage({ onBack }: Props) {
               <Bell className="w-4 h-4 text-[var(--color-accent)]" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[var(--color-text-primary)]">{t('settings.pushNotifications')}</p>
-                <p className="text-[10px] text-[var(--color-text-muted)]">
-                  {Notification?.permission === 'granted' ? t('settings.pushEnabled') : t('settings.pushDisabled')}
+                <p className="text-[10px] text-[var(--color-text-muted)]" id="push-status">
+                  {t('settings.pushDisabled')}
                 </p>
               </div>
-              {Notification?.permission !== 'granted' && (
-                <button
-                  onClick={async () => {
-                    const permission = await Notification.requestPermission()
-                    if (permission === 'granted') {
+              <button
+                id="push-toggle-btn"
+                onClick={async () => {
+                  const btn = document.getElementById('push-toggle-btn') as HTMLButtonElement
+                  const status = document.getElementById('push-status')
+                  if (!btn || !status) return
+                  btn.disabled = true
+                  btn.textContent = '...'
+
+                  try {
+                    // Check if already subscribed
+                    const reg = await navigator.serviceWorker?.ready
+                    const existing = reg ? await reg.pushManager?.getSubscription() : null
+
+                    if (existing) {
+                      // Unsubscribe
+                      await existing.unsubscribe()
+                      await api.unregisterPush(token, existing.endpoint)
+                      status.textContent = t('settings.pushDisabled')
+                      btn.textContent = t('settings.enablePush')
+                      btn.className = btn.className.replace('bg-[var(--color-error)]', 'bg-[var(--color-accent)]').replace('hover:bg-red-600', 'hover:opacity-90')
+                    } else {
+                      // Request permission if needed
+                      if (Notification.permission === 'default') {
+                        const perm = await Notification.requestPermission()
+                        if (perm !== 'granted') {
+                          status.textContent = t('settings.pushDenied') || 'Permission denied'
+                          btn.textContent = t('settings.enablePush')
+                          btn.disabled = false
+                          return
+                        }
+                      }
+                      if (Notification.permission !== 'granted') {
+                        status.textContent = t('settings.pushDenied') || 'Permission denied by system'
+                        btn.textContent = t('settings.enablePush')
+                        btn.disabled = false
+                        return
+                      }
+                      // Subscribe
                       const { registerPushNotifications } = await import('@/lib/push')
-                      await registerPushNotifications(token)
-                      // Force re-render
-                      setSection(section!)
+                      const ok = await registerPushNotifications(token)
+                      if (ok) {
+                        status.textContent = t('settings.pushEnabled')
+                        btn.textContent = t('settings.disablePush')
+                      } else {
+                        status.textContent = t('settings.pushFailed') || 'Registration failed'
+                        btn.textContent = t('settings.enablePush')
+                      }
                     }
-                  }}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white cursor-pointer hover:opacity-90 transition-opacity"
-                >
-                  {t('settings.enablePush')}
-                </button>
-              )}
-              {Notification?.permission === 'granted' && (
-                <span className="text-xs text-[var(--color-success)]">✓</span>
-              )}
+                  } catch (err) {
+                    status.textContent = `Error: ${err}`
+                    btn.textContent = t('settings.enablePush')
+                  }
+                  btn.disabled = false
+                }}
+                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white cursor-pointer hover:opacity-90 transition-opacity"
+              >
+                {t('settings.enablePush')}
+              </button>
             </div>
           </div>
 

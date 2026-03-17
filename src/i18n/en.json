@@ -167,7 +167,10 @@
     "pushNotifications": "Push Notifications",
     "enablePush": "Enable",
     "pushEnabled": "Notifications are enabled",
-    "pushDisabled": "Tap Enable to receive message notifications"
+    "pushDisabled": "Tap Enable to receive message notifications",
+    "disablePush": "Disable",
+    "pushFailed": "Registration failed — try again",
+    "pushDenied": "Permission denied by system"
   },
   "message": {
     "revoked": "{{name}} revoked a message",
