@@ -6,7 +6,7 @@ import * as api from '@/lib/api'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { CreateAgentDialog } from './CreateAgentDialog'
+import { CreateBotDialog } from './CreateBotDialog'
 import { Bot, Plus, Search, Loader2, Wifi, WifiOff, PowerOff } from 'lucide-react'
 
 interface Props {
@@ -133,9 +133,9 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
         </button>
       </div>
 
-      {/* Create agent dialog */}
+      {/* Create bot dialog */}
       {showCreate && (
-        <CreateAgentDialog
+        <CreateBotDialog
           onClose={() => setShowCreate(false)}
           onCreated={(result) => {
             setShowCreate(false)

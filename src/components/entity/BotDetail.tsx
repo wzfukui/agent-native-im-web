@@ -135,7 +135,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `${bot.name || 'agent'}-quickstart.md`
+    a.download = `${bot.name || 'bot'}-quickstart.md`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -195,7 +195,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     `curl ${window.location.origin}/api/v1/me -H "Authorization: Bearer ${accessToken}"`,
   ].join('\n') : ''
   const accessUrl = accessToken
-    ? `aim-agent://connect?base=${encodeURIComponent(`${window.location.origin}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
+    ? `aim-bot://connect?base=${encodeURIComponent(`${window.location.origin}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
     : ''
   const diagnosticsSnapshot = [
     `entity=${bot.id} (${bot.name})`,
@@ -296,7 +296,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
             <div className="flex gap-2">
               <button
                 onClick={() => {
-                  const integrationInfo = `# Agent Integration Configuration
+                  const integrationInfo = `# Bot Integration Configuration
 API Endpoint: ${window.location.origin}/api/v1
 API Key: ${createdCredentials.key}
 
@@ -420,20 +420,20 @@ ${createdCredentials.doc}`
             </div>
             <div className="flex flex-wrap gap-2">
               <button
-                onClick={() => handleCopy(accessText, 'agent-access-text')}
+                onClick={() => handleCopy(accessText, 'bot-access-text')}
                 disabled={!accessToken}
                 className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
-                {copyBtn('agent-access-text')}
-                {copied === 'agent-access-text' ? t('common.copied') : t('bot.copyAgentAccess')}
+                {copyBtn('bot-access-text')}
+                {copied === 'bot-access-text' ? t('common.copied') : t('bot.copyBotAccess')}
               </button>
               <button
-                onClick={() => handleCopy(accessUrl, 'agent-access-url')}
+                onClick={() => handleCopy(accessUrl, 'bot-access-url')}
                 disabled={!accessToken}
                 className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
                 <Link className="w-3 h-3 text-[var(--color-text-muted)]" />
-                {copied === 'agent-access-url' ? t('common.copied') : t('bot.copyAgentUrl')}
+                {copied === 'bot-access-url' ? t('common.copied') : t('bot.copyBotUrl')}
               </button>
               <button
                 onClick={downloadQuickstart}
@@ -456,7 +456,7 @@ ${createdCredentials.doc}`
           </div>
         )}
 
-        {/* ── Agent info — no card wrapper ── */}
+        {/* ── Bot info — no card wrapper ── */}
         <div className="px-5 py-4 border-b border-[var(--color-border)]">
           {/* Avatar change (owner only) */}
           {isOwner && !isDisabled && (
@@ -675,9 +675,9 @@ ${createdCredentials.doc}`
 /** Map backend recommendation strings to i18n keys */
 const REC_MAP: Record<string, string> = {
   'entity is disabled, reactivate it first': 'bot.recDisabled',
-  'agent is still using bootstrap key, complete approval to issue permanent key': 'bot.recBootstrapOnly',
-  'no credentials found, recreate or re-approve this agent': 'bot.recNoCreds',
-  'agent is offline, verify network and websocket handshake': 'bot.recOffline',
+  'bot is still using bootstrap key, complete approval to issue permanent key': 'bot.recBootstrapOnly',
+  'no credentials found, recreate or re-approve this bot': 'bot.recNoCreds',
+  'bot is offline, verify network and websocket handshake': 'bot.recOffline',
 }
 function translateRecommendation(text: string, t: (key: string) => string): string {
   const key = REC_MAP[text]

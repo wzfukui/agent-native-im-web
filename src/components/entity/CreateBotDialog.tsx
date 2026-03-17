@@ -12,7 +12,7 @@ interface Props {
   onCreated: (result: { entity: Entity; key: string; doc: string }) => void
 }
 
-export function CreateAgentDialog({ onClose, onCreated }: Props) {
+export function CreateBotDialog({ onClose, onCreated }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [name, setName] = useState('')
