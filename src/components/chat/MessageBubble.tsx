@@ -399,7 +399,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           : <div className="w-8 flex-shrink-0" />
       )}
 
-      <div className={cn('space-y-0.5 min-w-0 flex-1', isSelf ? 'items-end' : 'items-start', 'flex flex-col')}>
+      <div className={cn('space-y-0.5 min-w-0 flex-1 flex flex-col', isSelf ? 'items-end md:items-end' : 'items-stretch md:items-start')}>
         {/* Sender name + time */}
         {showSender ? (
           <div className={cn('flex items-center gap-2 px-1', isSelf ? 'flex-row-reverse' : '')}>
