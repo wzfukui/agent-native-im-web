@@ -297,7 +297,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   }
 
   return (
-    <div className="px-4 pb-4 pt-2 relative">
+    <div className="px-4 pt-2 relative" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
       {/* @mention autocomplete popover */}
       {mentionQuery !== null && mentionCandidates.length > 0 && (
         <div

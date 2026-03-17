@@ -20,12 +20,12 @@ export function BotsPage() {
   // Load bot entities when entering bots view
   useEffect(() => {
     botManager.loadBotEntities()
-  }, [])
+  }, [botManager])
 
   // Also reload when navigating to a specific bot
   useEffect(() => {
     if (selectedBotId) botManager.loadBotEntities()
-  }, [selectedBotId])
+  }, [selectedBotId, botManager])
 
   const selectedBot = botManager.botEntities.find((e) => e.id === selectedBotId) || null
 

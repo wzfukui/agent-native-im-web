@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
@@ -25,7 +25,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   const [removeMemberId, setRemoveMemberId] = useState<number | null>(null)
   const [addSearch, setAddSearch] = useState('')
 
-  const participants = conversation.participants || []
+  const participants = useMemo(() => conversation.participants || [], [conversation.participants])
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
   const canManage = myParticipant?.role === 'owner' || myParticipant?.role === 'admin'
 
@@ -45,7 +45,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
         }
       })
     })
-  }, [showAddMember, token])
+  }, [showAddMember, token, participants])
 
   const handleAdd = async (entityId: number) => {
     setLoading(true)

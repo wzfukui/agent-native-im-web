@@ -40,7 +40,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
     }).catch(() => {
       // Network failed — cached data remains visible
     })
-  }, [])
+  }, [myEntity.id, token])
 
   const toggleSelect = (id: number) => {
     const next = new Set(selected)

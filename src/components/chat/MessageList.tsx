@@ -76,7 +76,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     if (streams && streams.length > 0 && isNearBottomRef.current) {
       endRef.current?.scrollIntoView({ behavior: 'smooth' })
     }
-  }, [streamContent, streams?.length])
+  }, [streamContent, streams])
 
   // Auto-scroll when thinking indicator or progress appears
   useEffect(() => {

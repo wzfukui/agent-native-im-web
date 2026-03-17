@@ -31,7 +31,7 @@ export function MobileTabBar({ activeTab, onTabChange }: Props) {
 
   return (
     <nav className="mobile-tab-bar flex items-end justify-around bg-[var(--color-bg-secondary)] border-t border-[var(--color-border)]"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+      style={{ paddingBottom: 'max(8px, env(safe-area-inset-bottom))' }}
     >
       {tabs.map(({ key, icon: Icon, label, badge }) => {
         const active = activeTab === key
