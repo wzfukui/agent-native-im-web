@@ -631,30 +631,18 @@ export function UserSettingsPage({ onBack }: Props) {
 
             {/* Developer Mode toggle */}
             <div className="border-t border-[var(--color-border)] pt-6 mt-6">
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex-1 min-w-0">
+              <label className="flex items-center justify-between gap-3 cursor-pointer">
+                <div>
                   <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('settings.devMode')}</p>
                   <p className="text-[10px] text-[var(--color-text-muted)]">{t('settings.devModeDesc')}</p>
                 </div>
-                <button
-                  onClick={() => setDevMode(!devMode)}
-                  style={{ width: 44, minWidth: 44, height: 24 }}
-                  className={cn(
-                    'relative inline-flex items-center rounded-full transition-colors cursor-pointer',
-                    devMode ? 'bg-[var(--color-accent)]' : 'bg-[var(--color-border)]',
-                  )}
-                  role="switch"
-                  aria-checked={devMode}
-                >
-                  <span
-                    style={{ width: 18, height: 18 }}
-                    className={cn(
-                      'inline-block rounded-full bg-white shadow-sm transform transition-transform',
-                      devMode ? 'translate-x-[22px]' : 'translate-x-[3px]',
-                    )}
-                  />
-                </button>
-              </div>
+                <input
+                  type="checkbox"
+                  checked={devMode}
+                  onChange={(e) => setDevMode(e.target.checked)}
+                  className="w-5 h-5 accent-[var(--color-accent)] cursor-pointer"
+                />
+              </label>
             </div>
           </div>
         )
