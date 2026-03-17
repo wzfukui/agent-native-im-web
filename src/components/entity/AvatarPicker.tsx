@@ -15,7 +15,7 @@ const PRESET_AVATARS = [
 interface Props {
   currentUrl?: string
   onSelect: (url: string) => void
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
 }
 
 function generatePresetSvg(emoji: string): string {
@@ -97,8 +97,8 @@ export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
     setShowPicker(false)
   }
 
-  const sizeClasses = size === 'sm' ? 'w-10 h-10' : 'w-14 h-14'
-  const iconSize = size === 'sm' ? 'w-4 h-4' : 'w-5 h-5'
+  const sizeClasses = size === 'sm' ? 'w-10 h-10' : size === 'lg' ? 'w-20 h-20' : 'w-14 h-14'
+  const iconSize = size === 'sm' ? 'w-4 h-4' : size === 'lg' ? 'w-6 h-6' : 'w-5 h-5'
 
   return (
     <div className="relative" ref={pickerRef}>

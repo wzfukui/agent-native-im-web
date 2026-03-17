@@ -73,36 +73,54 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
     const isActive = entity.id === selectedId
     const meta = entity.metadata as Record<string, unknown> | undefined
     const tags = Array.isArray(meta?.tags) ? (meta.tags as string[]) : []
+    const description = (meta?.description as string) || ''
     return (
       <button
         key={entity.id}
         onClick={() => onSelect(entity.id)}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors text-left cursor-pointer',
+          'w-full flex items-start gap-3 p-3 rounded-xl border transition-all text-left cursor-pointer',
           isActive
-            ? 'bg-[var(--color-accent-dim)]'
-            : 'hover:bg-[var(--color-bg-hover)]',
+            ? 'border-[var(--color-accent)] bg-[var(--color-accent-dim)] shadow-sm'
+            : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]/30 hover:bg-[var(--color-bg-hover)]',
           isDisabled && 'opacity-50'
         )}
       >
-        <EntityAvatar entity={entity} size="sm" showStatus />
+        <div className="relative flex-shrink-0">
+          <EntityAvatar entity={entity} size="md" />
+          {/* Online status dot */}
+          <span className={cn(
+            'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--color-bg-secondary)]',
+            isDisabled
+              ? 'bg-[var(--color-warning)]'
+              : isOnline
+                ? 'bg-[var(--color-success)]'
+                : 'bg-[var(--color-text-muted)]/50'
+          )} />
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
-            {entityDisplayName(entity)}
-          </p>
-          <p className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
-            {isDisabled ? (
-              <><PowerOff className="w-2.5 h-2.5" /> {t('bot.disabled')}</>
-            ) : isOnline ? (
-              <><Wifi className="w-2.5 h-2.5 text-[var(--color-success)]" /> {t('common.online')}</>
-            ) : (
-              <><WifiOff className="w-2.5 h-2.5" /> {t('common.offline')}</>
-            )}
-          </p>
+          <div className="flex items-center gap-2">
+            <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
+              {entityDisplayName(entity)}
+            </p>
+            <span className={cn(
+              'px-1.5 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0',
+              isDisabled
+                ? 'bg-[var(--color-warning)]/12 text-[var(--color-warning)]'
+                : isOnline
+                  ? 'bg-[var(--color-success)]/12 text-[var(--color-success)]'
+                  : 'bg-[var(--color-text-muted)]/12 text-[var(--color-text-muted)]'
+            )}>
+              {isDisabled ? t('bot.disabled') : isOnline ? t('common.online') : t('common.offline')}
+            </span>
+          </div>
+          {description && (
+            <p className="text-xs text-[var(--color-text-muted)] truncate mt-0.5">{description}</p>
+          )}
           {tags.length > 0 && (
-            <div className="flex flex-wrap gap-0.5 mt-0.5">
+            <div className="flex flex-wrap gap-1 mt-1.5">
               {tags.slice(0, 3).map((tag, i) => (
-                <span key={i} className="px-1 py-px rounded bg-[var(--color-bot)]/8 text-[var(--color-bot)] text-[9px]">
+                <span key={i} className="px-1.5 py-0.5 rounded-md bg-[var(--color-bot)]/8 text-[var(--color-bot)] text-[9px]">
                   {tag}
                 </span>
               ))}
@@ -160,7 +178,7 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
       </div>
 
       {/* Bot list */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5">
+      <div className="flex-1 overflow-y-auto px-3 pb-3">
         {loading ? (
           <div className="flex justify-center py-12">
             <Loader2 className="w-5 h-5 text-[var(--color-text-muted)] animate-spin" />
@@ -172,13 +190,15 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
           </div>
         ) : (
           <>
-            {/* Active bots (online first) */}
-            {activeBots.map((entity) => renderBotItem(entity, false))}
+            {/* Active bots (online first) — card grid, 2-col on desktop */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {activeBots.map((entity) => renderBotItem(entity, false))}
+            </div>
 
             {/* Divider + Disabled bots */}
             {disabledBots.length > 0 && (
               <>
-                <div className="flex items-center gap-2 px-2 py-2 mt-1">
+                <div className="flex items-center gap-2 px-2 py-3 mt-2">
                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                   <span className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-1">
                     <PowerOff className="w-2.5 h-2.5" />
@@ -186,7 +206,9 @@ export function BotList({ selectedId, onSelect, onStartChat, onCreated, refreshT
                   </span>
                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                 </div>
-                {disabledBots.map((entity) => renderBotItem(entity, true))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {disabledBots.map((entity) => renderBotItem(entity, true))}
+                </div>
               </>
             )}
           </>

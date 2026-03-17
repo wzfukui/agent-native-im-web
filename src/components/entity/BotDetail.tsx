@@ -221,14 +221,14 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   return (
     <div className="flex flex-col h-full bg-[var(--color-bg-primary)]">
       {/* Header */}
-      <div className="flex items-center gap-3 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+      <div className="flex items-center gap-3 px-5 py-4 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
         <button
           onClick={onBack}
           className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer"
         >
           <ArrowLeft className="w-4 h-4 text-[var(--color-text-muted)]" />
         </button>
-        <EntityAvatar entity={bot} size="sm" showStatus />
+        <EntityAvatar entity={bot} size="md" showStatus />
         <div className="flex-1 min-w-0">
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)] truncate tracking-[-0.01em]">
             {entityDisplayName(bot)}
@@ -271,24 +271,33 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
             </div>
 
             {/* Connection fields — flat, no nested cards */}
-            <div className="space-y-2 mb-3">
+            <div className="space-y-2.5 mb-3">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--color-text-muted)] w-8 flex-shrink-0">API</span>
-                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1 rounded truncate">
+                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1.5 rounded-lg truncate">
                   {window.location.origin}/api/v1
                 </code>
-                <button onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')} className="p-1 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                <button onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')} className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer">
                   {copyBtn('api')}
                 </button>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--color-warning)] w-8 flex-shrink-0">Key</span>
-                <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1 rounded truncate">
-                  {createdCredentials.key}
-                </code>
-                <button onClick={() => handleCopy(createdCredentials.key, 'bootstrap')} className="p-1 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer">
-                  {copyBtn('bootstrap')}
+                <button
+                  onClick={() => handleCopy(createdCredentials.key, 'bootstrap')}
+                  className="flex-1 text-left group cursor-pointer"
+                  title={t('common.copied')}
+                >
+                  <code className="block text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1.5 rounded-lg truncate group-hover:bg-[var(--color-bg-hover)] transition-colors">
+                    {copied === 'bootstrap'
+                      ? createdCredentials.key
+                      : `${createdCredentials.key.slice(0, 8)}${'*'.repeat(24)}${createdCredentials.key.slice(-4)}`
+                    }
+                  </code>
                 </button>
+                <span className="p-1.5 flex-shrink-0">
+                  {copyBtn('bootstrap')}
+                </span>
               </div>
             </div>
 
@@ -340,7 +349,7 @@ ${createdCredentials.doc}`
 
         {/* ── Status overview — flat key-value, owner only ── */}
         {isOwner && (selfCheck || diagnostics) && (
-          <div className="px-5 py-4 border-b border-[var(--color-border)]">
+          <div className="px-5 py-5 border-b border-[var(--color-border)]">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Activity className="w-4 h-4 text-[var(--color-accent)]" />
@@ -410,7 +419,7 @@ ${createdCredentials.doc}`
 
         {/* ── Access pack — consolidated (owner only) ── */}
         {isOwner && (accessToken || !showFullCreds) && (
-          <div className="px-5 py-4 border-b border-[var(--color-border)]">
+          <div className="px-5 py-5 border-b border-[var(--color-border)]">
             <div className="flex items-center gap-2 mb-3">
               <Key className="w-4 h-4 text-[var(--color-accent)]" />
               <span className="text-sm font-medium text-[var(--color-text-primary)]">{t('bot.agentAccessPack')}</span>
@@ -457,7 +466,7 @@ ${createdCredentials.doc}`
         )}
 
         {/* ── Bot info — no card wrapper ── */}
-        <div className="px-5 py-4 border-b border-[var(--color-border)]">
+        <div className="px-5 py-5 border-b border-[var(--color-border)]">
           {/* Avatar change (owner only) */}
           {isOwner && !isDisabled && (
             <div className="flex items-center gap-3 mb-4">
@@ -565,7 +574,7 @@ ${createdCredentials.doc}`
         </div>
 
         {/* ── Conversations ── */}
-        <div className="px-5 py-4">
+        <div className="px-5 py-5">
           <button
             onClick={() => setConvsCollapsed(!convsCollapsed)}
             className="flex items-center gap-2 mb-3 cursor-pointer group w-full"
