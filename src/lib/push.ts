@@ -31,7 +31,21 @@ export async function registerPushNotifications(token: string): Promise<boolean>
     // Wait for service worker (registered by vite-plugin-pwa)
     const registration = await navigator.serviceWorker.ready
 
-    // Subscribe to push
+    // Unsubscribe any existing push subscription first
+    // (handles VAPID key rotation gracefully)
+    const existing = await registration.pushManager.getSubscription()
+    if (existing) {
+      await existing.unsubscribe()
+    }
+
+    // Request notification permission if not granted
+    if (Notification.permission === 'default') {
+      const perm = await Notification.requestPermission()
+      if (perm !== 'granted') return false
+    }
+    if (Notification.permission !== 'granted') return false
+
+    // Subscribe to push with current VAPID key
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(keyRes.data.public_key) as BufferSource,
