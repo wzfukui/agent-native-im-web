@@ -259,7 +259,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         const language = (layers.data?.language as string) || ''
         const height = (layers.data?.height as number) || 300
         return (
-          <div className="min-w-[280px]">
+          <div className="min-w-0 max-w-full sm:min-w-[280px]">
             {layers.summary && (
               <p className="text-sm leading-relaxed px-3.5 pt-2.5 pb-1.5">{layers.summary}</p>
             )}
@@ -372,7 +372,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     <div
       ref={bubbleRef}
       className={cn(
-        'flex gap-2.5 max-w-[85%] group transition-opacity duration-300',
+        'flex gap-2.5 max-w-[92%] md:max-w-[85%] group transition-opacity duration-300',
         isSelf ? 'ml-auto flex-row-reverse' : '',
         message.client_state === 'sending' ? 'opacity-60' : '',
       )}
@@ -397,7 +397,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
           : <div className="w-8 flex-shrink-0" />
       )}
 
-      <div className={cn('space-y-0.5', isSelf ? 'items-end' : 'items-start', 'flex flex-col')}>
+      <div className={cn('space-y-0.5 min-w-0', isSelf ? 'items-end' : 'items-start', 'flex flex-col')}>
         {/* Sender name + time */}
         {showSender ? (
           <div className={cn('flex items-center gap-2 px-1', isSelf ? 'flex-row-reverse' : '')}>
@@ -449,7 +449,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         <div className={cn('flex items-center gap-1', isSelf ? 'flex-row-reverse' : '')}>
           <div
             className={cn(
-              'rounded-2xl max-w-full',
+              'rounded-2xl max-w-full min-w-0',
               (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
               isSelf
                 ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
