@@ -33,10 +33,14 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
   }, [conversations, mutedIds])
 
   return (
-    <nav role="navigation" aria-label={t('a11y.navigation')} className="w-16 flex flex-col items-center py-4 gap-3 bg-[var(--color-bg-secondary)] border-r border-[var(--color-border)]">
-      {/* Logo — solid, no gradient */}
-      <div className="w-10 h-10 rounded-xl bg-[var(--color-accent)] flex items-center justify-center mb-2">
+    <nav role="navigation" aria-label={t('a11y.navigation')} className="relative w-[72px] flex flex-col items-center py-5 gap-3 bg-[var(--color-bg-secondary)]/92 backdrop-blur-xl border-r border-[var(--color-border)]">
+      <div className="absolute inset-y-0 right-0 w-px bg-gradient-to-b from-transparent via-[var(--color-border)] to-transparent" />
+      {/* Logo */}
+      <div className="relative mb-2">
+        <div className="absolute inset-0 rounded-2xl bg-[var(--color-accent)]/20 blur-xl" />
+        <div className="relative w-11 h-11 rounded-2xl bg-[var(--color-accent)] flex items-center justify-center shadow-lg shadow-[var(--color-accent)]/25">
         <Zap className="w-5 h-5 text-white" />
+        </div>
       </div>
 
       {/* Chat with unread badge */}
@@ -45,7 +49,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
         className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
           !botMode && !adminMode && !settingsMode
-            ? 'bg-[var(--color-accent)]/15 text-[var(--color-accent)] before:absolute before:-left-3 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-[var(--color-accent)]'
+            ? 'bg-[var(--color-accent)]/16 text-[var(--color-accent)] shadow-sm before:absolute before:-left-3 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-[var(--color-accent)]'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
         )}
         title={t('sidebar.messages')}
@@ -68,7 +72,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
         className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
           botMode
-            ? 'bg-[var(--color-bot)]/15 text-[var(--color-bot)]'
+            ? 'bg-[var(--color-bot)]/15 text-[var(--color-bot)] shadow-sm'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-bot)]'
         )}
         title={t('sidebar.agents')}
@@ -84,7 +88,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
           className={cn(
             'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
             adminMode
-              ? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)]'
+              ? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)] shadow-sm'
               : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)]'
           )}
           title={t('sidebar.admin')}
@@ -97,7 +101,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
       {/* User avatar (clickable for settings) */}
       <button
         onClick={onToggleSettings}
-        className="relative group cursor-pointer"
+        className="relative group cursor-pointer rounded-2xl p-1.5 bg-[var(--color-bg-primary)]/70 border border-[var(--color-border)]"
         title={entityDisplayName(entity)}
         aria-label={t('settings.title')}
       >

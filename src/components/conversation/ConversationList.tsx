@@ -111,27 +111,30 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
   }, [pullDistance, onRefresh, refreshing])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-[var(--color-bg-primary)]">
       {/* Header */}
-      <div className="px-4 pt-4 pb-2 flex items-center justify-between flex-shrink-0">
-        <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">{t('conversation.messages')}</h2>
+      <div className="px-4 pt-5 pb-3 flex items-center justify-between flex-shrink-0 border-b border-[var(--color-border)]">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)] mb-1">{t('conversation.messages')}</p>
+          <h2 className="text-[22px] leading-none font-semibold text-[var(--color-text-primary)]">{t('conversation.messages')}</h2>
+        </div>
         <button
           onClick={onNewChat}
-          className="w-9 h-9 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
+          className="w-10 h-10 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] hover:bg-[var(--color-bg-hover)] flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
         >
           <Plus className="w-5 h-5 text-[var(--color-text-secondary)]" />
         </button>
       </div>
 
       {/* Search — polished rounded style */}
-      <div className="px-3 pb-2 flex-shrink-0">
+      <div className="px-3 pt-3 pb-3 flex-shrink-0">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--color-text-muted)]" />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('conversation.search')}
-            className="w-full h-9 pl-10 pr-3 rounded-xl bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
+            className="w-full h-10 pl-10 pr-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] focus:border-[var(--color-accent)]/35 text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
           />
           {search && (
             <button
@@ -171,7 +174,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
       {/* List */}
       <div
         ref={listRef}
-        className="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5"
+        className="flex-1 overflow-y-auto px-2 pb-3 space-y-1"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -220,10 +223,10 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
 
       {/* Archive folder */}
       {!search && (
-        <div className="flex-shrink-0 border-t border-[var(--color-border)] px-2 py-1">
+        <div className="flex-shrink-0 border-t border-[var(--color-border)] px-2 py-2">
           <button
             onClick={() => setArchivedOpen(!archivedOpen)}
-            className="w-full flex items-center gap-2 px-2 py-2 rounded-lg hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] cursor-pointer transition-colors"
+            className="w-full flex items-center gap-2 px-3 py-2.5 rounded-2xl border border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-muted)] cursor-pointer transition-colors"
           >
             <Archive className="w-3.5 h-3.5" />
             <span className="text-xs font-medium">{t('conversation.archived')}</span>

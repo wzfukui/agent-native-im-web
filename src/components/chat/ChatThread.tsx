@@ -552,7 +552,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
   return (
     <div
-      className="flex flex-col h-full bg-[var(--color-bg-primary)] relative"
+      className="flex flex-col h-full bg-[var(--color-bg-primary)] relative overflow-hidden"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -566,7 +566,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/90 backdrop-blur-xl">
         {onBack && (
           <button onClick={onBack} aria-label={t('a11y.back')} className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer min-w-[32px]">
             <ArrowLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -576,10 +576,10 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         {/* Clickable title area — opens settings/detail panel */}
         <button
           onClick={() => isGroup ? setShowMembers(true) : onToggleSettings?.()}
-          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:opacity-80 transition-opacity"
+          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer rounded-2xl px-1.5 py-1 hover:bg-[var(--color-bg-hover)]/60 transition-colors"
         >
           {isGroup ? (
-            <div className="w-9 h-9 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center flex-shrink-0">
+            <div className="w-9 h-9 rounded-full bg-[var(--color-accent-dim)] border border-[var(--color-border)] flex items-center justify-center flex-shrink-0">
               <Users className="w-4 h-4 text-[var(--color-accent)]" />
             </div>
           ) : (
@@ -613,7 +613,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           }}
           aria-label={t('a11y.search')}
           className={cn(
-            'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
+            'w-8 h-8 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
             searching ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]',
           )}
         >
@@ -624,7 +624,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           <button
             onClick={onToggleTasks}
             aria-label={t('a11y.tasks')}
-            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
+            className="w-8 h-8 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
           >
             <ListTodo className="w-4 h-4" />
           </button>
@@ -641,7 +641,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
               }
             }}
             className={cn(
-              'w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
+              'w-8 h-8 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
               debugCopied ? 'text-[var(--color-success)]' : 'text-[var(--color-warning)]',
             )}
             title={t('settings.devMode')}
@@ -653,7 +653,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           <button
             onClick={onToggleSettings}
             aria-label={t('a11y.settings')}
-            className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
+            className="w-8 h-8 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] min-w-[32px]"
           >
             <Settings className="w-4 h-4" />
           </button>
@@ -662,7 +662,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
       {/* Search bar */}
       {searching && (
-        <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+        <div className="px-4 py-2 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/90 backdrop-blur-xl">
           <div className="flex items-center gap-2">
             <input
               value={searchQuery}

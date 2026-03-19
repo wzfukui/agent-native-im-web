@@ -137,16 +137,16 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         className={cn(
-          'w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-all text-left cursor-pointer group',
+          'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border transition-all text-left cursor-pointer group',
           active
-            ? 'bg-[var(--color-bg-active)] shadow-sm'
-            : 'hover:bg-[var(--color-bg-hover)]',
+            ? 'bg-[var(--color-bg-active)] border-[var(--color-accent)]/25 shadow-lg shadow-black/5'
+            : 'bg-[var(--color-bg-secondary)] border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]',
         )}
       >
         {/* Avatar — 40px */}
         {isGroup ? (
           <div className="relative w-10 h-10 flex-shrink-0">
-            <div className="w-10 h-10 rounded-full bg-[var(--color-accent-dim)] flex items-center justify-center">
+            <div className="w-10 h-10 rounded-full bg-[var(--color-accent-dim)] border border-[var(--color-border)] flex items-center justify-center">
               <Users className="w-4.5 h-4.5 text-[var(--color-accent)]" />
             </div>
             {conv.participants?.some((p) => isBotOrService(p.entity)) && (
