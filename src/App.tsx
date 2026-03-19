@@ -7,7 +7,6 @@ import { JoinPage } from '@/pages/JoinPage'
 import { ChatPage } from '@/pages/ChatPage'
 import { BotsPage } from '@/pages/BotsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
-import { AdminPage } from '@/pages/AdminPage'
 import * as api from '@/lib/api'
 
 /** Redirect old #c=xxx hash URLs to /chat/xxx */
@@ -101,7 +100,7 @@ export default function App() {
           <Route path="/bots/:botId" element={<BotsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />
-          <Route path="/admin" element={<AdminPage />} />
+          <Route path="/admin" element={<Navigate to="/chat" replace />} />
         </Route>
 
         {/* Catch-all redirect */}

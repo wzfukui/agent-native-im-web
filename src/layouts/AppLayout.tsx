@@ -16,7 +16,6 @@ import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
 import { registerPushNotifications } from '@/lib/push'
 import { setSessionHooks } from '@/lib/auth-session'
 import { setGlobalErrorHandler, type ParsedError } from '@/lib/errors'
-import * as api from '@/lib/api'
 import { useState, useCallback } from 'react'
 
 export function AppLayout() {
@@ -72,15 +71,6 @@ export function AppLayout() {
     setGlobalErrorHandler(pushError)
   }, [pushError])
 
-  // ─── Admin detection ───
-  const [isAdmin, setIsAdmin] = useState(false)
-  // Detect admin status on token change — async check
-   
-  useEffect(() => {
-    if (!token) { queueMicrotask(() => setIsAdmin(false)); return }
-    api.adminGetStats(token).then((res) => setIsAdmin(res.ok === true))
-  }, [token])
-
   // ─── Push notifications ───
   useEffect(() => {
     if (token) registerPushNotifications(token)
@@ -99,9 +89,8 @@ export function AppLayout() {
   }, [totalUnread])
 
   // ─── Derive active view from URL ───
-  const viewMode: 'chat' | 'bots' | 'admin' | 'settings' = (() => {
+  const viewMode: 'chat' | 'bots' | 'settings' = (() => {
     if (location.pathname.startsWith('/bots')) return 'bots'
-    if (location.pathname.startsWith('/admin')) return 'admin'
     if (location.pathname.startsWith('/settings')) return 'settings'
     return 'chat'
   })()
@@ -140,11 +129,8 @@ export function AppLayout() {
         {!isMobile && (
           <Sidebar
             botMode={viewMode === 'bots'}
-            adminMode={viewMode === 'admin'}
             settingsMode={viewMode === 'settings'}
-            isAdmin={isAdmin}
             onToggleBots={() => navigate(viewMode === 'bots' ? '/chat' : '/bots')}
-            onToggleAdmin={() => navigate(viewMode === 'admin' ? '/chat' : '/admin')}
             onToggleChat={() => navigate('/chat')}
             onToggleSettings={() => navigate(viewMode === 'settings' ? '/chat' : '/settings')}
           />
@@ -155,7 +141,6 @@ export function AppLayout() {
           ws,
           convManager,
           botManager,
-          isAdmin,
           isMobile,
         }} />
         </main>
@@ -190,6 +175,5 @@ export interface AppOutletContext {
   ws: ReturnType<typeof UseWSType>
   convManager: ReturnType<typeof UseConvType>
   botManager: ReturnType<typeof UseBotType>
-  isAdmin: boolean
   isMobile: boolean
 }

@@ -5,20 +5,17 @@ import { usePresenceStore } from '@/store/presence'
 import { useConversationsStore } from '@/store/conversations'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Bot, Zap, Wifi, WifiOff, Shield, MessageSquare } from 'lucide-react'
+import { Bot, Zap, Wifi, WifiOff, MessageSquare } from 'lucide-react'
 
 interface Props {
   botMode: boolean
-  adminMode?: boolean
   settingsMode?: boolean
-  isAdmin?: boolean
   onToggleBots: () => void
-  onToggleAdmin?: () => void
   onToggleChat?: () => void
   onToggleSettings?: () => void
 }
 
-export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBots, onToggleAdmin, onToggleChat, onToggleSettings }: Props) {
+export function Sidebar({ botMode, settingsMode, onToggleBots, onToggleChat, onToggleSettings }: Props) {
   const { t } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
@@ -48,7 +45,7 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
         onClick={onToggleChat}
         className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
-          !botMode && !adminMode && !settingsMode
+          !botMode && !settingsMode
             ? 'bg-[var(--color-accent)]/16 text-[var(--color-accent)] shadow-sm before:absolute before:-left-3 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-[var(--color-accent)]'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
         )}
@@ -80,23 +77,6 @@ export function Sidebar({ botMode, adminMode, settingsMode, isAdmin, onToggleBot
       >
         <Bot className="w-5 h-5" />
       </button>
-
-      {/* Admin panel */}
-      {isAdmin && (
-        <button
-          onClick={onToggleAdmin}
-          className={cn(
-            'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
-            adminMode
-              ? 'bg-[var(--color-danger)]/15 text-[var(--color-danger)] shadow-sm'
-              : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-danger)]'
-          )}
-          title={t('sidebar.admin')}
-          aria-label={t('sidebar.admin')}
-        >
-          <Shield className="w-5 h-5" />
-        </button>
-      )}
 
       {/* User avatar (clickable for settings) */}
       <button
