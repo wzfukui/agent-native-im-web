@@ -211,7 +211,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     switch (effectiveType) {
       case 'markdown':
         return (
-          <div className="md text-sm leading-relaxed w-full overflow-hidden">
+          <div className="md text-sm leading-relaxed max-w-full overflow-hidden">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{body}</ReactMarkdown>
           </div>
         )
@@ -372,6 +372,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
     }
   }
 
+  const usesCompactBubble =
+    message.content_type !== 'artifact' &&
+    message.content_type !== 'task_handover'
+
   return (
     <>
     <div
@@ -456,7 +460,8 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
         <div className={cn('relative flex items-center w-full', isSelf ? 'flex-row-reverse' : '')}>
           <div
             className={cn(
-              'rounded-2xl max-w-full min-w-0 flex-1',
+              'rounded-2xl min-w-0',
+              usesCompactBubble ? 'w-fit max-w-full md:max-w-[min(42rem,100%)]' : 'max-w-full flex-1',
               (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
               isSelf
                 ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
