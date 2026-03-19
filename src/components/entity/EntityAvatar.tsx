@@ -1,7 +1,7 @@
-import { cn, getInitials, entityColor, isBotOrService, authenticatedFileUrl } from '@/lib/utils'
+import { useEffect, useState } from 'react'
+import { cn, getInitials, entityColor, isBotOrService, publicAvatarUrl } from '@/lib/utils'
 import type { Entity } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
-import { useAuthStore } from '@/store/auth'
 import { Bot } from 'lucide-react'
 
 interface Props {
@@ -17,10 +17,14 @@ const dotSize = { xs: 'w-2 h-2', sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-
 
 export function EntityAvatar({ entity, size = 'md', showStatus = false, className, onClick }: Props) {
   const online = usePresenceStore((s) => entity ? s.online.has(entity.id) : false)
-  const token = useAuthStore((s) => s.token)
-  const avatarUrl = authenticatedFileUrl(entity?.avatar_url, token)
+  const avatarUrl = publicAvatarUrl(entity?.avatar_url)
   const color = entityColor(entity)
   const isBot = isBotOrService(entity)
+  const [imgError, setImgError] = useState(false)
+
+  useEffect(() => {
+    setImgError(false)
+  }, [avatarUrl])
 
   return (
     <div
@@ -35,8 +39,13 @@ export function EntityAvatar({ entity, size = 'md', showStatus = false, classNam
         )}
         style={{ backgroundColor: color + '22', color }}
       >
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="w-full h-full rounded-full object-cover" />
+        {avatarUrl && !imgError ? (
+          <img
+            src={avatarUrl}
+            alt=""
+            className="w-full h-full rounded-full object-cover"
+            onError={() => setImgError(true)}
+          />
         ) : isBot ? (
           <Bot className={size === 'sm' ? 'w-3.5 h-3.5' : size === 'lg' ? 'w-6 h-6' : 'w-4.5 h-4.5'} />
         ) : (

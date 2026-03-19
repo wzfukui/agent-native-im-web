@@ -113,3 +113,12 @@ export function authenticatedFileUrl(url: string | undefined | null, token: stri
   return `${url}${separator}token=${encodeURIComponent(token)}`
 }
 
+/**
+ * Map stored avatar files onto the stable public avatar endpoint.
+ * This avoids leaking session tokens in image URLs and enables caching.
+ */
+export function publicAvatarUrl(url: string | undefined | null): string {
+  if (!url) return ''
+  if (!url.startsWith('/files/')) return url
+  return `/avatars/${url.slice('/files/'.length)}`
+}
