@@ -7,6 +7,7 @@ import type { Entity, Conversation } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { AvatarPicker } from './AvatarPicker'
 import { entityDisplayName, cn } from '@/lib/utils'
+import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -172,6 +173,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
 
   const isOnline = online.has(bot.id)
   const isDisabled = bot.status === 'disabled'
+  const statusSemantic = getEntityPresenceSemantic(bot, isOnline)
+  const statusLabel = getEntityStatusLabel(t, bot, isOnline)
   const meta = bot.metadata as Record<string, unknown> | undefined
   const description = (meta?.description as string) || ''
   const caps = (meta?.capabilities as string[]) || []
@@ -240,13 +243,21 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
         {/* Status + primary action in header */}
         <span className={cn(
           'px-2.5 py-1 rounded-full text-xs font-medium flex items-center gap-1.5',
-          isDisabled
+          statusSemantic === 'disabled' || statusSemantic === 'pending'
             ? 'bg-[var(--color-warning)]/12 text-[var(--color-warning)]'
-            : isOnline
+            : statusSemantic === 'online'
               ? 'bg-[var(--color-success)]/12 text-[var(--color-success)]'
               : 'bg-[var(--color-text-muted)]/12 text-[var(--color-text-muted)]'
         )}>
-          {isDisabled ? <><PowerOff className="w-3 h-3" /> {t('bot.disabled')}</> : isOnline ? <><Wifi className="w-3 h-3" /> {t('common.online')}</> : <><WifiOff className="w-3 h-3" /> {t('common.offline')}</>}
+          {statusSemantic === 'disabled' ? (
+            <><PowerOff className="w-3 h-3" /> {statusLabel}</>
+          ) : statusSemantic === 'pending' ? (
+            <><Clock className="w-3 h-3" /> {statusLabel}</>
+          ) : statusSemantic === 'online' ? (
+            <><Wifi className="w-3 h-3" /> {statusLabel}</>
+          ) : (
+            <><WifiOff className="w-3 h-3" /> {statusLabel}</>
+          )}
         </span>
       </div>
 

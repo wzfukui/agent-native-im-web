@@ -8,6 +8,7 @@ import type { Entity } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader'
 import { entityDisplayName, cn } from '@/lib/utils'
+import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
 import { CreateBotDialog } from './CreateBotDialog'
 import { Bot, Plus, Search, PowerOff } from 'lucide-react'
 
@@ -95,8 +96,10 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
     .sort((a, b) => (online.has(a.id) ? 0 : 1) - (online.has(b.id) ? 0 : 1))
   const disabledBots = filtered.filter((e) => e.status === 'disabled')
 
-  const renderBotItem = (entity: Entity, isDisabled: boolean) => {
+  const renderBotItem = (entity: Entity) => {
     const isOnline = online.has(entity.id)
+    const statusSemantic = getEntityPresenceSemantic(entity, isOnline)
+    const statusLabel = getEntityStatusLabel(t, entity, isOnline)
     const isActive = entity.id === selectedId
     const meta = entity.metadata as Record<string, unknown> | undefined
     const tags = Array.isArray(meta?.tags) ? (meta.tags as string[]) : []
@@ -110,7 +113,7 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
           isActive
             ? 'border-[var(--color-accent)] bg-[var(--color-accent-dim)] shadow-sm'
             : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]/30 hover:bg-[var(--color-bg-hover)]',
-          isDisabled && 'opacity-50'
+          statusSemantic === 'disabled' && 'opacity-50'
         )}
       >
         <div className="relative flex-shrink-0">
@@ -118,9 +121,9 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
           {/* Online status dot */}
           <span className={cn(
             'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--color-bg-secondary)]',
-            isDisabled
+            statusSemantic === 'disabled' || statusSemantic === 'pending'
               ? 'bg-[var(--color-warning)]'
-              : isOnline
+              : statusSemantic === 'online'
                 ? 'bg-[var(--color-success)]'
                 : 'bg-[var(--color-text-muted)]/50'
           )} />
@@ -132,13 +135,13 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
             </p>
             <span className={cn(
               'px-1.5 py-0.5 rounded-full text-[9px] font-medium flex-shrink-0',
-              isDisabled
+              statusSemantic === 'disabled' || statusSemantic === 'pending'
                 ? 'bg-[var(--color-warning)]/12 text-[var(--color-warning)]'
-                : isOnline
+                : statusSemantic === 'online'
                   ? 'bg-[var(--color-success)]/12 text-[var(--color-success)]'
                   : 'bg-[var(--color-text-muted)]/12 text-[var(--color-text-muted)]'
             )}>
-              {isDisabled ? t('bot.disabled') : isOnline ? t('common.online') : t('common.offline')}
+              {statusLabel}
             </span>
           </div>
           {description && (
@@ -217,7 +220,7 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
           <>
             {/* Active bots (online first) — card grid, 2-col on desktop */}
             <div className="grid grid-cols-1 gap-2">
-              {activeBots.map((entity) => renderBotItem(entity, false))}
+              {activeBots.map((entity) => renderBotItem(entity))}
             </div>
 
             {/* Divider + Disabled bots */}
@@ -232,7 +235,7 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
                   <div className="flex-1 h-px bg-[var(--color-border)]" />
                 </div>
                 <div className="grid grid-cols-1 gap-2">
-                  {disabledBots.map((entity) => renderBotItem(entity, true))}
+                  {disabledBots.map((entity) => renderBotItem(entity))}
                 </div>
               </>
             )}

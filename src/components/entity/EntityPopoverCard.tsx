@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next'
 import { EntityAvatar } from './EntityAvatar'
 import { cn, entityDisplayName, entityColor, isBotOrService, formatTime } from '@/lib/utils'
 import type { Entity } from '@/lib/types'
+import { usePresenceStore } from '@/store/presence'
+import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
 import { Bot, User, MessageSquare, ExternalLink, X } from 'lucide-react'
 
 interface Props {
@@ -20,6 +22,7 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const isBot = isBotOrService(entity)
   const color = entityColor(entity)
+  const isOnline = usePresenceStore((s) => s.online.has(entity.id))
   const description = entity.metadata?.description as string | undefined
 
   // Position the popover relative to the anchor (layout effect to avoid flicker)
@@ -76,11 +79,8 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
       ? t('entityPopover.service')
       : t('entityPopover.user')
 
-  const statusText = entity.status === 'active'
-    ? t('entityPopover.active')
-    : entity.status === 'disabled'
-      ? t('entityPopover.disabled')
-      : t('entityPopover.pending')
+  const statusSemantic = getEntityPresenceSemantic(entity, isOnline)
+  const statusText = getEntityStatusLabel(t, entity, isOnline)
 
   return createPortal(
     <>
@@ -153,7 +153,11 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
             <span className="flex items-center gap-1">
               <span className={cn(
                 'w-1.5 h-1.5 rounded-full',
-                entity.status === 'active' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-muted)]',
+                statusSemantic === 'disabled' || statusSemantic === 'pending'
+                  ? 'bg-[var(--color-warning)]'
+                  : statusSemantic === 'online'
+                    ? 'bg-[var(--color-success)]'
+                    : 'bg-[var(--color-text-muted)]',
               )} />
               {statusText}
             </span>
