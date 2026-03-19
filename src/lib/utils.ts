@@ -120,5 +120,5 @@ export function authenticatedFileUrl(url: string | undefined | null, token: stri
 export function publicAvatarUrl(url: string | undefined | null): string {
   if (!url) return ''
   if (!url.startsWith('/files/')) return url
-  return `/avatar-files/${url.slice('/files/'.length)}`
+  return `/avatar-files/${url.slice('/files/'.length)}?v=1`
 }
