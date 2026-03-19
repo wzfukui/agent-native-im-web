@@ -862,7 +862,7 @@ export function UserSettingsPage({ onBack }: Props) {
             className="flex items-center gap-1.5 text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)] cursor-pointer transition-colors"
           >
             <ChevronLeft className="w-3.5 h-3.5" />
-            {t('admin.back')}
+            {t('common.back')}
           </button>
           <h2 className="text-sm font-semibold text-[var(--color-text-primary)] mt-2">{t('settings.title')}</h2>
         </div>
