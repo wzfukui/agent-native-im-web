@@ -57,7 +57,7 @@ export function BotsPage() {
   }, [botManager, navigate])
 
   return (
-    <>
+    <div className="h-full flex min-h-0">
       {/* Left panel: BotList */}
       <div className={cn(
         'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
@@ -127,6 +127,6 @@ export function BotsPage() {
           />
         )
       )}
-    </>
+    </div>
   )
 }
