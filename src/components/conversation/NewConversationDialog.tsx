@@ -5,6 +5,7 @@ import * as api from '@/lib/api'
 import { getCachedEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { X, Plus, Users, MessageSquare, Loader2, Check, Search } from 'lucide-react'
 import { useFocusTrap } from '@/lib/accessibility'
@@ -97,6 +98,8 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
+          {!preselectedEntityId && <OnboardingCard compact />}
+
           {/* Type toggle */}
           <div className="flex gap-2">
             <button

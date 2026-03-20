@@ -7,6 +7,7 @@ import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
 import { Bot, Users, Search, X, Check, Loader2, Plus, ArrowLeft, MessageSquare } from 'lucide-react'
 
@@ -133,6 +134,11 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
           <h2 className="text-base font-semibold text-[var(--color-text-primary)] mb-4 text-center">
             {t('conversation.newChat')}
           </h2>
+          {!preselectedEntityId && (
+            <div className="mb-4">
+              <OnboardingCard compact />
+            </div>
+          )}
           <div className="space-y-2">
             <button
               onClick={() => setStep('chat-with-bot')}

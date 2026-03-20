@@ -11,6 +11,7 @@ import { NewConversationDialog } from '@/components/conversation/NewConversation
 import { NewConversationSheet } from '@/components/conversation/NewConversationSheet'
 import { GlobalSearch } from '@/components/conversation/GlobalSearch'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
+import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { cn } from '@/lib/utils'
 import { MessageSquare, Bot, Settings2 } from 'lucide-react'
 import type { Entity } from '@/lib/types'
@@ -158,6 +159,14 @@ export function ChatPage() {
               <p className="text-sm text-[var(--color-text-muted)] mb-8">
                 {conversations.length === 0 ? t('auth.tagline') : ''}
               </p>
+              {conversations.length === 0 && (
+                <div className="w-full max-w-xl px-6 mb-8">
+                  <OnboardingCard
+                    onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+                    onManageBots={() => navigate('/bots')}
+                  />
+                </div>
+              )}
               <div className="flex flex-col gap-2 w-56">
                 <button
                   onClick={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}

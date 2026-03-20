@@ -4,6 +4,7 @@ import { Search, Plus, MessageSquare, Archive, ChevronDown, ChevronRight, Loader
 import { ConversationItem } from './ConversationItem'
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 import type { Conversation } from '@/lib/types'
@@ -194,12 +195,12 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
               title={t('conversation.noConversations')}
               description={t('conversation.noConversationsDesc')}
               action={
-                <button
-                  onClick={onNewChat}
-                  className="px-4 py-2 rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-medium cursor-pointer transition-colors"
-                >
-                  {t('conversation.newChat')}
-                </button>
+                <div className="w-full max-w-sm">
+                  <OnboardingCard
+                    onNewChat={onNewChat}
+                    onManageBots={() => window.location.assign('/bots')}
+                  />
+                </div>
               }
             />
           )
