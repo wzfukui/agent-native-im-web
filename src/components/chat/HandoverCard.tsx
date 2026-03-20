@@ -52,7 +52,7 @@ export function HandoverCard({ message, participants }: Props) {
           <>
             <ArrowRight className="w-3 h-3 text-[var(--color-text-muted)]" />
             <span className="text-xs text-[var(--color-text-secondary)] truncate">
-              {assignees.join(', ')}
+              {t('handover.assignedTo', { names: assignees.join(', ') })}
             </span>
           </>
         )}
@@ -122,6 +122,18 @@ export function HandoverCard({ message, participants }: Props) {
                       <ul className="text-xs text-[var(--color-text-muted)] list-disc list-inside">
                         {data.context.known_issues.map((issue, i) => (
                           <li key={i}>{issue}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {data.context.test_focus && data.context.test_focus.length > 0 && (
+                    <div>
+                      <p className="text-[10px] font-medium text-[var(--color-text-muted)] mb-0.5">
+                        {t('handover.testFocus')}
+                      </p>
+                      <ul className="text-xs text-[var(--color-text-muted)] list-disc list-inside">
+                        {data.context.test_focus.map((focus, i) => (
+                          <li key={i}>{focus}</li>
                         ))}
                       </ul>
                     </div>

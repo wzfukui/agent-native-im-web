@@ -103,6 +103,15 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     for (const msg of messages) map.set(msg.id, msg)
     return map
   }, [messages])
+  const interactionResponseMap = useMemo(() => {
+    const map = new Map<number, Message>()
+    for (const msg of messages) {
+      const reply = msg.layers?.data?.interaction_reply as { reply_to?: number } | undefined
+      const replyToId = typeof reply?.reply_to === 'number' ? reply.reply_to : undefined
+      if (replyToId) map.set(replyToId, msg)
+    }
+    return map
+  }, [messages])
 
   // Pre-compute date strings for separator checks
   const dateSepIndices = useMemo(() => {
@@ -214,6 +223,7 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
                 showSender={showSender}
                 isRead={readIndicatorMsgId === msg.id}
                 replyMessage={msg.reply_to ? messageMap.get(msg.reply_to) : undefined}
+                interactionResponse={interactionResponseMap.get(msg.id)}
                 onInteractionReply={onInteractionReply}
                 onRevoke={onRevoke}
                 onReply={onReply}

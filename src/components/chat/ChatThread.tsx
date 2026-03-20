@@ -490,6 +490,22 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     const processingEntity = sourceMessage?.sender && isBotOrService(sourceMessage.sender)
       ? sourceMessage.sender
       : null
+    const tempId = `interaction-${conversation.id}-${msgId}-${Date.now()}`
+    const optimisticId = -Date.now()
+    addOptimisticMessage(tempId, {
+      id: optimisticId,
+      conversation_id: conversation.id,
+      sender_id: myEntity.id,
+      sender: myEntity,
+      content_type: 'text',
+      layers: {
+        summary: label,
+        data: { interaction_reply: { reply_to: msgId, choice } },
+      },
+      reply_to: msgId,
+      created_at: new Date().toISOString(),
+    })
+
     const res = await api.sendMessage(token, {
       conversation_id: conversation.id,
       content_type: 'text',
@@ -500,10 +516,12 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       reply_to: msgId,
     })
     if (res.ok && res.data) {
-      addMessage(res.data)
+      replaceOptimisticMessage(tempId, res.data)
       startBotThinking(processingEntity)
+      return
     }
-  }, [token, conversation.id, messages, addMessage, startBotThinking])
+    setOptimisticState(tempId, 'failed')
+  }, [token, conversation.id, messages, myEntity, addOptimisticMessage, replaceOptimisticMessage, setOptimisticState, startBotThinking])
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault()

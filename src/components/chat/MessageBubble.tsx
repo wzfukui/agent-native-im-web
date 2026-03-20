@@ -95,6 +95,7 @@ interface Props {
   isSelf: boolean
   myEntityId?: number
   replyMessage?: Message
+  interactionResponse?: Message
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
   onReply?: (msg: Message) => void
@@ -107,7 +108,7 @@ interface Props {
   isRead?: boolean
 }
 
-export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, onScrollToMessage, showSender = true, isRead }: Props) {
+export function MessageBubble({ message, isSelf, myEntityId, replyMessage, interactionResponse, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onEntitySendMessage, onEntityViewDetails, onScrollToMessage, showSender = true, isRead }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)
   const authUrl = (url: string | undefined) => authenticatedFileUrl(url, token)
@@ -512,11 +513,13 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, onInt
             </div>
 
             {/* Interaction card */}
-            {layers.interaction && onInteractionReply && (
+            {layers.interaction && (onInteractionReply || interactionResponse) && (
               <InteractionCard
                 interaction={layers.interaction}
                 messageId={message.id}
-                onReply={(choice, label) => onInteractionReply(message.id, choice, label)}
+                responseMessage={interactionResponse}
+                onReply={(choice, label) => onInteractionReply?.(message.id, choice, label)}
+                disabled={!onInteractionReply}
               />
             )}
           </div>
