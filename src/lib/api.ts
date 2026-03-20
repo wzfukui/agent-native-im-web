@@ -8,6 +8,7 @@ import { reportApiError } from './errors'
 
 let baseUrl = ''
 let refreshInFlight: Promise<string | null> | null = null
+const inflightGetRequests = new Map<string, Promise<APIResponse<unknown>>>()
 
 export function setBaseUrl(url: string) {
   baseUrl = url.replace(/\/+$/, '')
@@ -57,6 +58,33 @@ async function fetchWithAuthRetry<T>(
 }
 
 async function request<T>(method: string, path: string, token?: string, body?: unknown): Promise<APIResponse<T>> {
+  if (method === 'GET') {
+    const key = `${token || '__anon__'} ${path}`
+    const existing = inflightGetRequests.get(key)
+    if (existing) return existing as Promise<APIResponse<T>>
+
+    const pending = (async () => {
+      if (token) {
+        return fetchWithAuthRetry<T>(method, path, token, body)
+      }
+
+      const res = await fetch(`${baseUrl}${path}`, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: body ? JSON.stringify(body) : undefined,
+      })
+      return parseAPIResponse<T>(res)
+    })()
+
+    inflightGetRequests.set(key, pending as Promise<APIResponse<unknown>>)
+    try {
+      return await pending
+    } finally {
+      inflightGetRequests.delete(key)
+    }
+  }
+
   if (token) {
     return fetchWithAuthRetry<T>(method, path, token, body)
   }
