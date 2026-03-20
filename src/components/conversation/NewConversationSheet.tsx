@@ -9,6 +9,7 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
+import { buildDirectConversationTitle } from '@/lib/conversation-title'
 import { Bot, Users, Search, X, Check, Loader2, Plus, ArrowLeft, MessageSquare } from 'lucide-react'
 
 type SheetStep = 'choose' | 'chat-with-bot' | 'create-group'
@@ -96,7 +97,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
   const handleChatWithBot = async (bot: Entity) => {
     setCreating(true)
     const res = await api.createConversation(token, {
-      title: entityDisplayName(bot),
+      title: buildDirectConversationTitle(t, bot),
       conv_type: 'direct',
       participant_ids: [bot.id],
     })

@@ -7,6 +7,7 @@ import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, cn } from '@/lib/utils'
+import { buildDirectConversationTitle } from '@/lib/conversation-title'
 import { X, Plus, Users, MessageSquare, Loader2, Check, Search } from 'lucide-react'
 import { useFocusTrap } from '@/lib/accessibility'
 
@@ -57,10 +58,11 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   const handleCreate = async () => {
     if (selected.size === 0) return
     setCreating(true)
+    const selectedEntity = entities.find((e) => selected.has(e.id))
 
     const convTitle = isGroup
       ? (title || `Group (${selected.size + 1} members)`)
-      : (title || entityDisplayName(entities.find((e) => selected.has(e.id))))
+      : (title || (selectedEntity ? buildDirectConversationTitle(t, selectedEntity) : 'Direct chat'))
 
     const res = await api.createConversation(token, {
       title: convTitle,
