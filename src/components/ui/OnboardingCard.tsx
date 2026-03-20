@@ -65,6 +65,15 @@ export function OnboardingCard({ onNewChat, onManageBots, compact = false }: Pro
         })}
       </div>
 
+      <div className={`mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] ${compact ? 'p-3' : 'p-3.5'}`}>
+        <p className="text-xs font-semibold text-[var(--color-text-primary)]">
+          {t('onboarding.boundaryTitle')}
+        </p>
+        <p className="mt-1 text-xs leading-relaxed text-[var(--color-text-muted)]">
+          {t('onboarding.boundaryDescription')}
+        </p>
+      </div>
+
       {!compact && (onNewChat || onManageBots) && (
         <div className="mt-4 flex flex-wrap gap-2">
           {onNewChat && (

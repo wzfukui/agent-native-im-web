@@ -534,6 +534,32 @@ ${createdCredentials.doc}`
             )}
           </div>
 
+          <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] p-3.5">
+            <div className="flex items-center gap-2">
+              <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('bot.capabilityTitle')}</p>
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-text-secondary)] leading-relaxed">
+              {t('bot.capabilitySummary')}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {[
+                t('bot.capabilityText'),
+                t('bot.capabilityImages'),
+                t('bot.capabilityAudio'),
+                t('bot.capabilityVideo'),
+                t('bot.capabilityPdf'),
+              ].map((label) => (
+                <span key={label} className="px-2 py-0.5 rounded-full bg-[var(--color-bg-primary)] text-[var(--color-text-secondary)] text-xs border border-[var(--color-border)]">
+                  {label}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-xs text-[var(--color-text-muted)] leading-relaxed">
+              {t('bot.capabilityBoundary')}
+            </p>
+          </div>
+
           {/* Tags + Capabilities — inline */}
           {(tags.length > 0 || caps.length > 0) && (
             <div className="flex flex-wrap gap-1.5 mt-4">
