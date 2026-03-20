@@ -22,6 +22,7 @@ export function ChatPage() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const { ws, convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
+  const { loadBotEntities } = botManager
   const entity = useAuthStore((s) => s.entity)
   const { conversations, activeId, removeConversation, updateConversation } = useConversationsStore()
   const setActive = useConversationsStore((s) => s.setActive)
@@ -67,9 +68,9 @@ export function ChatPage() {
   const handleEntityViewDetails = useCallback((target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
       navigate(`/bots/${target.id}`)
-      botManager.loadBotEntities()
+      loadBotEntities()
     }
-  }, [navigate, botManager])
+  }, [navigate, loadBotEntities])
 
   const { activeConv, isArchivedView } = convManager
   const hasConversation = !!activeConv

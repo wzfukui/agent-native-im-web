@@ -12,6 +12,16 @@ export function BotsPage() {
   const { botId } = useParams()
   const navigate = useNavigate()
   const { convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
+  const {
+    botEntities,
+    createdCredentials,
+    botListRefresh,
+    loadBotEntities,
+    setCreatedCredentials,
+    handleDisableBot,
+    handleReactivateBot,
+    handleHardDeleteBot: hardDeleteBot,
+  } = botManager
 
   const selectedBotId = botId ? Number(botId) : null
   const [showNewChat, setShowNewChat] = useState(false)
@@ -19,24 +29,24 @@ export function BotsPage() {
 
   // Load bot entities when entering bots view
   useEffect(() => {
-    botManager.loadBotEntities()
-  }, [botManager])
+    loadBotEntities()
+  }, [loadBotEntities])
 
   // Also reload when navigating to a specific bot
   useEffect(() => {
-    if (selectedBotId) botManager.loadBotEntities()
-  }, [selectedBotId, botManager])
+    if (selectedBotId) loadBotEntities()
+  }, [selectedBotId, loadBotEntities])
 
-  const selectedBot = botManager.botEntities.find((e) => e.id === selectedBotId) || null
+  const selectedBot = botEntities.find((e) => e.id === selectedBotId) || null
 
   const handleSelectBot = useCallback((id: number | null) => {
     if (id !== null) {
       navigate(`/bots/${id}`)
-      botManager.loadBotEntities()
+      loadBotEntities()
     } else {
       navigate('/bots')
     }
-  }, [navigate, botManager])
+  }, [navigate, loadBotEntities])
 
   const handleStartChatFromBot = useCallback((entityId: number) => {
     setNewChatEntityId(entityId)
@@ -52,9 +62,9 @@ export function BotsPage() {
   }, [navigate])
 
   const handleHardDeleteBot = useCallback(async (botIdToDelete: number) => {
-    await botManager.handleHardDeleteBot(botIdToDelete)
+    await hardDeleteBot(botIdToDelete)
     navigate('/bots')
-  }, [botManager, navigate])
+  }, [hardDeleteBot, navigate])
 
   return (
     <div className="h-full flex min-h-0">
@@ -71,11 +81,11 @@ export function BotsPage() {
           onSelect={(id) => handleSelectBot(id)}
           onStartChat={handleStartChatFromBot}
           onCreated={(result) => {
-            botManager.setCreatedCredentials(result)
+            setCreatedCredentials(result)
             navigate(`/bots/${result.entity.id}`)
-            botManager.loadBotEntities()
+            loadBotEntities()
           }}
-          refreshTrigger={botManager.botListRefresh}
+          refreshTrigger={botListRefresh}
         />
       </div>
 
@@ -89,15 +99,15 @@ export function BotsPage() {
             <ErrorBoundary>
               <BotDetail
                 bot={selectedBot}
-                createdCredentials={selectedBot?.id === botManager.createdCredentials?.entity.id ? botManager.createdCredentials : null}
-                onDismissCredentials={() => botManager.setCreatedCredentials(null)}
+                createdCredentials={selectedBot?.id === createdCredentials?.entity.id ? createdCredentials : null}
+                onDismissCredentials={() => setCreatedCredentials(null)}
                 onBack={handleBotDetailBack}
                 onOpenConversation={handleOpenConversation}
-                onDisable={botManager.handleDisableBot}
-                onReactivate={botManager.handleReactivateBot}
+                onDisable={handleDisableBot}
+                onReactivate={handleReactivateBot}
                 onHardDelete={handleHardDeleteBot}
                 onStartChat={handleStartChatFromBot}
-                onRefresh={botManager.loadBotEntities}
+                onRefresh={loadBotEntities}
               />
             </ErrorBoundary>
           </div>
