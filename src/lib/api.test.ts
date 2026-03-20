@@ -98,4 +98,26 @@ describe('api auth refresh', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1)
     expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/conversations/public/abc-123')
   })
+
+  it('coalesces repeated in-flight GET requests', async () => {
+    let resolveFetch: ((value: Response) => void) | null = null
+    const fetchMock = vi.fn().mockImplementation(() => {
+      return new Promise<Response>((resolve) => {
+        resolveFetch = resolve
+      })
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    const first = api.listEntities('token-1')
+    const second = api.listEntities('token-1')
+
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    resolveFetch?.(jsonResponse(200, { ok: true, data: [] }))
+
+    const [firstRes, secondRes] = await Promise.all([first, second])
+    expect(firstRes.ok).toBe(true)
+    expect(secondRes.ok).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
 })

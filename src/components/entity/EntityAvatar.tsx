@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { cn, getInitials, entityColor, isBotOrService, publicAvatarUrl } from '@/lib/utils'
 import type { Entity } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
@@ -20,11 +20,8 @@ export function EntityAvatar({ entity, size = 'md', showStatus = false, classNam
   const avatarUrl = publicAvatarUrl(entity?.avatar_url)
   const color = entityColor(entity)
   const isBot = isBotOrService(entity)
-  const [imgError, setImgError] = useState(false)
-
-  useEffect(() => {
-    setImgError(false)
-  }, [avatarUrl])
+  const [failedUrl, setFailedUrl] = useState<string | null>(null)
+  const imgError = !!avatarUrl && failedUrl === avatarUrl
 
   return (
     <div
@@ -44,7 +41,7 @@ export function EntityAvatar({ entity, size = 'md', showStatus = false, classNam
             src={avatarUrl}
             alt=""
             className="w-full h-full rounded-full object-cover"
-            onError={() => setImgError(true)}
+            onError={() => setFailedUrl(avatarUrl)}
           />
         ) : isBot ? (
           <Bot className={size === 'sm' ? 'w-3.5 h-3.5' : size === 'lg' ? 'w-6 h-6' : 'w-4.5 h-4.5'} />

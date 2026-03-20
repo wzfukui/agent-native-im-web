@@ -5,7 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 import { execSync } from 'node:child_process'
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 
 function readPackageVersion(): string {
   try {
@@ -32,6 +32,20 @@ const appBuildTime = new Date().toISOString()
 
 export default defineConfig({
   plugins: [
+    {
+      name: 'ani-build-info-manifest',
+      closeBundle() {
+        writeFileSync(
+          path.resolve(__dirname, 'dist/build-info.json'),
+          JSON.stringify({
+            version: appVersion,
+            commit: appCommit,
+            buildTime: appBuildTime,
+          }, null, 2),
+          'utf-8',
+        )
+      },
+    },
     react(),
     tailwindcss(),
     VitePWA({

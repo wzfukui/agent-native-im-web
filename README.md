@@ -22,10 +22,10 @@ ANI should be understood as an agent-native communication system, not a generic 
 
 ## Features
 
-- **PWA**: Service Worker, offline message queue (outbox), push notifications (HTTPS)
+- **PWA**: Service Worker, offline message queue (outbox), push notifications (HTTPS), build drift detection with `build-info.json`
 - **Responsive**: Desktop sidebar layout + mobile bottom tab navigation
 - **Chat**: Streaming with typing indicators, artifact rendering, Markdown + code highlighting + Mermaid diagrams, reactions, read receipts, image lightbox, clipboard paste, drag-and-drop upload
-- **Agent-native UX**: conversation context cards, interaction cards, task handover, bot quick actions, capability boundary messaging
+- **Agent-native UX**: conversation context cards, memory previews, roadmap summaries, interaction cards, task handover, bot quick actions, capability boundary messaging
 - **Search**: Global full-text search across conversations
 - **Bot management**: Create, approve, credentials, diagnostics, quickstart docs download
 - **Conversations**: Create/archive/pin, invite links, member roles, system prompt config
@@ -90,6 +90,7 @@ Note:
 
 - `/files/` are protected conversation attachments
 - `/avatar-files/` are stable avatar resources with different caching semantics
+- `build-info.json` is emitted with each build and is used by the PWA to detect stale bundles
 
 For uploads larger than 1 MB, ensure nginx `client_max_body_size` is configured explicitly.
 

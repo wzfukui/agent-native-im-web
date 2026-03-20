@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test'
-import { login, loginAndWait, getCredentials } from './helpers'
+import { login, loginAndWait } from './helpers'
 
 test.describe('Authentication', () => {
   test('login with valid credentials redirects to /chat', async ({ page }) => {

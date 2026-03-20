@@ -45,7 +45,6 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const progress = useMessagesStore((s) => s.progress[conversation.id])
   const setMessages = useMessagesStore((s) => s.setMessages)
   const prependMessages = useMessagesStore((s) => s.prependMessages)
-  const addMessage = useMessagesStore((s) => s.addMessage)
   const revokeMessage = useMessagesStore((s) => s.revokeMessage)
   const updateMessageReactions = useMessagesStore((s) => s.updateMessageReactions)
   const addOptimisticMessage = useMessagesStore((s) => s.addOptimisticMessage)
@@ -714,6 +713,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           prompt={conversation.prompt}
           messageCount={messages.length}
           onOpenSettings={onToggleSettings}
+          onOpenTasks={onToggleTasks}
         />
       )}
 
