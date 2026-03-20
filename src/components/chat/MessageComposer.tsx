@@ -27,11 +27,12 @@ interface Props {
   placeholder?: string
   participants?: Participant[]
   isObserver?: boolean
+  enableMentions?: boolean
   replyTo?: Message | null
   onCancelReply?: () => void
 }
 
-export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, replyTo, onCancelReply }: Props) {
+export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, enableMentions = true, replyTo, onCancelReply }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
@@ -86,7 +87,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
 
   // Filter participants by mention query
   const mentionCandidates = useMemo(() => {
-    if (mentionQuery === null || !participants) return []
+    if (!enableMentions || mentionQuery === null || !participants) return []
     const q = mentionQuery.toLowerCase()
     return participants
       .filter((p) => p.entity)
@@ -96,7 +97,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
         return name.includes(q) || display.includes(q)
       })
       .slice(0, 8)
-  }, [mentionQuery, participants])
+  }, [enableMentions, mentionQuery, participants])
 
   // Reset mention index when candidates change
   useEffect(() => {
@@ -178,18 +179,22 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     const trimmed = text.trim()
     if (!trimmed && uploadedAttachments.length === 0) return
     if (hasUploading) return // Wait for uploads to finish
-    onSend(trimmed, uploadedAttachments.length > 0 ? uploadedAttachments : undefined, mentionIds.length > 0 ? mentionIds : undefined)
+    onSend(
+      trimmed,
+      uploadedAttachments.length > 0 ? uploadedAttachments : undefined,
+      enableMentions && mentionIds.length > 0 ? mentionIds : undefined,
+    )
     setText('')
     setPendingFiles([])
     setMentionIds([])
     setMentionQuery(null)
     if (conversationId) localStorage.removeItem(`draft:${conversationId}`)
     textareaRef.current?.focus()
-  }, [text, uploadedAttachments, hasUploading, mentionIds, onSend, conversationId])
+  }, [text, uploadedAttachments, hasUploading, mentionIds, onSend, conversationId, enableMentions])
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     // Handle mention autocomplete navigation
-    if (mentionQuery !== null && mentionCandidates.length > 0) {
+    if (enableMentions && mentionQuery !== null && mentionCandidates.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault()
         setMentionIndex((i) => (i + 1) % mentionCandidates.length)
@@ -275,6 +280,12 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     // Detect @mention trigger
     const cursor = ta.selectionStart
     const textBeforeCursor = value.slice(0, cursor)
+    if (!enableMentions) {
+      setMentionQuery(null)
+      setMentionStart(-1)
+      if (mentionIds.length > 0) setMentionIds([])
+      return
+    }
     // Find the last '@' that isn't preceded by a word char
     const atMatch = textBeforeCursor.match(/(^|[^a-zA-Z0-9])@([^\s@]*)$/)
     if (atMatch && participants && participants.length > 0) {
@@ -299,7 +310,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   return (
     <div className="px-4 pt-2 relative" style={{ paddingBottom: 'max(16px, env(safe-area-inset-bottom))' }}>
       {/* @mention autocomplete popover */}
-      {mentionQuery !== null && mentionCandidates.length > 0 && (
+      {enableMentions && mentionQuery !== null && mentionCandidates.length > 0 && (
         <div
           ref={mentionRef}
           className="absolute bottom-full left-4 right-4 mb-1 max-h-52 overflow-y-auto rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] shadow-xl shadow-black/20 z-20"
@@ -390,7 +401,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
       )}
 
       {/* Mention badges */}
-      {mentionIds.length > 0 && participants && (
+      {enableMentions && mentionIds.length > 0 && participants && (
         <div className="flex gap-1.5 mb-2 flex-wrap">
           {mentionIds.map((eid) => {
             const p = participants.find((pp) => pp.entity_id === eid)
