@@ -27,6 +27,7 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
   const [memoryCount, setMemoryCount] = useState(0)
   const [recentMemories, setRecentMemories] = useState<ConversationMemory[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
+  const [isCachedSnapshot, setIsCachedSnapshot] = useState(false)
 
   useEffect(() => {
     setResolvedPrompt(prompt)
@@ -40,6 +41,7 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
       setMemoryCount((cached.memories || []).length)
       setRecentMemories((cached.memories || []).slice(0, 2))
       setTasks(cached.tasks || [])
+      setIsCachedSnapshot(true)
     }).catch(() => {})
     return () => { cancelled = true }
   }, [conversationId, prompt])
@@ -53,6 +55,7 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
       setResolvedPrompt(nextPrompt)
       setMemoryCount(nextMemories.length)
       setRecentMemories(nextMemories.slice(0, 2))
+      setIsCachedSnapshot(false)
       void cacheConversationContext(conversationId, {
         prompt: nextPrompt,
         memories: nextMemories,
@@ -69,6 +72,7 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
       if (cancelled || !res.ok || !res.data) return
       const nextTasks = res.data || []
       setTasks(nextTasks)
+      setIsCachedSnapshot(false)
       void cacheConversationContext(conversationId, {
         prompt: resolvedPrompt,
         memories: recentMemories,
@@ -97,6 +101,11 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
         <div className="flex items-center gap-2">
           <Brain className="w-3.5 h-3.5 text-[var(--color-accent)]" />
           <span className="text-xs font-semibold text-[var(--color-text-primary)]">{t('memory.contextTitle')}</span>
+          {isCachedSnapshot ? (
+            <span className="rounded-full bg-[var(--color-bg-hover)] px-2 py-0.5 text-[10px] font-medium text-[var(--color-text-muted)]">
+              {t('conversation.cachedShort')}
+            </span>
+          ) : null}
         </div>
         {canOpen ? <ChevronRight className="w-3.5 h-3.5 text-[var(--color-text-muted)]" /> : null}
       </div>

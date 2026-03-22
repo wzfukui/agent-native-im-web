@@ -20,6 +20,7 @@ export function useConversationManager() {
   const [leaveConfirmId, setLeaveConfirmId] = useState<number | null>(null)
   const [archiveRefresh, setArchiveRefresh] = useState(0)
   const [archivedConv, setArchivedConv] = useState<Conversation | null>(null)
+  const [showCachedSnapshot, setShowCachedSnapshot] = useState(false)
   const [outboxCount, setOutboxCount] = useState(0)
   const [outboxFailedCount, setOutboxFailedCount] = useState(0)
   const [outboxLastSyncAt, setOutboxLastSyncAt] = useState<string | null>(null)
@@ -29,7 +30,10 @@ export function useConversationManager() {
   useEffect(() => {
     if (!token) return
     getCachedConversations().then((cached) => {
-      if (cached.length > 0) setConversations(cached)
+      if (cached.length > 0) {
+        setConversations(cached)
+        setShowCachedSnapshot(true)
+      }
     })
   }, [token, setConversations])
 
@@ -42,6 +46,7 @@ export function useConversationManager() {
     if (res.ok && res.data) {
       const convs = Array.isArray(res.data) ? res.data : []
       setConversations(convs)
+      setShowCachedSnapshot(false)
       cacheConversations(convs)
 
       const entityIds = new Set<number>()
@@ -273,6 +278,7 @@ export function useConversationManager() {
     activeConv,
     isArchivedView,
     convsLoading,
+    showCachedSnapshot,
     leaveConfirmId,
     archiveRefresh,
     outboxCount,

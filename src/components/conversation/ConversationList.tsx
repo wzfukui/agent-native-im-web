@@ -25,9 +25,10 @@ interface Props {
   onRefresh?: () => Promise<void>
   archiveRefresh?: number
   loading?: boolean
+  showCachedSnapshot?: boolean
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading, showCachedSnapshot = false }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
@@ -153,6 +154,11 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
           >
             {t('conversation.globalSearch')}
           </button>
+        )}
+        {showCachedSnapshot && (
+          <div className="mt-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-2 text-[11px] leading-relaxed text-[var(--color-text-muted)]">
+            {t('conversation.cachedSnapshot')}
+          </div>
         )}
       </div>
 

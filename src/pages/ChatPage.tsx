@@ -103,6 +103,7 @@ export function ChatPage() {
           onRefresh={convManager.loadConversations}
           archiveRefresh={convManager.archiveRefresh}
           loading={convManager.convsLoading}
+          showCachedSnapshot={convManager.showCachedSnapshot}
         />
       </div>
 
