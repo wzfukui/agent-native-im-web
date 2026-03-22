@@ -117,11 +117,7 @@ export class AnimpWebSocket {
 
     const deviceInfo = (navigator.userAgent || '').substring(0, 100)
     // Cookie-based auth: browser sends aim_token cookie automatically with the WS upgrade request.
-    // Token query param kept as fallback for non-browser clients or when cookies aren't available.
     let wsUrl = `${this.url}?device_id=${encodeURIComponent(this.deviceId)}&device_info=${encodeURIComponent(deviceInfo)}`
-    if (this.token) {
-      wsUrl += `&token=${encodeURIComponent(this.token)}`
-    }
     // On reconnect, request catch-up messages since the last known ID
     if (this.wasConnected && this._sinceId > 0) {
       wsUrl += `&since_id=${this._sinceId}`

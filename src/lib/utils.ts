@@ -102,15 +102,13 @@ export function truncate(str: string, max: number): string {
 }
 
 /**
- * Append JWT token to /files/ URLs for authenticated access.
- * Non-file URLs (http://, https://, data:, etc.) are returned unchanged.
+ * Resolve authenticated file URLs for browser usage.
+ * Web uses same-origin cookie auth for /files/* so we intentionally avoid
+ * appending bearer tokens to URLs.
  */
 export function authenticatedFileUrl(url: string | undefined | null, token: string | null): string {
-  if (!url || !token) return url ?? ''
-  // Only modify relative /files/ paths served by our backend
-  if (!url.startsWith('/files/')) return url
-  const separator = url.includes('?') ? '&' : '?'
-  return `${url}${separator}token=${encodeURIComponent(token)}`
+  void token
+  return url ?? ''
 }
 
 /**

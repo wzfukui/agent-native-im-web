@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { getInitials, entityDisplayName, entityColor, formatFileSize, truncate } from './utils'
+import { getInitials, entityDisplayName, entityColor, formatFileSize, truncate, authenticatedFileUrl } from './utils'
 import type { Entity } from './types'
 
 describe('getInitials', () => {
@@ -80,5 +80,11 @@ describe('truncate', () => {
 
   it('handles exact length', () => {
     expect(truncate('hello', 5)).toBe('hello')
+  })
+})
+
+describe('authenticatedFileUrl', () => {
+  it('does not append bearer tokens to browser file URLs', () => {
+    expect(authenticatedFileUrl('/files/demo.png', 'secret-token')).toBe('/files/demo.png')
   })
 })
