@@ -6,12 +6,13 @@ interface Props {
   onSwitchToRegister?: () => void
   onLogin: (username: string, password: string) => Promise<void>
   error?: string
+  offlineHint?: string
   onForgotPassword?: () => void
   onTerms?: () => void
   onPrivacy?: () => void
 }
 
-export function LoginForm({ onLogin, error, onSwitchToRegister, onForgotPassword, onTerms, onPrivacy }: Props) {
+export function LoginForm({ onLogin, error, offlineHint, onSwitchToRegister, onForgotPassword, onTerms, onPrivacy }: Props) {
   const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -46,6 +47,11 @@ export function LoginForm({ onLogin, error, onSwitchToRegister, onForgotPassword
           onSubmit={handleSubmit}
           className="space-y-5"
         >
+          {offlineHint && (
+            <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-500/10 border border-amber-500/15 rounded-lg px-3 py-2.5">
+              {offlineHint}
+            </div>
+          )}
           <div>
             <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
               {t('auth.usernameOrEmail')}

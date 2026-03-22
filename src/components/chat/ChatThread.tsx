@@ -773,6 +773,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         onSend={handleSend}
         onAudioSend={handleAudioSend}
         onFileUpload={handleFileUpload}
+        attachmentsEnabled={navigator.onLine}
         onTyping={onTyping ? () => onTyping(conversation.id) : undefined}
         placeholder={t('conversation.typeMessage')}
         participants={conversation.participants}

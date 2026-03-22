@@ -30,9 +30,10 @@ interface Props {
   enableMentions?: boolean
   replyTo?: Message | null
   onCancelReply?: () => void
+  attachmentsEnabled?: boolean
 }
 
-export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, enableMentions = true, replyTo, onCancelReply }: Props) {
+export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, enableMentions = true, replyTo, onCancelReply, attachmentsEnabled = true }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
@@ -241,7 +242,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   }, [recStop, onAudioSend])
 
   const addAndUploadFiles = useCallback((newFiles: File[]) => {
-    if (!onFileUpload || newFiles.length === 0) return
+    if (!attachmentsEnabled || !onFileUpload || newFiles.length === 0) return
     const entries: PendingFile[] = newFiles.map((f) => ({ file: f, status: 'uploading' as const }))
     setPendingFiles((prev) => [...prev, ...entries])
     // Upload each file immediately
@@ -257,7 +258,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
         )
       })
     }
-  }, [onFileUpload])
+  }, [attachmentsEnabled, onFileUpload])
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || [])
@@ -367,6 +368,12 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
         </div>
       )}
 
+      {!attachmentsEnabled && onFileUpload && (
+        <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[11px] text-[var(--color-text-muted)]">
+          {t('composer.attachmentsRequireConnection')}
+        </div>
+      )}
+
       {/* Attached files preview */}
       {pendingFiles.length > 0 && (
         <div className="flex gap-2 mb-2 flex-wrap">
@@ -464,8 +471,14 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
           <>
             {/* Attach button */}
             <button
-              onClick={() => fileInputRef.current?.click()}
-              className="w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center flex-shrink-0 cursor-pointer transition-colors text-[var(--color-text-muted)] hover:text-[var(--color-text-secondary)]"
+              onClick={() => attachmentsEnabled && fileInputRef.current?.click()}
+              disabled={!attachmentsEnabled}
+              className={cn(
+                'w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors text-[var(--color-text-muted)]',
+                attachmentsEnabled
+                  ? 'hover:bg-[var(--color-bg-hover)] cursor-pointer hover:text-[var(--color-text-secondary)]'
+                  : 'opacity-45 cursor-not-allowed',
+              )}
               aria-label={t('a11y.attach')}
             >
               <Paperclip className="w-4 h-4" />
@@ -513,6 +526,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
               onCompositionStart={() => { isComposingRef.current = true }}
               onCompositionEnd={() => { isComposingRef.current = false }}
               onPaste={(e) => {
+                if (!attachmentsEnabled) return
                 const items = e.clipboardData?.items
                 if (!items) return
                 const imageFiles: File[] = []

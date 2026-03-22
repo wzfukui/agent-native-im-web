@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
 import { LoginForm } from '@/components/auth/LoginForm'
@@ -21,6 +21,18 @@ export function LoginPage() {
 
   const [loginError, setLoginError] = useState('')
   const [authPage, setAuthPage] = useState<'login' | 'register' | 'forgot' | 'terms' | 'privacy'>('login')
+  const [isOffline, setIsOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false)
+
+  useEffect(() => {
+    const onOnline = () => setIsOffline(false)
+    const onOffline = () => setIsOffline(true)
+    window.addEventListener('online', onOnline)
+    window.addEventListener('offline', onOffline)
+    return () => {
+      window.removeEventListener('online', onOnline)
+      window.removeEventListener('offline', onOffline)
+    }
+  }, [])
 
   // If already logged in, redirect
   if (token && entity) {
@@ -60,6 +72,7 @@ export function LoginPage() {
       <LoginForm
         onLogin={handleLogin}
         error={loginError}
+        offlineHint={isOffline ? t('auth.offlineFirstLoginHint') : undefined}
         onSwitchToRegister={() => setAuthPage('register')}
         onForgotPassword={() => setAuthPage('forgot')}
         onTerms={() => setAuthPage('terms')}

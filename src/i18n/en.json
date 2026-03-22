@@ -37,6 +37,7 @@
     "backToLogin": "Back to Sign In",
     "fieldsRequired": "Username/email and password are required",
     "registerError": "Registration failed",
+    "offlineFirstLoginHint": "First-time sign-in still needs a live connection. After you've signed in once, ANI can restore your recent workspace from local cache.",
     "pwdTooShort": "Too short",
     "pwdWeak": "Weak",
     "pwdMedium": "Medium",
@@ -450,7 +451,7 @@
   "connection": {
     "disconnected": "Connection lost, reconnecting...",
     "reconnected": "Reconnected",
-    "offlineMode": "Offline mode: changes will sync when network is back",
+    "offlineMode": "Connection lost: text messages may retry when service is back",
     "authExpired": "Session check in progress...",
     "queuedMessages": "{{count}} queued",
     "failedMessages": "{{count}} failed",
@@ -534,6 +535,9 @@
     "navigation": "Main navigation",
     "closeSearch": "Clear search",
     "closeDialog": "Close dialog"
+  },
+  "composer": {
+    "attachmentsRequireConnection": "Attachments and media uploads need a live connection. Text messages can queue and retry when service returns."
   },
   "forgotPassword": {
     "title": "Reset Password",
