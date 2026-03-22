@@ -9,7 +9,8 @@ export function PrivacyPage({ onBack }: Props) {
   const { t } = useTranslation()
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg-primary)] px-4 py-8">
+    <div className="h-full overflow-y-auto bg-[var(--color-bg-primary)]">
+      <div className="min-h-full px-4 py-8">
       <div className="max-w-2xl mx-auto">
         <button
           onClick={onBack}
@@ -63,6 +64,7 @@ export function PrivacyPage({ onBack }: Props) {
           <h2 className="text-lg font-semibold text-[var(--color-text-primary)] mt-6">8. Contact</h2>
           <p>For privacy inquiries, contact the service administrator.</p>
         </div>
+      </div>
       </div>
     </div>
   )
