@@ -98,6 +98,31 @@ function MermaidRenderer({ source }: { source: string }) {
   const [error, setError] = useState<string>('')
   const id = useId().replace(/:/g, '-')
 
+  const sanitizeSvg = useCallback((rawSvg: string) => {
+    if (typeof window === 'undefined' || typeof DOMParser === 'undefined') return rawSvg
+    try {
+      const parser = new DOMParser()
+      const doc = parser.parseFromString(rawSvg, 'image/svg+xml')
+      doc.querySelectorAll('script, foreignObject').forEach((node) => node.remove())
+      doc.querySelectorAll('*').forEach((node) => {
+        for (const attr of Array.from(node.attributes)) {
+          const name = attr.name.toLowerCase()
+          const value = attr.value.trim().toLowerCase()
+          if (name.startsWith('on')) {
+            node.removeAttribute(attr.name)
+            continue
+          }
+          if ((name === 'href' || name === 'xlink:href') && value.startsWith('javascript:')) {
+            node.removeAttribute(attr.name)
+          }
+        }
+      })
+      return new XMLSerializer().serializeToString(doc.documentElement)
+    } catch {
+      return rawSvg
+    }
+  }, [])
+
   useEffect(() => {
     let cancelled = false
     async function render() {
@@ -105,14 +130,14 @@ function MermaidRenderer({ source }: { source: string }) {
         const mermaid = (await import('mermaid')).default
         mermaid.initialize({ theme: 'dark', startOnLoad: false })
         const { svg: rendered } = await mermaid.render(`mermaid${id}`, source)
-        if (!cancelled) setSvg(rendered)
+        if (!cancelled) setSvg(sanitizeSvg(rendered))
       } catch (e) {
         if (!cancelled) setError(e instanceof Error ? e.message : 'Mermaid render failed')
       }
     }
     render()
     return () => { cancelled = true }
-  }, [source, id])
+  }, [source, id, sanitizeSvg])
 
   if (error) {
     return (
