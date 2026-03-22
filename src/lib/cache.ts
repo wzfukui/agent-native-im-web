@@ -1,4 +1,5 @@
 import type { Conversation, Message, Entity } from './types'
+import type { ConversationMemory, Task } from './types'
 
 const DB_NAME = 'aim_cache'
 const DB_VERSION = 4
@@ -16,6 +17,13 @@ export interface OutboxMessage {
   last_error?: string
   last_attempt_at?: string
   sync_state?: 'queued' | 'sending' | 'failed'
+}
+
+export interface CachedConversationContext {
+  prompt: string
+  memories: ConversationMemory[]
+  tasks: Task[]
+  updated_at: string
 }
 
 function openDB(): Promise<IDBDatabase> {
@@ -110,6 +118,26 @@ export async function cacheUser(user: Entity) {
     const store = await tx('meta', 'readwrite')
     store.put({ key: 'current_user', data: user })
   } catch { /* IndexedDB may be unavailable */ }
+}
+
+export async function cacheConversationContext(conversationId: number, context: CachedConversationContext) {
+  try {
+    const store = await tx('meta', 'readwrite')
+    store.put({ key: `context_${conversationId}`, data: context })
+  } catch { /* IndexedDB may be unavailable */ }
+}
+
+export async function getCachedConversationContext(conversationId: number): Promise<CachedConversationContext | null> {
+  try {
+    const store = await tx('meta', 'readonly')
+    return new Promise((resolve) => {
+      const req = store.get(`context_${conversationId}`)
+      req.onsuccess = () => resolve(req.result?.data || null)
+      req.onerror = () => resolve(null)
+    })
+  } catch {
+    return null
+  }
 }
 
 export async function getCachedUser(): Promise<Entity | null> {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Brain, ChevronRight, ListTodo, MessagesSquare, TerminalSquare } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
+import { cacheConversationContext, getCachedConversationContext } from '@/lib/cache'
 import type { ConversationMemory, Task } from '@/lib/types'
 
 interface Props {
@@ -33,24 +34,50 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
 
   useEffect(() => {
     let cancelled = false
-    api.listMemories(token, conversationId).then((res) => {
-      if (cancelled || !res.ok || !res.data) return
-      setResolvedPrompt(res.data.prompt || '')
-      const nextMemories = res.data.memories || []
-      setMemoryCount(nextMemories.length)
-      setRecentMemories(nextMemories.slice(0, 2))
+    getCachedConversationContext(conversationId).then((cached) => {
+      if (cancelled || !cached) return
+      setResolvedPrompt(cached.prompt || prompt)
+      setMemoryCount((cached.memories || []).length)
+      setRecentMemories((cached.memories || []).slice(0, 2))
+      setTasks(cached.tasks || [])
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [token, conversationId])
+  }, [conversationId, prompt])
+
+  useEffect(() => {
+    let cancelled = false
+    api.listMemories(token, conversationId).then((res) => {
+      if (cancelled || !res.ok || !res.data) return
+      const nextPrompt = res.data.prompt || ''
+      const nextMemories = res.data.memories || []
+      setResolvedPrompt(nextPrompt)
+      setMemoryCount(nextMemories.length)
+      setRecentMemories(nextMemories.slice(0, 2))
+      void cacheConversationContext(conversationId, {
+        prompt: nextPrompt,
+        memories: nextMemories,
+        tasks,
+        updated_at: new Date().toISOString(),
+      })
+    }).catch(() => {})
+    return () => { cancelled = true }
+  }, [token, conversationId, tasks])
 
   useEffect(() => {
     let cancelled = false
     api.listTasks(token, conversationId).then((res) => {
       if (cancelled || !res.ok || !res.data) return
-      setTasks(res.data || [])
+      const nextTasks = res.data || []
+      setTasks(nextTasks)
+      void cacheConversationContext(conversationId, {
+        prompt: resolvedPrompt,
+        memories: recentMemories,
+        tasks: nextTasks,
+        updated_at: new Date().toISOString(),
+      })
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [token, conversationId])
+  }, [token, conversationId, resolvedPrompt, recentMemories])
 
   const promptPreview = useMemo(() => truncate(resolvedPrompt), [resolvedPrompt])
   const hasContext = !!promptPreview || memoryCount > 0

@@ -8,6 +8,7 @@ import { ChatPage } from '@/pages/ChatPage'
 import { BotsPage } from '@/pages/BotsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import * as api from '@/lib/api'
+import { getCachedUser } from '@/lib/cache'
 
 /** Redirect old #c=xxx hash URLs to /chat/xxx */
 function HashRedirect() {
@@ -50,7 +51,15 @@ function SessionRestore() {
         const placeholder = '__cookie_session__'
         setAuth(placeholder, res.data)
       }
-    }).catch(() => {}).finally(() => {
+    }).catch(async () => {
+      if (typeof navigator !== 'undefined' && !navigator.onLine) {
+        const cachedUser = await getCachedUser()
+        if (cachedUser) {
+          setAuth('__offline_cached__', cachedUser)
+          return
+        }
+      }
+    }).finally(() => {
       setSessionChecked()
     })
   }, [token, entity, sessionChecked, setAuth, setSessionChecked])

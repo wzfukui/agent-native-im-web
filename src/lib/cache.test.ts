@@ -1,9 +1,11 @@
 import { describe, it, expect } from 'vitest'
 import {
   getCachedConversations,
+  getCachedConversationContext,
   getCachedMessages,
   getCachedEntities,
   getCachedUser,
+  cacheConversationContext,
   cacheConversations,
   cacheMessages,
   cacheEntities,
@@ -40,6 +42,11 @@ describe('cache functions (no IndexedDB)', () => {
     expect(result).toBeNull()
   })
 
+  it('getCachedConversationContext returns null', async () => {
+    const result = await getCachedConversationContext(1)
+    expect(result).toBeNull()
+  })
+
   it('cacheConversations does not throw', async () => {
     await expect(cacheConversations([])).resolves.not.toThrow()
   })
@@ -54,6 +61,15 @@ describe('cache functions (no IndexedDB)', () => {
 
   it('cacheUser does not throw', async () => {
     await expect(cacheUser({ id: 1, name: 'test' } as never)).resolves.not.toThrow()
+  })
+
+  it('cacheConversationContext does not throw', async () => {
+    await expect(cacheConversationContext(1, {
+      prompt: 'remember this',
+      memories: [],
+      tasks: [],
+      updated_at: new Date().toISOString(),
+    })).resolves.not.toThrow()
   })
 
   it('clearCache does not throw', async () => {

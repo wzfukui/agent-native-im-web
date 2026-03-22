@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Entity } from '@/lib/types'
+import { cacheUser } from '@/lib/cache'
 
 interface AuthState {
   token: string | null
@@ -21,6 +22,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setAuth: (token, entity) => {
     sessionStorage.setItem('aim_token', token)
     sessionStorage.setItem('aim_entity', JSON.stringify(entity))
+    void cacheUser(entity)
     set({ token, entity, sessionChecked: true })
   },
   setToken: (token) => {
