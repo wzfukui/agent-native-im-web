@@ -187,16 +187,16 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   // Show full credential card if just created
   const showFullCreds = createdCredentials && createdCredentials.entity.id === bot.id
   const accessToken = rotatedToken || (showFullCreds ? createdCredentials?.key : null)
-  const wsUrlWithToken = accessToken
-    ? `${window.location.origin.replace('https://', 'wss://').replace('http://', 'ws://')}/api/v1/ws?token=${encodeURIComponent(accessToken)}`
-    : null
+  const wsUrl = `${window.location.origin.replace('https://', 'wss://').replace('http://', 'ws://')}/api/v1/ws`
   const accessText = accessToken ? [
     `AGENT_IM_BASE=${window.location.origin}/api/v1`,
     `AGENT_IM_TOKEN=${accessToken}`,
-    `AGENT_IM_WS=${wsUrlWithToken}`,
+    `AGENT_IM_WS=${wsUrl}`,
     '',
     '# Quick check',
     `curl ${window.location.origin}/api/v1/me -H "Authorization: Bearer ${accessToken}"`,
+    '',
+    '# WebSocket clients should send Authorization: Bearer <token> during the handshake',
   ].join('\n') : ''
   const accessUrl = accessToken
     ? `aim-bot://connect?base=${encodeURIComponent(`${window.location.origin}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
