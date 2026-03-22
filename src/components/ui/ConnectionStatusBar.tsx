@@ -77,7 +77,8 @@ export function ConnectionStatusBar({
       {!issue ? (
         <>
           <Wifi className="w-3.5 h-3.5" />
-          {t('connection.reconnected')}
+          {lastSyncAt ? t('connection.syncRestored') : t('connection.reconnected')}
+          {lastSyncAt && <span className="opacity-75">{t('connection.lastSyncAt', { time: new Date(lastSyncAt).toLocaleTimeString() })}</span>}
         </>
       ) : (
         <>

@@ -86,6 +86,10 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   }, [conversation.participants, myEntity.id])
 
   const directBotParticipant = !isGroup ? (botParticipants[0] || null) : null
+  const composerTargetBot = useMemo(() => {
+    if (!isGroup) return directBotParticipant
+    return botParticipants.length === 1 ? botParticipants[0] : null
+  }, [isGroup, directBotParticipant, botParticipants])
 
   // Start bot thinking indicator with auto-timeout
   const startBotThinking = useCallback((target?: import('@/lib/types').Entity | null) => {
@@ -781,6 +785,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
         enableMentions={conversation.conv_type !== 'direct'}
         replyTo={replyTo}
         onCancelReply={() => setReplyTo(null)}
+        targetBot={composerTargetBot}
       />
     </div>
   )

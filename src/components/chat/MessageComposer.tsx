@@ -5,6 +5,8 @@ import { cn, formatFileSize, entityDisplayName } from '@/lib/utils'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { EmojiPicker } from '@/components/ui/EmojiPicker'
 import { useAudioRecorder } from '@/lib/use-audio-recorder'
+import { getEntityAttachmentHint, type AttachmentCapabilityKind } from '@/lib/entity-capabilities'
+import type { Entity } from '@/lib/types'
 import type { Participant, Message, Attachment } from '@/lib/types'
 
 /** A file that has been selected and is being (or has been) uploaded. */
@@ -31,9 +33,10 @@ interface Props {
   replyTo?: Message | null
   onCancelReply?: () => void
   attachmentsEnabled?: boolean
+  targetBot?: Entity | null
 }
 
-export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, enableMentions = true, replyTo, onCancelReply, attachmentsEnabled = true }: Props) {
+export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, enableMentions = true, replyTo, onCancelReply, attachmentsEnabled = true, targetBot = null }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([])
@@ -175,6 +178,18 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
   [pendingFiles])
 
   const hasUploading = pendingFiles.some((pf) => pf.status === 'uploading')
+  const attachmentKinds = useMemo<AttachmentCapabilityKind[]>(() => {
+    return pendingFiles.map((pf) => {
+      if (pf.file.type.startsWith('image/')) return 'image'
+      if (pf.file.type.startsWith('audio/')) return 'audio'
+      if (pf.file.type.startsWith('video/')) return 'video'
+      return 'document'
+    })
+  }, [pendingFiles])
+  const attachmentHint = useMemo(
+    () => getEntityAttachmentHint(t, targetBot, attachmentKinds),
+    [t, targetBot, attachmentKinds],
+  )
 
   const handleSubmit = useCallback(async () => {
     const trimmed = text.trim()
@@ -371,6 +386,12 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
       {!attachmentsEnabled && onFileUpload && (
         <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--color-border)] text-[11px] text-[var(--color-text-muted)]">
           {t('composer.attachmentsRequireConnection')}
+        </div>
+      )}
+
+      {attachmentHint && (
+        <div className="mb-2 px-3 py-2 rounded-lg bg-[var(--color-accent)]/8 border border-[var(--color-accent)]/15 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
+          {attachmentHint}
         </div>
       )}
 
