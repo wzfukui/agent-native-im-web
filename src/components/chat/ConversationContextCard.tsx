@@ -48,40 +48,47 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
 
   useEffect(() => {
     let cancelled = false
-    api.listMemories(token, conversationId).then((res) => {
-      if (cancelled || !res.ok || !res.data) return
-      const nextPrompt = res.data.prompt || ''
-      const nextMemories = res.data.memories || []
-      setResolvedPrompt(nextPrompt)
-      setMemoryCount(nextMemories.length)
-      setRecentMemories(nextMemories.slice(0, 2))
-      setIsCachedSnapshot(false)
-      void cacheConversationContext(conversationId, {
-        prompt: nextPrompt,
-        memories: nextMemories,
-        tasks,
-        updated_at: new Date().toISOString(),
-      })
-    }).catch(() => {})
-    return () => { cancelled = true }
-  }, [token, conversationId, tasks])
+    void Promise.allSettled([
+      api.listMemories(token, conversationId),
+      api.listTasks(token, conversationId),
+    ]).then(([memoriesResult, tasksResult]) => {
+      if (cancelled) return
 
-  useEffect(() => {
-    let cancelled = false
-    api.listTasks(token, conversationId).then((res) => {
-      if (cancelled || !res.ok || !res.data) return
-      const nextTasks = res.data || []
-      setTasks(nextTasks)
-      setIsCachedSnapshot(false)
-      void cacheConversationContext(conversationId, {
-        prompt: resolvedPrompt,
-        memories: recentMemories,
-        tasks: nextTasks,
-        updated_at: new Date().toISOString(),
-      })
+      const memoriesResponse = memoriesResult.status === 'fulfilled' ? memoriesResult.value : null
+      const tasksResponse = tasksResult.status === 'fulfilled' ? tasksResult.value : null
+
+      const nextPrompt = memoriesResponse?.ok && memoriesResponse.data
+        ? (memoriesResponse.data.prompt || '')
+        : prompt
+      const nextMemories = memoriesResponse?.ok && memoriesResponse.data
+        ? (memoriesResponse.data.memories || [])
+        : []
+      const nextTasks = tasksResponse?.ok && tasksResponse.data
+        ? tasksResponse.data
+        : []
+
+      if (memoriesResponse?.ok && memoriesResponse.data) {
+        setResolvedPrompt(nextPrompt)
+        setMemoryCount(nextMemories.length)
+        setRecentMemories(nextMemories.slice(0, 2))
+      }
+
+      if (tasksResponse?.ok && tasksResponse.data) {
+        setTasks(nextTasks)
+      }
+
+      if ((memoriesResponse?.ok && memoriesResponse.data) || (tasksResponse?.ok && tasksResponse.data)) {
+        setIsCachedSnapshot(false)
+        void cacheConversationContext(conversationId, {
+          prompt: nextPrompt,
+          memories: nextMemories,
+          tasks: nextTasks,
+          updated_at: new Date().toISOString(),
+        })
+      }
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [token, conversationId, resolvedPrompt, recentMemories])
+  }, [token, conversationId, prompt])
 
   const promptPreview = useMemo(() => truncate(resolvedPrompt), [resolvedPrompt])
   const hasContext = !!promptPreview || memoryCount > 0
