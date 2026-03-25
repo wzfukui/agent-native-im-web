@@ -11,6 +11,15 @@ vi.mock('react-i18next', () => ({
 
 describe('LoginForm', () => {
   it('renders offline hint when provided', () => {
+    Object.defineProperty(window, 'localStorage', {
+      configurable: true,
+      value: {
+        getItem: vi.fn(() => null),
+        setItem: vi.fn(),
+        removeItem: vi.fn(),
+      },
+    })
+
     render(
       <LoginForm
         onLogin={vi.fn(async () => {})}

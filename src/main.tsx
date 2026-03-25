@@ -7,6 +7,7 @@ import App from './App'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { buildInfo } from '@/lib/build-info'
 import { fetchLatestBuildInfo, isBuildStale } from '@/lib/update-check'
+import { applyGatewayUrl } from '@/lib/gateway'
 
 function showUpdateToast(label: string, actionLabel: string, onRefresh: () => void) {
   const existing = document.getElementById('sw-update-toast')
@@ -51,6 +52,7 @@ if (savedTheme === 'system') {
 }
 
 void checkForVersionDrift()
+applyGatewayUrl()
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible') void checkForVersionDrift()
 })

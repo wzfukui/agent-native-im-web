@@ -8,6 +8,7 @@ import { EntityAvatar } from './EntityAvatar'
 import { AvatarPicker } from './AvatarPicker'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
+import { getGatewayUrl, getGatewayWebSocketUrl } from '@/lib/gateway'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -130,8 +131,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     const quickstart = generateBotQuickstart({
       botName: bot.display_name || bot.name,
       botToken: accessToken,
-      apiUrl: `${window.location.origin}/api/v1`,
-      webUrl: window.location.origin,
+      apiUrl: `${gatewayUrl}/api/v1`,
+      webUrl: gatewayUrl,
     })
     const blob = new Blob([quickstart], { type: 'text/markdown;charset=utf-8' })
     const url = URL.createObjectURL(blob)
@@ -187,19 +188,20 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   // Show full credential card if just created
   const showFullCreds = createdCredentials && createdCredentials.entity.id === bot.id
   const accessToken = rotatedToken || (showFullCreds ? createdCredentials?.key : null)
-  const wsUrl = `${window.location.origin.replace('https://', 'wss://').replace('http://', 'ws://')}/api/v1/ws`
+  const gatewayUrl = getGatewayUrl()
+  const wsUrl = getGatewayWebSocketUrl()
   const accessText = accessToken ? [
-    `AGENT_IM_BASE=${window.location.origin}/api/v1`,
+    `AGENT_IM_BASE=${gatewayUrl}/api/v1`,
     `AGENT_IM_TOKEN=${accessToken}`,
     `AGENT_IM_WS=${wsUrl}`,
     '',
     '# Quick check',
-    `curl ${window.location.origin}/api/v1/me -H "Authorization: Bearer ${accessToken}"`,
+    `curl ${gatewayUrl}/api/v1/me -H "Authorization: Bearer ${accessToken}"`,
     '',
     '# WebSocket clients should send Authorization: Bearer <token> during the handshake',
   ].join('\n') : ''
   const accessUrl = accessToken
-    ? `aim-bot://connect?base=${encodeURIComponent(`${window.location.origin}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
+    ? `aim-bot://connect?base=${encodeURIComponent(`${gatewayUrl}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
     : ''
   const diagnosticsSnapshot = [
     `entity=${bot.id} (${bot.name})`,
@@ -287,9 +289,9 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
               <div className="flex items-center gap-2">
                 <span className="text-xs text-[var(--color-text-muted)] w-8 flex-shrink-0">API</span>
                 <code className="flex-1 text-xs font-mono text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] px-2.5 py-1.5 rounded-lg truncate">
-                  {window.location.origin}/api/v1
+                  {gatewayUrl}/api/v1
                 </code>
-                <button onClick={() => handleCopy(`${window.location.origin}/api/v1`, 'api')} className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                <button onClick={() => handleCopy(`${gatewayUrl}/api/v1`, 'api')} className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer">
                   {copyBtn('api')}
                 </button>
               </div>
@@ -318,11 +320,11 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
               <button
                 onClick={() => {
                   const integrationInfo = `# Bot Integration Configuration
-API Endpoint: ${window.location.origin}/api/v1
+API Endpoint: ${gatewayUrl}/api/v1
 API Key: ${createdCredentials.key}
 
 # Environment Variables (.env)
-AGENT_IM_BASE=${window.location.origin}/api/v1
+AGENT_IM_BASE=${gatewayUrl}/api/v1
 AGENT_IM_TOKEN=${createdCredentials.key}
 
 # Integration Documentation
@@ -465,7 +467,7 @@ ${createdCredentials.doc}`
                 {t('bot.downloadQuickstart')}
               </button>
               <a
-                href={`${window.location.origin}/api/v1/onboarding-guide`}
+                href={`${gatewayUrl}/api/v1/onboarding-guide`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(secondaryBtn, 'border border-[var(--color-border)] no-underline')}

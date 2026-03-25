@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { LogIn, Loader2 } from 'lucide-react'
+import { applyGatewayUrl, clearGatewayUrl, getDefaultGatewayUrl, getGatewayUrl, persistGatewayUrl } from '@/lib/gateway'
 
 interface Props {
   onSwitchToRegister?: () => void
@@ -17,12 +18,26 @@ export function LoginForm({ onLogin, error, offlineHint, onSwitchToRegister, onF
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showGateway, setShowGateway] = useState(getGatewayUrl() !== getDefaultGatewayUrl())
+  const [gateway, setGateway] = useState(getGatewayUrl())
+  const [gatewayError, setGatewayError] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!username || !password) return
     setLoading(true)
     try {
+      if (showGateway) {
+        try {
+          persistGatewayUrl(gateway)
+          setGatewayError('')
+        } catch {
+          setGatewayError(t('auth.gatewayInvalid'))
+          return
+        }
+      } else {
+        applyGatewayUrl(getGatewayUrl())
+      }
       await onLogin(username, password)
     } finally {
       setLoading(false)
@@ -78,9 +93,53 @@ export function LoginForm({ onLogin, error, offlineHint, onSwitchToRegister, onF
             />
           </div>
 
-          {error && (
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => {
+                setGatewayError('')
+                setShowGateway((prev) => !prev)
+              }}
+              className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-accent)] transition-colors cursor-pointer"
+            >
+              {showGateway ? t('auth.hideGateway') : t('auth.useCustomGateway')}
+            </button>
+            {showGateway && (
+              <div>
+                <label className="block text-xs font-medium text-[var(--color-text-secondary)] mb-1.5">
+                  {t('auth.gateway')}
+                </label>
+                <input
+                  type="text"
+                  value={gateway}
+                  onChange={(e) => {
+                    setGateway(e.target.value)
+                    setGatewayError('')
+                  }}
+                  placeholder={getDefaultGatewayUrl()}
+                  className="w-full h-11 px-3.5 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]/30 transition-colors text-sm"
+                />
+                <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">{t('auth.gatewayHelp')}</p>
+                {gateway !== getDefaultGatewayUrl() && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      clearGatewayUrl()
+                      setGateway(getDefaultGatewayUrl())
+                      setGatewayError('')
+                    }}
+                    className="mt-2 text-[11px] text-[var(--color-text-muted)] hover:text-[var(--color-accent)] transition-colors cursor-pointer"
+                  >
+                    {t('auth.useOfficialGateway')}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+
+          {(error || gatewayError) && (
             <div className="text-xs text-[var(--color-error)] bg-[var(--color-error)]/8 border border-[var(--color-error)]/15 rounded-lg px-3 py-2.5">
-              {error}
+              {gatewayError || error}
             </div>
           )}
 

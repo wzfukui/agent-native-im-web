@@ -55,6 +55,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
   const canManage = myParticipant?.role === 'owner' || myParticipant?.role === 'admin'
+  const canAddOwnBot = Boolean(myParticipant)
   const isGroup = conversation.conv_type === 'group' || conversation.conv_type === 'channel'
   const muted = isMuted(conversation.id)
 
@@ -97,13 +98,13 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
     try {
       const res = await api.listEntities(token)
       if (res.ok && res.data) {
-        setAddableEntities((res.data as import('@/lib/types').Entity[]).filter((e) => !existing.has(e.id)))
+        setAddableEntities((res.data as import('@/lib/types').Entity[]).filter((e) => e.entity_type === 'bot' && !existing.has(e.id)))
       }
     } catch {
       // Network failed — fall back to cached entities
       const cached = await getCachedEntities()
       if (cached.length > 0) {
-        setAddableEntities(cached.filter((e) => !existing.has(e.id)))
+        setAddableEntities(cached.filter((e) => e.entity_type === 'bot' && !existing.has(e.id)))
       }
     }
     setAddMemberLoading(false)
@@ -379,7 +380,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
           </div>
 
           {/* Add member inline */}
-          {canManage && isGroup && !isArchived && (
+          {canAddOwnBot && isGroup && !isArchived && (
             showAddMember ? (
               <div className="mt-2 space-y-2">
                 <div className="relative">
@@ -431,7 +432,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
                 className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 cursor-pointer transition-colors"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                {t('common.addMember')}
+                {t('common.addMyBot')}
               </button>
             )
           )}

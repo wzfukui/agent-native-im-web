@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
+import { getGatewayUrl } from '@/lib/gateway'
 import { Link, Copy, Trash2, Plus, Check, Loader2 } from 'lucide-react'
 
 interface InviteLink {
@@ -57,7 +58,7 @@ export function InviteLinkSection({ conversationId }: Props) {
   }
 
   const handleCopy = (link: InviteLink) => {
-    const url = `${window.location.origin}/join/${link.code}`
+    const url = `${getGatewayUrl()}/join/${link.code}`
     navigator.clipboard.writeText(url)
     setCopied(link.id)
     setTimeout(() => setCopied(null), 2000)

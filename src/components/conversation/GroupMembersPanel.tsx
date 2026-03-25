@@ -28,6 +28,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
   const participants = useMemo(() => conversation.participants || [], [conversation.participants])
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
   const canManage = myParticipant?.role === 'owner' || myParticipant?.role === 'admin'
+  const canAddOwnBot = Boolean(myParticipant)
 
   // Load entities for adding members
   useEffect(() => {
@@ -35,13 +36,13 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
     const existing = new Set(participants.map((p) => p.entity_id))
     api.listEntities(token).then((res) => {
       if (res.ok && res.data) {
-        setEntities((res.data as Entity[]).filter((e) => !existing.has(e.id)))
+        setEntities((res.data as Entity[]).filter((e) => e.entity_type === 'bot' && !existing.has(e.id)))
       }
     }).catch(() => {
       // Network failed — fall back to cached entities
       getCachedEntities().then((cached) => {
         if (cached.length > 0) {
-          setEntities(cached.filter((e) => !existing.has(e.id)))
+          setEntities(cached.filter((e) => e.entity_type === 'bot' && !existing.has(e.id)))
         }
       })
     })
@@ -163,7 +164,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
         </div>
 
         {/* Add member */}
-        {canManage && (
+        {canAddOwnBot && (
           <div className="border-t border-[var(--color-border)]">
             {showAddMember ? (
               <div className="p-3 space-y-2 max-h-60 overflow-y-auto">
@@ -217,7 +218,7 @@ export function GroupMembersPanel({ conversation, onClose, onUpdate }: Props) {
                 className="w-full flex items-center justify-center gap-1.5 px-5 py-3 text-xs font-medium text-[var(--color-accent)] hover:bg-[var(--color-accent)]/5 cursor-pointer transition-colors"
               >
                 <UserPlus className="w-3.5 h-3.5" />
-                {t('common.addMember')}
+                {t('common.addMyBot')}
               </button>
             )}
           </div>

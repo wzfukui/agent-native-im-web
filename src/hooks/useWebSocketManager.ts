@@ -7,6 +7,7 @@ import { useTasksStore } from '@/store/tasks'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import * as api from '@/lib/api'
 import type { WSMessage, Message, Task } from '@/lib/types'
+import { getGatewayWebSocketUrl } from '@/lib/gateway'
 
 interface TypingEntry {
   name: string
@@ -71,9 +72,7 @@ export function useWebSocketManager() {
   useEffect(() => {
     if (!token || !entity) return
 
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-    const wsHost = window.location.host
-    const wsUrl = `${wsProtocol}//${wsHost}/api/v1/ws`
+    const wsUrl = getGatewayWebSocketUrl()
 
     const ws = new AnimpWebSocket(wsUrl, token)
     wsRef.current = ws
