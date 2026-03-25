@@ -37,6 +37,7 @@ export class AnimpWebSocket {
   private handleOffline = () => this.onNetworkOffline()
 
   private deviceId: string
+  private wsProtocol: string | null = null
 
   // Latest message ID for catch-up on reconnect
   private _sinceId: number = 0
@@ -45,6 +46,12 @@ export class AnimpWebSocket {
     this.url = url
     this.token = token
     this.deviceId = this.getOrCreateDeviceId()
+    this.wsProtocol = token ? `${wsBearerSubprotocolPrefix}${token}` : null
+  }
+
+  updateToken(token: string) {
+    this.token = token
+    this.wsProtocol = token ? `${wsBearerSubprotocolPrefix}${token}` : null
   }
 
   /** Set the latest known message ID so reconnect can request catch-up. */
@@ -116,13 +123,13 @@ export class AnimpWebSocket {
     this.stopPing()
 
     const deviceInfo = (navigator.userAgent || '').substring(0, 100)
-    // Cookie-based auth: browser sends aim_token cookie automatically with the WS upgrade request.
     let wsUrl = `${this.url}?device_id=${encodeURIComponent(this.deviceId)}&device_info=${encodeURIComponent(deviceInfo)}`
     // On reconnect, request catch-up messages since the last known ID
     if (this.wasConnected && this._sinceId > 0) {
       wsUrl += `&since_id=${this._sinceId}`
     }
-    this.ws = new WebSocket(wsUrl)
+    const protocols = this.wsProtocol ? [this.wsProtocol] : undefined
+    this.ws = protocols ? new WebSocket(wsUrl, protocols) : new WebSocket(wsUrl)
     let opened = false
 
     this.ws.onopen = () => {
@@ -258,7 +265,6 @@ export class AnimpWebSocket {
     this.sendQueue = []
   }
 
-  updateToken(newToken: string) {
-    this.token = newToken
-  }
 }
+
+const wsBearerSubprotocolPrefix = 'ani.bearer.'

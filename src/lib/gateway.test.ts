@@ -40,4 +40,11 @@ describe('web gateway helpers', () => {
     expect(gateway.getGatewayUrl()).toBe(gateway.getDefaultGatewayUrl())
     expect(setBaseUrl).toHaveBeenLastCalledWith('')
   })
+
+  it('builds websocket URLs from a persisted custom gateway', async () => {
+    const gateway = await import('./gateway')
+    gateway.persistGatewayUrl('https://demo.example.com')
+
+    expect(gateway.getGatewayWebSocketUrl()).toBe('wss://demo.example.com/api/v1/ws')
+  })
 })

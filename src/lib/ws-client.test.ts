@@ -15,6 +15,8 @@ let mockWsInstance: {
   simulateClose: () => void
 }
 
+let mockWsCtorArgs: unknown[] = []
+
 function createMockWsInstance() {
   return {
     readyState: 1, // OPEN
@@ -33,8 +35,16 @@ function createMockWsInstance() {
 beforeEach(() => {
   vi.useFakeTimers()
   mockWsInstance = createMockWsInstance()
-   
-  const MockWS = class { static OPEN = 1; static CLOSED = 3; constructor() { return mockWsInstance as never } }
+
+  mockWsCtorArgs = []
+  const MockWS = class {
+    static OPEN = 1
+    static CLOSED = 3
+    constructor(...args: unknown[]) {
+      mockWsCtorArgs = args
+      return mockWsInstance as never
+    }
+  }
   vi.stubGlobal('WebSocket', MockWS)
 })
 
@@ -105,6 +115,15 @@ describe('AnimpWebSocket', () => {
     ws.connect()
     mockWsInstance.simulateOpen()
     expect(ws.connected).toBe(true)
+    expect(mockWsCtorArgs[1]).toEqual(['ani.bearer.new-token'])
+  })
+
+  it('passes bearer token via WebSocket subprotocol', () => {
+    const ws = new AnimpWebSocket('wss://gateway.example.com/api/v1/ws', 'jwt-token')
+    ws.connect()
+
+    expect(mockWsCtorArgs[0]).toContain('wss://gateway.example.com/api/v1/ws?device_id=')
+    expect(mockWsCtorArgs[1]).toEqual(['ani.bearer.jwt-token'])
   })
 
   // ─── New tests for reliability features ──────────────────────
