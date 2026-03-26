@@ -1,6 +1,6 @@
 # Agent Native IM - Web
 
-Web control panel for the [Agent-Native IM](https://github.com/wzfukui/agent-native-im) platform. Version **1.6.0**.
+Web control panel for the [Agent-Native IM](https://github.com/wzfukui/agent-native-im) platform. Version **1.6.1**.
 
 ## Current Position
 
@@ -69,11 +69,28 @@ server {
         try_files $uri $uri/ /index.html;
     }
 
-    location /api/ {
+    location = /api/v1/ws {
         proxy_pass http://127.0.0.1:9800;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Sec-WebSocket-Protocol $http_sec_websocket_protocol;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 3600;
+    }
+
+    location /api/ {
+        proxy_pass http://127.0.0.1:9800;
+        proxy_http_version 1.1;
+        proxy_set_header Authorization $http_authorization;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
 
     location /files/ {
@@ -91,6 +108,7 @@ Note:
 - `/files/` are protected conversation attachments
 - `/avatar-files/` are stable avatar resources with different caching semantics
 - `build-info.json` is emitted with each build and is used by the PWA to detect stale bundles
+- `/api/v1/ws` must not be left to a generic `/api/` proxy block without WebSocket upgrade headers
 
 For uploads larger than 1 MB, ensure nginx `client_max_body_size` is configured explicitly.
 
