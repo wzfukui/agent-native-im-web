@@ -4,7 +4,8 @@ export function normalizeSelectedMessageText(text: string): string {
 
 function serializeSelectedNode(node: Node): string {
   if (node.nodeType === Node.TEXT_NODE) {
-    return node.textContent || ''
+    const text = node.textContent || ''
+    return /^\s+$/.test(text) ? '' : text
   }
 
   if (node.nodeType !== Node.ELEMENT_NODE) return ''

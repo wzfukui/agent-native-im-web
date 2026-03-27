@@ -26,6 +26,14 @@ describe('getSelectedMessageCopyText', () => {
     expect(getSelectedMessageCopyText(root)).toBe('hello\nworld')
   })
 
+  it('ignores formatting whitespace nodes between markdown blocks', () => {
+    document.body.innerHTML = '<div id="root"><div class="md"><p>hello</p>\n<p>world</p></div></div>'
+    const root = document.getElementById('root') as HTMLElement
+    const markdown = root.querySelector('.md') as HTMLElement
+    selectNodeContents(markdown)
+    expect(getSelectedMessageCopyText(root)).toBe('hello\nworld')
+  })
+
   it('keeps list items on separate lines without adding blank paragraphs', () => {
     document.body.innerHTML = '<div id="root"><div class="md"><p>intro</p><ul><li>one</li><li>two</li></ul><p>tail</p></div></div>'
     const root = document.getElementById('root') as HTMLElement
