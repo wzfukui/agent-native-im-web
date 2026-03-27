@@ -34,6 +34,24 @@ export interface FriendRequest {
   target_entity?: Entity
 }
 
+export type NotificationStatus = 'unread' | 'read'
+
+export interface NotificationRecord {
+  id: number
+  recipient_entity_id: number
+  actor_entity_id?: number
+  kind: string
+  status: NotificationStatus
+  title: string
+  body: string
+  data?: Record<string, unknown>
+  read_at?: string
+  created_at: string
+  updated_at: string
+  recipient_entity?: Entity
+  actor_entity?: Entity
+}
+
 export interface BotAccessLink {
   id: number
   bot_entity_id: number
@@ -203,6 +221,11 @@ export type WSEventType =
   | 'entity.config'
   | 'message.progress'
   | 'typing'
+  | 'friend.request.created'
+  | 'friend.request.updated'
+  | 'notification.new'
+  | 'notification.read'
+  | 'notification.read_all'
   | 'pong'
 
 export interface WSMessage {

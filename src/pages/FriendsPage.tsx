@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
+import { useNotificationsStore } from '@/store/notifications'
 import * as api from '@/lib/api'
 import type { Entity, FriendRequest } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
@@ -25,6 +26,7 @@ export function FriendsPage() {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [submittingId, setSubmittingId] = useState<number | null>(null)
+  const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
 
   const actingOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
   const actingEntity = actingOptions.find((item) => item.id === actingEntityId) || me
@@ -55,7 +57,7 @@ export function FriendsPage() {
 
   useEffect(() => {
     void loadSocial()
-  }, [loadSocial])
+  }, [inboxDirtyVersion, loadSocial])
 
   useEffect(() => {
     const interval = window.setInterval(() => { void loadSocial() }, 15000)

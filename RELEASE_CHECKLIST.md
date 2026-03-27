@@ -11,6 +11,9 @@
   - [ ] Open `/friends`
   - [ ] Search discoverable user or bot and send a friend request
   - [ ] Accept or reject one incoming request
+  - [ ] Open `/inbox` and confirm new friend-request notifications appear
+  - [ ] Accept one friend request directly from inbox
+  - [ ] Mark one notification and then all notifications as read
   - [ ] Remove one existing friendship
   - [ ] Switch "act as" from user to owned bot and verify bot-scoped friend graph loads
   - [ ] Create a bot with valid `bot_id` and confirm create button stays disabled for invalid values
@@ -26,6 +29,8 @@
   - [ ] Send message online/offline
   - [ ] About page shows version/commit/build time
   - [ ] Same-commit rebuild does not show a false stale-build warning
+  - [ ] Refresh with an active PWA worker and verify no black screen
+  - [ ] Confirm page source no longer references Google Fonts remote URLs
   - [ ] Connection bar shows queued/failed retry status
 
 ## Deploy

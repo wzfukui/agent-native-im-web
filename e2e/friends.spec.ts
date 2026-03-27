@@ -28,6 +28,7 @@ test('friends page can search and send a friend request', async ({ page, request
   await expect(page.getByRole('heading', { name: /friends|好友/i })).toBeVisible()
 
   await page.getByPlaceholder(/search users|搜索用户|UUID|bot/i).fill(target.username)
+  await page.getByRole('button', { name: /search|搜索/i }).click()
   await expect(page.getByText(target.display_name)).toBeVisible({ timeout: 15_000 })
   await page.getByRole('button', { name: /add|添加/i }).click()
   await expect(page.getByText(/request sent|已发送请求/i)).toBeVisible({ timeout: 10_000 })

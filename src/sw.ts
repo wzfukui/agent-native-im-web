@@ -1,4 +1,5 @@
 /// <reference lib="webworker" />
+import { clientsClaim } from 'workbox-core'
 import { precacheAndRoute, cleanupOutdatedCaches, createHandlerBoundToURL } from 'workbox-precaching'
 import { registerRoute, NavigationRoute } from 'workbox-routing'
 import { CacheFirst, NetworkFirst } from 'workbox-strategies'
@@ -7,14 +8,28 @@ import { CacheableResponsePlugin } from 'workbox-cacheable-response'
 
 declare let self: ServiceWorkerGlobalScope
 
+// Activate updated workers immediately so stale app shells are replaced on refresh.
+self.skipWaiting()
+clientsClaim()
+
 // Precache static assets (injected by vite-plugin-pwa)
 precacheAndRoute(self.__WB_MANIFEST)
 cleanupOutdatedCaches()
 
-// SPA navigation fallback — serve index.html for all navigation requests
-// except API calls and file downloads
-const handler = createHandlerBoundToURL('/index.html')
-registerRoute(new NavigationRoute(handler, {
+// SPA navigation: prefer the latest network HTML so refreshes do not keep serving
+// a stale app shell that references already-rotated hashed chunks.
+const cachedAppShell = createHandlerBoundToURL('/index.html')
+const navigationStrategy = new NetworkFirst({
+  cacheName: 'app-shell',
+  plugins: [new CacheableResponsePlugin({ statuses: [200] })],
+  networkTimeoutSeconds: 3,
+})
+
+registerRoute(new NavigationRoute(async (options) => {
+  const response = await navigationStrategy.handle(options)
+  if (response) return response
+  return cachedAppShell(options)
+}, {
   denylist: [/^\/api\//, /^\/files\//],
 }))
 
@@ -29,27 +44,6 @@ registerRoute(
     plugins: [
       new CacheableResponsePlugin({ statuses: [0, 200] }),
       new ExpirationPlugin({ maxEntries: 80, maxAgeSeconds: 30 * 24 * 60 * 60 }),
-    ],
-  })
-)
-
-// Google Fonts stylesheets
-registerRoute(
-  /^https:\/\/fonts\.googleapis\.com\/.*/i,
-  new CacheFirst({
-    cacheName: 'google-fonts-stylesheets',
-    plugins: [new ExpirationPlugin({ maxEntries: 10, maxAgeSeconds: 365 * 24 * 60 * 60 })],
-  })
-)
-
-// Google Fonts webfont files
-registerRoute(
-  /^https:\/\/fonts\.gstatic\.com\/.*/i,
-  new CacheFirst({
-    cacheName: 'google-fonts-webfonts',
-    plugins: [
-      new CacheableResponsePlugin({ statuses: [0, 200] }),
-      new ExpirationPlugin({ maxEntries: 30, maxAgeSeconds: 365 * 24 * 60 * 60 }),
     ],
   })
 )

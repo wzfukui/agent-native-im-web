@@ -7,6 +7,7 @@ import { JoinPage } from '@/pages/JoinPage'
 import { ChatPage } from '@/pages/ChatPage'
 import { BotsPage } from '@/pages/BotsPage'
 import { FriendsPage } from '@/pages/FriendsPage'
+import { InboxPage } from '@/pages/InboxPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { PublicBotPage } from '@/pages/PublicBotPage'
 import * as api from '@/lib/api'
@@ -109,6 +110,7 @@ export default function App() {
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/chat/:conversationId" element={<ChatPage />} />
           <Route path="/friends" element={<FriendsPage />} />
+          <Route path="/inbox" element={<InboxPage />} />
           <Route path="/bots" element={<BotsPage />} />
           <Route path="/bots/:botId" element={<BotsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

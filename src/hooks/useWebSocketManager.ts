@@ -4,6 +4,7 @@ import { useConversationsStore } from '@/store/conversations'
 import { useMessagesStore } from '@/store/messages'
 import { usePresenceStore } from '@/store/presence'
 import { useTasksStore } from '@/store/tasks'
+import { useNotificationsStore } from '@/store/notifications'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import * as api from '@/lib/api'
 import type { WSMessage, Message, Task } from '@/lib/types'
@@ -239,6 +240,33 @@ export function useWebSocketManager() {
               return next
             })
           }
+          break
+        }
+
+        case 'friend.request.created':
+        case 'friend.request.updated': {
+          useNotificationsStore.getState().markDirty()
+          break
+        }
+
+        case 'notification.new': {
+          const store = useNotificationsStore.getState()
+          store.bumpUnreadCount(1)
+          store.markDirty()
+          break
+        }
+
+        case 'notification.read': {
+          const store = useNotificationsStore.getState()
+          store.markReadCount(1)
+          store.markDirty()
+          break
+        }
+
+        case 'notification.read_all': {
+          const store = useNotificationsStore.getState()
+          store.resetUnreadCount()
+          store.markDirty()
           break
         }
 

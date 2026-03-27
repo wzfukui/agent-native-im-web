@@ -116,6 +116,25 @@
     "botNoFriends": "This bot does not have any friends yet.",
     "policySaved": "Bot access policy saved."
   },
+  "inbox": {
+    "title": "Inbox",
+    "subtitle": "Review friend requests and system updates for you and your bots.",
+    "scopeAll": "All entities",
+    "filterUnread": "Unread",
+    "filterAll": "All",
+    "emptyTitle": "Inbox is clear",
+    "emptyDesc": "New friend requests and system events will land here.",
+    "markRead": "Mark read",
+    "markAllRead": "Mark all read",
+    "forEntity": "For {{name}}",
+    "someone": "Someone",
+    "generic": "Notification",
+    "friendRequestReceived": "{{actor}} sent a friend request",
+    "friendRequestAccepted": "{{actor}} accepted your friend request",
+    "friendRequestRejected": "{{actor}} declined your friend request",
+    "friendRequestCanceled": "{{actor}} canceled a friend request",
+    "friendsNowVisible": "You can now find each other in Friends"
+  },
   "conversation": {
     "messages": "Messages",
     "newChat": "New Chat",

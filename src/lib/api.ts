@@ -2,6 +2,7 @@ import type {
   APIResponse, LoginResponse, Entity, Conversation,
   MessagesResponse, SearchResponse, GlobalSearchResponse, Message,
   Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics, FriendRequest, BotAccessLink, PublicBotProfile,
+  NotificationRecord,
 } from './types'
 import { getSessionHooks } from './auth-session'
 import { reportApiError } from './errors'
@@ -295,6 +296,21 @@ export const cancelFriendRequest = (token: string, id: number, entityId?: number
 
 export const deleteFriend = (token: string, targetEntityId: number, entityId?: number) =>
   request('DELETE', `/api/v1/friends/${targetEntityId}${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const listNotifications = (token: string, options?: { entityId?: number; status?: 'unread' | 'read'; limit?: number }) => {
+  const params = new URLSearchParams()
+  if (options?.entityId) params.set('entity_id', String(options.entityId))
+  if (options?.status) params.set('status', options.status)
+  if (options?.limit) params.set('limit', String(options.limit))
+  const qs = params.toString()
+  return request<NotificationRecord[]>('GET', `/api/v1/notifications${qs ? `?${qs}` : ''}`, token)
+}
+
+export const markNotificationRead = (token: string, id: number, entityId?: number) =>
+  request<NotificationRecord>('POST', `/api/v1/notifications/${id}/read${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const markAllNotificationsRead = (token: string, entityId?: number) =>
+  request('POST', `/api/v1/notifications/read-all${entityId ? `?entity_id=${entityId}` : ''}`, token)
 
 export const listBotAccessLinks = (token: string, botId: number) =>
   request<BotAccessLink[]>('GET', `/api/v1/bots/${botId}/access-links`, token)

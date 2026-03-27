@@ -116,6 +116,25 @@
     "botNoFriends": "这个 Bot 还没有好友。",
     "policySaved": "Bot 访问策略已保存。"
   },
+  "inbox": {
+    "title": "消息盒子",
+    "subtitle": "集中查看你和你的 Bot 收到的好友请求与系统通知。",
+    "scopeAll": "全部实体",
+    "filterUnread": "未读",
+    "filterAll": "全部",
+    "emptyTitle": "消息盒子很干净",
+    "emptyDesc": "新的好友请求和系统事件会显示在这里。",
+    "markRead": "标记已读",
+    "markAllRead": "全部已读",
+    "forEntity": "发送给 {{name}}",
+    "someone": "某个实体",
+    "generic": "通知",
+    "friendRequestReceived": "{{actor}} 向你发来了好友请求",
+    "friendRequestAccepted": "{{actor}} 已接受你的好友请求",
+    "friendRequestRejected": "{{actor}} 拒绝了你的好友请求",
+    "friendRequestCanceled": "{{actor}} 取消了好友请求",
+    "friendsNowVisible": "双方现在都会出现在好友列表中"
+  },
   "conversation": {
     "messages": "消息",
     "newChat": "新会话",

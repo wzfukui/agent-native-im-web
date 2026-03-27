@@ -5,20 +5,23 @@ import { usePresenceStore } from '@/store/presence'
 import { useConversationsStore } from '@/store/conversations'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Bot, Zap, Wifi, WifiOff, MessageSquare, Users } from 'lucide-react'
+import { Bot, Bell, Zap, Wifi, WifiOff, MessageSquare, Users } from 'lucide-react'
 
 interface Props {
   botMode: boolean
   friendsMode?: boolean
+  inboxMode?: boolean
   settingsMode?: boolean
   friendRequestCount?: number
+  notificationCount?: number
   onToggleBots: () => void
   onToggleFriends?: () => void
+  onToggleInbox?: () => void
   onToggleChat?: () => void
   onToggleSettings?: () => void
 }
 
-export function Sidebar({ botMode, friendsMode, settingsMode, friendRequestCount = 0, onToggleBots, onToggleFriends, onToggleChat, onToggleSettings }: Props) {
+export function Sidebar({ botMode, friendsMode, inboxMode, settingsMode, friendRequestCount = 0, notificationCount = 0, onToggleBots, onToggleFriends, onToggleInbox, onToggleChat, onToggleSettings }: Props) {
   const { t } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
@@ -48,7 +51,7 @@ export function Sidebar({ botMode, friendsMode, settingsMode, friendRequestCount
         onClick={onToggleChat}
         className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
-          !botMode && !settingsMode
+          !botMode && !friendsMode && !inboxMode && !settingsMode
             ? 'bg-[var(--color-accent)]/16 text-[var(--color-accent)] shadow-sm before:absolute before:-left-3 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-[var(--color-accent)]'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
         )}
@@ -81,6 +84,25 @@ export function Sidebar({ botMode, friendsMode, settingsMode, friendRequestCount
         {friendRequestCount > 0 && (
           <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
             {friendRequestCount > 99 ? '99+' : friendRequestCount}
+          </span>
+        )}
+      </button>
+
+      <button
+        onClick={onToggleInbox}
+        className={cn(
+          'relative w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
+          inboxMode
+            ? 'bg-[var(--color-warning)]/15 text-[var(--color-warning)] shadow-sm'
+            : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-warning)]'
+        )}
+        title={t('inbox.title')}
+        aria-label={t('inbox.title')}
+      >
+        <Bell className="w-5 h-5" />
+        {notificationCount > 0 && (
+          <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
+            {notificationCount > 99 ? '99+' : notificationCount}
           </span>
         )}
       </button>

@@ -3,6 +3,7 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
+import { useNotificationsStore } from '@/store/notifications'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useWebSocketManager } from '@/hooks/useWebSocketManager'
 import { useConversationManager } from '@/hooks/useConversationManager'
@@ -53,6 +54,9 @@ export function AppLayout() {
   // ─── Global error handler ───
   const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
   const [friendRequestCount, setFriendRequestCount] = useState(0)
+  const unreadNotificationCount = useNotificationsStore((s) => s.unreadCount)
+  const setUnreadNotificationCount = useNotificationsStore((s) => s.setUnreadCount)
+  const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
 
   const pushError = useCallback((parsed: ParsedError) => {
     const toast: ErrorToastData = {
@@ -94,29 +98,40 @@ export function AppLayout() {
   useEffect(() => {
     if (!token || !entity) {
       setFriendRequestCount(0)
+      setUnreadNotificationCount(0)
       return
     }
 
     let cancelled = false
 
-    const loadFriendRequests = async () => {
+    const loadInboxState = async () => {
       const entitiesRes = await api.listEntities(token)
       const ownedBots = entitiesRes.ok && entitiesRes.data
         ? entitiesRes.data.filter((item: Entity) => item.entity_type !== 'user')
         : []
       const actingIds = [entity.id, ...ownedBots.map((item: Entity) => item.id)]
       const uniqueIds = Array.from(new Set(actingIds))
-      const results = await Promise.all(
+      const [friendResults, notificationResults] = await Promise.all([
+        Promise.all(
         uniqueIds.map((id) => api.listFriendRequests(token, { entityId: id, direction: 'incoming', status: 'pending' })),
-      )
+        ),
+        Promise.all(
+          uniqueIds.map((id) => api.listNotifications(token, { entityId: id, status: 'unread', limit: 100 })),
+        ),
+      ])
       if (cancelled) return
-      const nextCount = results.reduce((sum, res) => sum + (res.ok && res.data ? res.data.length : 0), 0)
-      setFriendRequestCount(nextCount)
+      const nextFriendCount = friendResults.reduce((sum, res) => sum + (res.ok && res.data ? res.data.length : 0), 0)
+      const nextNotificationCount = notificationResults.reduce((sum, res) => sum + (res.ok && res.data ? res.data.length : 0), 0)
+      setFriendRequestCount(nextFriendCount)
+      setUnreadNotificationCount(nextNotificationCount)
     }
 
-    void loadFriendRequests()
-    const interval = window.setInterval(() => { void loadFriendRequests() }, 30000)
-    const onFocus = () => { void loadFriendRequests() }
+    void loadInboxState()
+    const interval = window.setInterval(() => { void loadInboxState() }, 30000)
+    const onFocus = () => {
+      if (document.visibilityState === 'hidden') return
+      void loadInboxState()
+    }
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onFocus)
     return () => {
@@ -125,11 +140,12 @@ export function AppLayout() {
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onFocus)
     }
-  }, [entity, token])
+  }, [entity, inboxDirtyVersion, setUnreadNotificationCount, token])
 
   // ─── Derive active view from URL ───
-  const viewMode: 'chat' | 'friends' | 'bots' | 'settings' = (() => {
+  const viewMode: 'chat' | 'friends' | 'inbox' | 'bots' | 'settings' = (() => {
     if (location.pathname.startsWith('/friends')) return 'friends'
+    if (location.pathname.startsWith('/inbox')) return 'inbox'
     if (location.pathname.startsWith('/bots')) return 'bots'
     if (location.pathname.startsWith('/settings')) return 'settings'
     return 'chat'
@@ -142,11 +158,12 @@ export function AppLayout() {
   )
   const showMobileTabBar = isMobile && !isMobileInDetail
 
-  const mobileTab: MobileTab = viewMode === 'bots' ? 'bots' : viewMode === 'friends' ? 'friends' : viewMode === 'settings' ? 'settings' : 'chat'
+  const mobileTab: MobileTab = viewMode === 'bots' ? 'bots' : viewMode === 'friends' ? 'friends' : viewMode === 'inbox' ? 'inbox' : viewMode === 'settings' ? 'settings' : 'chat'
 
   const handleMobileTabChange = useCallback((tab: MobileTab) => {
     if (tab === 'chat') navigate('/chat')
     else if (tab === 'friends') navigate('/friends')
+    else if (tab === 'inbox') navigate('/inbox')
     else if (tab === 'bots') navigate('/bots')
     else if (tab === 'settings') navigate('/settings')
   }, [navigate])
@@ -171,10 +188,13 @@ export function AppLayout() {
           <Sidebar
             botMode={viewMode === 'bots'}
             friendsMode={viewMode === 'friends'}
+            inboxMode={viewMode === 'inbox'}
             settingsMode={viewMode === 'settings'}
             friendRequestCount={friendRequestCount}
+            notificationCount={unreadNotificationCount}
             onToggleBots={() => navigate(viewMode === 'bots' ? '/chat' : '/bots')}
             onToggleFriends={() => navigate(viewMode === 'friends' ? '/chat' : '/friends')}
+            onToggleInbox={() => navigate(viewMode === 'inbox' ? '/chat' : '/inbox')}
             onToggleChat={() => navigate('/chat')}
             onToggleSettings={() => navigate(viewMode === 'settings' ? '/chat' : '/settings')}
           />
@@ -204,7 +224,7 @@ export function AppLayout() {
 
       {/* Mobile bottom tab bar */}
       {showMobileTabBar && (
-        <MobileTabBar activeTab={mobileTab} friendRequestCount={friendRequestCount} onTabChange={handleMobileTabChange} />
+        <MobileTabBar activeTab={mobileTab} friendRequestCount={friendRequestCount} notificationCount={unreadNotificationCount} onTabChange={handleMobileTabChange} />
       )}
     </div>
   )
