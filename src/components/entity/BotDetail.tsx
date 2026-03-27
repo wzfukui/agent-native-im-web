@@ -246,7 +246,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     const res = await api.createBotAccessLink(token, bot.id, {})
     if (res.ok && res.data) {
       setAccessLinks((prev) => [res.data!, ...prev])
-      const shareUrl = `${window.location.origin}/public/bots/${encodeURIComponent(bot.bot_id || bot.public_id || String(bot.id))}?code=${encodeURIComponent(res.data.code)}`
+      const shareUrl = `${window.location.origin}/public/bots/${encodeURIComponent(bot.bot_id || bot.public_id || '')}?code=${encodeURIComponent(res.data.code)}`
       handleCopy(shareUrl, 'public-bot-link')
       setOpInfo(t('friends.accessLinkCreated'))
     } else {
@@ -294,7 +294,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const wsUrl = getGatewayWebSocketUrl()
   const accessText = accessToken ? buildBotAccessText({ gatewayUrl, wsUrl, accessToken }) : ''
   const accessUrl = accessToken ? buildBotAccessUrl({ gatewayUrl, accessToken, entityId: bot.id }) : ''
-  const publicBotIdentifier = bot.bot_id || bot.public_id || String(bot.id)
+  const publicBotIdentifier = bot.bot_id || bot.public_id || ''
   const publicBotUrl = `${window.location.origin}/public/bots/${encodeURIComponent(publicBotIdentifier)}`
   const diagnosticsSnapshot = [
     `entity=${bot.id} (${bot.name})`,

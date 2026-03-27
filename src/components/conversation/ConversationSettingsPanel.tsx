@@ -50,7 +50,7 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
   const [addMemberSearch, setAddMemberSearch] = useState('')
   const [addMemberLoading, setAddMemberLoading] = useState(false)
   const publicId = (conversation.metadata as Record<string, unknown> | undefined)?.public_id
-  const displayConversationId = (typeof publicId === 'string' && publicId) || conversation.public_id || String(conversation.id)
+  const displayConversationId = (typeof publicId === 'string' && publicId) || conversation.public_id || ''
 
   const participants = conversation.participants || []
   const myParticipant = participants.find((p) => p.entity_id === myEntity.id)
@@ -207,29 +207,31 @@ export function ConversationSettingsPanel({ conversation, onClose, onLeave, isAr
           <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('settings.conversationId')}</label>
           <div className="flex items-center gap-2 mt-1">
             <code className="text-xs text-[var(--color-text-secondary)] font-mono bg-[var(--color-bg-tertiary)] px-2 py-0.5 rounded">
-              {displayConversationId}
+              {displayConversationId || '—'}
             </code>
-            <button
-              onClick={async () => {
-                try {
-                  await navigator.clipboard.writeText(displayConversationId)
-                  setIdCopyError(null)
-                  setIdCopied(true)
-                  setTimeout(() => setIdCopied(false), 2000)
-                } catch {
-                  setIdCopied(false)
-                  setIdCopyError(t('common.copyFailed'))
+            {displayConversationId ? (
+              <button
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(displayConversationId)
+                    setIdCopyError(null)
+                    setIdCopied(true)
+                    setTimeout(() => setIdCopied(false), 2000)
+                  } catch {
+                    setIdCopied(false)
+                    setIdCopyError(t('common.copyFailed'))
+                  }
+                }}
+                className="p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-colors"
+                title={t('settings.conversationId')}
+              >
+                {idCopied
+                  ? <Check className="w-3 h-3 text-[var(--color-success)]" />
+                  : <Copy className="w-3 h-3 text-[var(--color-text-muted)]" />
                 }
-              }}
-              className="p-1 hover:bg-[var(--color-bg-hover)] rounded cursor-pointer transition-colors"
-              title={t('settings.conversationId')}
-            >
-              {idCopied
-                ? <Check className="w-3 h-3 text-[var(--color-success)]" />
-                : <Copy className="w-3 h-3 text-[var(--color-text-muted)]" />
-              }
-            </button>
-            {idCopied && <span className="text-[10px] text-[var(--color-success)]">{t('settings.idCopied')}</span>}
+              </button>
+            ) : null}
+            {displayConversationId && idCopied ? <span className="text-[10px] text-[var(--color-success)]">{t('settings.idCopied')}</span> : null}
             {idCopyError && <span className="text-[10px] text-red-400">{idCopyError}</span>}
           </div>
         </div>

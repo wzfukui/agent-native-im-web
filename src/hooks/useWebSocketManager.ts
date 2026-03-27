@@ -230,7 +230,7 @@ export function useWebSocketManager() {
               const next = new Map(prev)
               const convTyping = new Map(next.get(typData.conversation_id!) || [])
               convTyping.set(typData.entity_id!, {
-                name: typData.entity_name || `User ${typData.entity_id}`,
+                name: typData.entity_name || 'Someone',
                 expiresAt: Date.now() + (typData.is_processing ? 30000 : 4000),
                 isProcessing: typData.is_processing,
                 phase: typData.phase,

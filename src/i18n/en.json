@@ -403,6 +403,7 @@
     "descriptionPlaceholder": "Add description...",
     "assignee": "Assignee",
     "unassigned": "Unassigned",
+    "unknownAssignee": "Unknown participant",
     "dueDate": "Due date",
     "dependency": "Depends on",
     "noDependency": "None",

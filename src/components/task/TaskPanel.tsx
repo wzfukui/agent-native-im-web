@@ -200,7 +200,7 @@ export function TaskPanel({ conversationId, participants, onClose, isArchived }:
               <option value="">{t('task.unassigned')}</option>
               {participants.map((p) => (
                 <option key={p.entity_id} value={p.entity_id}>
-                  {p.entity ? (p.entity.display_name || p.entity.name) : `#${p.entity_id}`}
+                  {p.entity ? (p.entity.display_name || p.entity.name) : t('task.unknownAssignee')}
                 </option>
               ))}
             </select>
