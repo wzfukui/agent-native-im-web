@@ -133,7 +133,12 @@
     "friendRequestAccepted": "{{actor}} accepted your friend request",
     "friendRequestRejected": "{{actor}} declined your friend request",
     "friendRequestCanceled": "{{actor}} canceled a friend request",
-    "friendsNowVisible": "You can now find each other in Friends"
+    "inviteJoined": "{{actor}} joined a conversation via invite",
+    "changeRequested": "{{actor}} requested a conversation change",
+    "changeApproved": "{{actor}} approved your conversation change",
+    "changeRejected": "{{actor}} rejected your conversation change",
+    "friendsNowVisible": "You can now find each other in Friends",
+    "openConversation": "Open conversation"
   },
   "conversation": {
     "messages": "Messages",

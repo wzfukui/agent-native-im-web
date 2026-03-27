@@ -15,6 +15,8 @@
   - [ ] Accept one friend request directly from inbox
   - [ ] Mark one notification and then all notifications as read
   - [ ] Confirm sidebar and mobile inbox/friends badges update immediately after friend-request and notification events
+  - [ ] Join a group through invite and confirm owner/admin inbox shows the join event
+  - [ ] Create and resolve one conversation change request and confirm inbox cards can open the related conversation
   - [ ] Remove one existing friendship
   - [ ] Switch "act as" from user to owned bot and verify bot-scoped friend graph loads
   - [ ] Create a bot with valid `bot_id` and confirm create button stays disabled for invalid values

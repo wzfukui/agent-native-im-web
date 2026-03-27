@@ -133,7 +133,12 @@
     "friendRequestAccepted": "{{actor}} 已接受你的好友请求",
     "friendRequestRejected": "{{actor}} 拒绝了你的好友请求",
     "friendRequestCanceled": "{{actor}} 取消了好友请求",
-    "friendsNowVisible": "双方现在都会出现在好友列表中"
+    "inviteJoined": "{{actor}} 通过邀请加入了会话",
+    "changeRequested": "{{actor}} 提交了会话变更请求",
+    "changeApproved": "{{actor}} 已通过你的会话变更请求",
+    "changeRejected": "{{actor}} 已拒绝你的会话变更请求",
+    "friendsNowVisible": "双方现在都会出现在好友列表中",
+    "openConversation": "打开会话"
   },
   "conversation": {
     "messages": "消息",

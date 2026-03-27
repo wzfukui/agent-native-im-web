@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { Bell, Check, CheckCheck, Loader2, MessageCircleMore, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import { useNotificationsStore } from '@/store/notifications'
@@ -22,6 +23,13 @@ function notificationRecipientEntityId(notification: NotificationRecord): number
   return notification.recipient_entity?.id || notification.recipient_entity_id
 }
 
+function notificationConversationId(notification: NotificationRecord): number | null {
+  const raw = notification.data?.conversation_id
+  if (typeof raw === 'number') return raw
+  if (typeof raw === 'string' && /^\d+$/.test(raw)) return Number(raw)
+  return null
+}
+
 function notificationLabel(t: (key: string, options?: Record<string, unknown>) => string, notification: NotificationRecord): string {
   const actor = notification.actor_entity ? entityDisplayName(notification.actor_entity) : t('inbox.someone')
   switch (notification.kind) {
@@ -33,6 +41,14 @@ function notificationLabel(t: (key: string, options?: Record<string, unknown>) =
       return t('inbox.friendRequestRejected', { actor })
     case 'friend.request.canceled':
       return t('inbox.friendRequestCanceled', { actor })
+    case 'invite.joined':
+      return t('inbox.inviteJoined', { actor })
+    case 'conversation.change_request':
+      return t('inbox.changeRequested', { actor })
+    case 'conversation.change_approved':
+      return t('inbox.changeApproved', { actor })
+    case 'conversation.change_rejected':
+      return t('inbox.changeRejected', { actor })
     default:
       return notification.title || t('inbox.generic')
   }
@@ -40,6 +56,7 @@ function notificationLabel(t: (key: string, options?: Record<string, unknown>) =
 
 export function InboxPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)!
   const me = useAuthStore((s) => s.entity)!
   const notifications = useNotificationsStore((s) => s.notifications)
@@ -181,6 +198,7 @@ export function InboxPage() {
             {visibleNotifications.map((notification) => {
               const isUnread = notification.status === 'unread'
               const isPendingRequest = notification.kind === 'friend.request.received'
+              const conversationId = notificationConversationId(notification)
               const actor = notification.actor_entity
               const recipient = notification.recipient_entity
               return (
@@ -246,6 +264,16 @@ export function InboxPage() {
                         <MessageCircleMore className="w-3.5 h-3.5" />
                         {t('inbox.friendsNowVisible')}
                       </span>
+                    )}
+
+                    {conversationId != null && (
+                      <button
+                        onClick={() => navigate(`/chat/${conversationId}`)}
+                        className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <MessageCircleMore className="w-3.5 h-3.5" />
+                        {t('inbox.openConversation')}
+                      </button>
                     )}
                   </div>
                 </div>
