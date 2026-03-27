@@ -11,6 +11,7 @@ import { ArtifactRenderer } from './ArtifactRenderer'
 import { HandoverCard } from './HandoverCard'
 import { ImageLightbox } from '@/components/ui/ImageLightbox'
 import { MessageActionMenu } from '@/components/ui/MessageActionMenu'
+import { getSelectedMessageCopyText } from './message-copy'
 import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
@@ -179,6 +180,15 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
     const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
     setActionMenuRect(rect)
   }, [isRevoked])
+
+  const handleContentCopy = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
+    const contentEl = contentRef.current
+    if (!contentEl) return
+    const selectedText = getSelectedMessageCopyText(contentEl)
+    if (!selectedText) return
+    e.preventDefault()
+    e.clipboardData.setData('text/plain', selectedText)
+  }, [])
 
   // Revoked message
   if (isRevoked) {
@@ -382,7 +392,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
     <div
       ref={bubbleRef}
       className={cn(
-        'flex gap-2 md:gap-2.5 group transition-opacity duration-300',
+        'flex gap-2 md:gap-2.5 group transition-opacity duration-300 select-none',
         isSelf
           ? 'ml-auto flex-row-reverse w-full md:max-w-[85%]'
           : 'w-full md:max-w-[85%]',
@@ -474,8 +484,9 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
             <div className="relative">
               <div
                 ref={contentRef}
+                onCopy={handleContentCopy}
                 className={cn(
-                  'overflow-hidden transition-[max-height] duration-300',
+                  'overflow-hidden transition-[max-height] duration-300 select-text',
                   isOverflow && collapsed ? '' : '',
                 )}
                 style={isOverflow && collapsed ? { maxHeight: `${COLLAPSE_HEIGHT}px` } : undefined}
