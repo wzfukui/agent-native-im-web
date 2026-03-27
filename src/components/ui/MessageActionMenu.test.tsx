@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { normalizeCopiedMessageText } from './MessageActionMenu'
 
 describe('normalizeCopiedMessageText', () => {
-  it('collapses excessive blank lines and trims trailing whitespace', () => {
+  it('trims trailing whitespace while preserving intentional paragraph spacing', () => {
     expect(
       normalizeCopiedMessageText('hello  \r\n\r\n\r\nworld\t\t\r\n\r\n')
-    ).toBe('hello\n\nworld')
+    ).toBe('hello\n\n\nworld')
   })
 
   it('preserves a single intentional blank line between paragraphs', () => {

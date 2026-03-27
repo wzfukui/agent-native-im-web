@@ -30,7 +30,6 @@ export function normalizeCopiedMessageText(text: string): string {
     .split('\n')
     .map((line) => line.replace(/[ \t]+$/g, ''))
     .join('\n')
-    .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
 
