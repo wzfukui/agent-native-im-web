@@ -8,6 +8,8 @@
 - [ ] `npm test`
 - [ ] `npm run build`
 - [ ] Manual smoke:
+  - [ ] Create a bot with valid `bot_id` and confirm create button stays disabled for invalid values
+  - [ ] Bot detail shows copyable `bot_id` and UUID `public_id`
   - [ ] Login/logout
   - [ ] Reopen `/join/:code` in a fresh tab while already logged in
   - [ ] Confirm invite page loads after cookie session restore

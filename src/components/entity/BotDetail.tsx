@@ -551,6 +551,26 @@ ${createdCredentials.doc}`
             <InfoRow icon={Hash} label="ID">
               <span className="text-xs text-[var(--color-text-primary)] font-mono">{bot.id}</span>
             </InfoRow>
+            {bot.bot_id && (
+              <InfoRow icon={Tag} label="Bot ID">
+                <span className="flex min-w-0 items-center gap-2">
+                  <code className="min-w-0 truncate text-xs text-[var(--color-text-primary)] font-mono">{bot.bot_id}</code>
+                  <button onClick={() => handleCopy(bot.bot_id!, 'bot-id')} className="p-1 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                    {copyBtn('bot-id')}
+                  </button>
+                </span>
+              </InfoRow>
+            )}
+            {bot.public_id && (
+              <InfoRow icon={Hash} label="UUID">
+                <span className="flex min-w-0 items-center gap-2">
+                  <code className="min-w-0 truncate text-xs text-[var(--color-text-primary)] font-mono">{bot.public_id}</code>
+                  <button onClick={() => handleCopy(bot.public_id!, 'bot-public-id')} className="p-1 rounded hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                    {copyBtn('bot-public-id')}
+                  </button>
+                </span>
+              </InfoRow>
+            )}
             <InfoRow icon={Calendar} label={t('bot.createdAt')}>
               <span className="text-xs text-[var(--color-text-primary)]">
                 {bot.created_at ? new Date(bot.created_at).toLocaleDateString() : '—'}

@@ -21,21 +21,21 @@ test.describe('Bot access pack', () => {
     const token = await page.evaluate(() => sessionStorage.getItem('aim_token'))
     expect(token).not.toBeNull()
 
-    const botId = await page.evaluate(async ({ token, name }) => {
+    const botId = await page.evaluate(async ({ token, name, botId }) => {
       const res = await fetch('/api/v1/entities', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ name, metadata: { description: 'E2E rotate bot' } }),
+        body: JSON.stringify({ name, bot_id: botId, display_name: name, metadata: { description: 'E2E rotate bot' } }),
       })
       const payload = await res.json()
       if (!payload.ok || !payload.data?.entity?.id) {
         throw new Error(`Failed to create bot: ${JSON.stringify(payload)}`)
       }
       return payload.data.entity.id as number
-    }, { token, name: `e2e-bot-${stamp}` })
+    }, { token, name: `E2E Rotate Bot ${stamp}`, botId: `bot_e2e_rotate_${stamp}` })
 
     await page.route('**/api/v1/entities/*/regenerate-token', async (route) => {
       await route.fulfill({
@@ -63,6 +63,7 @@ test.describe('Bot access pack', () => {
 
     await expect(page.getByText(/token rotated\./i)).toBeVisible({ timeout: 10_000 })
     await expect(page.getByText(/openclaw plugin.*new token/i)).toBeVisible({ timeout: 10_000 })
+    await page.getByRole('button', { name: /show advanced options/i }).click()
     await expect(page.getByTestId('copy-bot-token-button')).toBeEnabled()
     await expect(page.getByTestId('copy-bot-access-button')).toBeEnabled()
     await expect(page.getByTestId('download-quickstart-button')).toBeEnabled()

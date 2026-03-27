@@ -229,10 +229,20 @@ export const searchGlobal = (token: string, query: string, limit = 20, offset = 
 export const listEntities = (token: string) =>
   request<Entity[]>('GET', '/api/v1/entities', token)
 
-export const createEntity = (token: string, name: string, metadata?: Record<string, unknown>) =>
+export const createEntity = (
+  token: string,
+  name: string,
+  options?: {
+    bot_id?: string
+    display_name?: string
+    metadata?: Record<string, unknown>
+  },
+) =>
   request<{ entity: Entity; api_key: string; bootstrap_key?: string; markdown_doc: string }>('POST', '/api/v1/entities', token, {
     name,
-    ...(metadata && Object.keys(metadata).length > 0 ? { metadata } : {}),
+    ...(options?.bot_id ? { bot_id: options.bot_id } : {}),
+    ...(options?.display_name ? { display_name: options.display_name } : {}),
+    ...(options?.metadata && Object.keys(options.metadata).length > 0 ? { metadata: options.metadata } : {}),
   })
 
 export const deleteEntity = (token: string, id: number) =>

@@ -19,6 +19,7 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
   const token = useAuthStore((s) => s.token)!
   const isMobile = useIsMobile()
   const [name, setName] = useState('')
+  const [botId, setBotId] = useState('')
   const [description, setDescription] = useState('')
   const [tags, setTags] = useState('')
   const [avatarUrl, setAvatarUrl] = useState('')
@@ -27,8 +28,11 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
   const [creating, setCreating] = useState(false)
   const [error, setError] = useState('')
 
+  const normalizedBotId = botId.trim()
+  const botIdValid = /^bot_[a-z0-9][a-z0-9_-]{2,63}$/.test(normalizedBotId)
+
   const handleCreate = async () => {
-    if (!name.trim()) return
+    if (!name.trim() || !botIdValid) return
     setCreating(true)
     setError('')
     try {
@@ -39,8 +43,13 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
       if (autoApprove) meta.auto_approve = true
 
       const res = await api.createEntity(
-        token, name.trim(),
-        Object.keys(meta).length > 0 ? meta : undefined,
+        token,
+        name.trim(),
+        {
+          bot_id: normalizedBotId,
+          display_name: name.trim(),
+          metadata: Object.keys(meta).length > 0 ? meta : undefined,
+        },
       )
       if (res.ok && res.data) {
         let entity = res.data.entity
@@ -89,6 +98,20 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
           </div>
         </div>
 
+        <div>
+          <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('bot.botIdLabel')} *</label>
+          <input
+            value={botId}
+            onChange={(e) => setBotId(e.target.value.trim().toLowerCase())}
+            placeholder={t('bot.botIdPlaceholder')}
+            className="w-full h-10 mt-1 px-3 rounded-lg bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:border-[var(--color-bot)]/50 transition-colors"
+          />
+          <p className="mt-1 text-[11px] text-[var(--color-text-muted)]">{t('bot.botIdHint')}</p>
+          {botId && !botIdValid ? (
+            <p className="mt-1 text-[11px] text-[var(--color-error)]">{t('bot.botIdInvalid')}</p>
+          ) : null}
+        </div>
+
         {/* Description (optional) */}
         <div>
           <label className="text-[10px] font-medium text-[var(--color-text-muted)] uppercase tracking-wider">{t('bot.descriptionLabel')}</label>
@@ -127,7 +150,7 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
         </button>
         <button
           onClick={handleCreate}
-          disabled={creating || !name.trim()}
+          disabled={creating || !name.trim() || !botIdValid}
           className="px-5 py-2 rounded-lg bg-[var(--color-bot)] hover:bg-[var(--color-bot)]/80 disabled:opacity-40 text-white text-xs font-medium flex items-center gap-1.5 cursor-pointer transition-colors"
         >
           {creating ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
