@@ -633,14 +633,11 @@ ${createdCredentials.doc}`
                   <span className="text-xs text-[var(--color-text-primary)]">{entityDisplayName(ownerEntity)}</span>
                 </span>
               ) : (
-                <span className="text-xs text-[var(--color-text-muted)]">#{bot.owner_id || '—'}</span>
+                <span className="text-xs text-[var(--color-text-muted)]">—</span>
               )}
             </InfoRow>
             <InfoRow icon={Tag} label={t('bot.type')}>
               <span className="text-xs text-[var(--color-text-primary)] capitalize">{bot.entity_type}</span>
-            </InfoRow>
-            <InfoRow icon={Hash} label="ID">
-              <span className="text-xs text-[var(--color-text-primary)] font-mono">{bot.id}</span>
             </InfoRow>
             {bot.bot_id && (
               <InfoRow icon={Tag} label="Bot ID">
