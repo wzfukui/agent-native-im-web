@@ -69,7 +69,7 @@ export function Sidebar({ botMode, friendsMode, settingsMode, friendRequestCount
       <button
         onClick={onToggleFriends}
         className={cn(
-          'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
+          'relative w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
           friendsMode
             ? 'bg-[var(--color-success)]/15 text-[var(--color-success)] shadow-sm'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-success)]'
