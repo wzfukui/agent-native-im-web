@@ -271,7 +271,7 @@
     "pushNotifications": "推送通知",
     "enablePush": "启用",
     "pushEnabled": "通知已启用",
-    "pushDisabled": "点击启用以接收消息通知",
+    "pushDisabled": "点击启用以接收消息和系统通知",
     "disablePush": "关闭",
     "pushFailed": "注册失败，请重试",
     "pushDenied": "系统拒绝了通知权限"

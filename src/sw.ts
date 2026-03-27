@@ -63,7 +63,7 @@ registerRoute(
 self.addEventListener('push', (event) => {
   if (!event.data) return
 
-  let payload: { title?: string; body?: string; conversation_id?: string; message_id?: string }
+  let payload: { title?: string; body?: string; kind?: string; path?: string; conversation_id?: string; message_id?: string }
   const isZh = navigator.language.startsWith('zh')
   try {
     payload = event.data.json()
@@ -76,10 +76,12 @@ self.addEventListener('push', (event) => {
     icon: '/icons/icon-192.png',
     badge: '/icons/icon-192.png',
     data: {
+      kind: payload.kind,
+      path: payload.path,
       conversation_id: payload.conversation_id,
       message_id: payload.message_id,
     },
-    tag: `conv-${payload.conversation_id}`,
+    tag: payload.kind ? `kind-${payload.kind}` : `conv-${payload.conversation_id}`,
     renotify: true,
   } as NotificationOptions & { renotify: boolean }
 
@@ -89,15 +91,27 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
+  const data = event.notification.data || {}
+  const path = typeof data.path === 'string' && data.path
+    ? data.path
+    : typeof data.conversation_id === 'string' && data.conversation_id
+      ? `/chat/${data.conversation_id}`
+      : '/inbox'
+  const destination = new URL(path, self.location.origin).href
 
   event.waitUntil(
-    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(async (clientList) => {
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && 'focus' in client) {
-          return client.focus()
+          const windowClient = client as WindowClient
+          await windowClient.focus()
+          if ('navigate' in windowClient && windowClient.url !== destination) {
+            return windowClient.navigate(destination)
+          }
+          return windowClient
         }
       }
-      return self.clients.openWindow('/')
+      return self.clients.openWindow(destination)
     })
   )
 })

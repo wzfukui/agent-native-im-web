@@ -19,6 +19,7 @@
   - [ ] Create and resolve one conversation change request and confirm inbox cards can open the related conversation
   - [ ] Send one task handover and confirm the assignee inbox receives it
   - [ ] Start one public bot visitor session and confirm the owner inbox receives it
+  - [ ] With push enabled, confirm friend/system inbox pushes open `/friends`, `/inbox`, or the target `/chat/:id`
   - [ ] Remove one existing friendship
   - [ ] Switch "act as" from user to owned bot and verify bot-scoped friend graph loads
   - [ ] Create a bot with valid `bot_id` and confirm create button stays disabled for invalid values
