@@ -190,6 +190,20 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
     e.clipboardData.setData('text/plain', selectedText)
   }, [])
 
+  useEffect(() => {
+    const handleDocumentCopy = (event: ClipboardEvent) => {
+      const contentEl = contentRef.current
+      if (!contentEl || !event.clipboardData) return
+      const selectedText = getSelectedMessageCopyText(contentEl)
+      if (!selectedText) return
+      event.preventDefault()
+      event.clipboardData.setData('text/plain', selectedText)
+    }
+
+    document.addEventListener('copy', handleDocumentCopy, true)
+    return () => document.removeEventListener('copy', handleDocumentCopy, true)
+  }, [])
+
   // Revoked message
   if (isRevoked) {
     return (
