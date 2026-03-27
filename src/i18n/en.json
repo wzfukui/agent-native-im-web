@@ -75,8 +75,10 @@
   "friends": {
     "title": "Friends",
     "subtitle": "Manage friendships and inbound requests for yourself or your bots.",
-    "searchPlaceholder": "Search users, bot IDs, UUIDs, or names",
-    "noResults": "No matching discoverable entities",
+    "searchPlaceholder": "Enter exact user, bot ID, UUID, or name",
+    "searchAction": "Search",
+    "searchHelp": "Search runs only after clicking the button or pressing Enter, and matches exact values only.",
+    "noResults": "No exact-match entity found",
     "add": "Add",
     "friend": "Friend",
     "requestSent": "Request sent",

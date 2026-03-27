@@ -21,7 +21,9 @@ export function FriendsPage() {
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([])
   const [discoverable, setDiscoverable] = useState<Entity[]>([])
   const [query, setQuery] = useState('')
+  const [searchedQuery, setSearchedQuery] = useState('')
   const [loading, setLoading] = useState(false)
+  const [searching, setSearching] = useState(false)
   const [submittingId, setSubmittingId] = useState<number | null>(null)
 
   const actingOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
@@ -55,16 +57,22 @@ export function FriendsPage() {
     void loadSocial()
   }, [loadSocial])
 
-  useEffect(() => {
-    const timer = window.setTimeout(async () => {
-      const res = await api.searchDiscoverableEntities(token, query.trim(), 20)
-      if (res.ok && res.data) {
-        setDiscoverable(res.data.filter((entity) => entity.id !== actingEntityId))
-      } else if (!query.trim()) {
-        setDiscoverable([])
-      }
-    }, query.trim() ? 180 : 0)
-    return () => window.clearTimeout(timer)
+  const runSearch = useCallback(async () => {
+    const trimmed = query.trim()
+    if (!trimmed) {
+      setSearchedQuery('')
+      setDiscoverable([])
+      return
+    }
+    setSearching(true)
+    setSearchedQuery(trimmed)
+    const res = await api.searchDiscoverableEntities(token, trimmed, 20)
+    if (res.ok && res.data) {
+      setDiscoverable(res.data.filter((entity) => entity.id !== actingEntityId))
+    } else {
+      setDiscoverable([])
+    }
+    setSearching(false)
   }, [actingEntityId, query, token])
 
   const outgoingTargets = new Set(outgoing.map((req) => req.target_entity_id))
@@ -79,6 +87,7 @@ export function FriendsPage() {
     setSubmittingId(null)
     await loadSocial()
     setQuery('')
+    setSearchedQuery('')
     setDiscoverable([])
   }, [actingEntityId, loadSocial, me.id, token])
 
@@ -136,12 +145,27 @@ export function FriendsPage() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                void runSearch()
+              }
+            }}
             placeholder={t('friends.searchPlaceholder')}
-            className="w-full h-11 pl-10 pr-4 rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
+            className="w-full h-11 pl-10 pr-28 rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
           />
+          <button
+            onClick={() => void runSearch()}
+            disabled={searching || !query.trim()}
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 h-8 px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium disabled:opacity-50 cursor-pointer inline-flex items-center gap-1.5"
+          >
+            {searching ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Search className="w-3.5 h-3.5" />}
+            {t('friends.searchAction')}
+          </button>
         </div>
+        <p className="mt-2 text-xs text-[var(--color-text-muted)]">{t('friends.searchHelp')}</p>
 
-        {query.trim() && (
+        {searchedQuery && (
           <div className="mt-3 grid gap-2">
             {discoverable.length === 0 ? (
               <div className="px-4 py-3 rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">

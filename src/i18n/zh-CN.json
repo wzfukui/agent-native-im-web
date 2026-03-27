@@ -75,8 +75,10 @@
   "friends": {
     "title": "好友",
     "subtitle": "管理你自己或你的 Bot 的好友关系和请求。",
-    "searchPlaceholder": "搜索用户、Bot ID、UUID 或名称",
-    "noResults": "没有匹配的可发现实体",
+    "searchPlaceholder": "输入完整的用户、Bot ID、UUID 或名称",
+    "searchAction": "搜索",
+    "searchHelp": "只有点击搜索按钮或按回车后才会查询，并且只做完全匹配。",
+    "noResults": "没有找到完全匹配的实体",
     "add": "添加",
     "friend": "好友",
     "requestSent": "已发送请求",
