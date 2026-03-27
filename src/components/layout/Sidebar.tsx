@@ -5,17 +5,19 @@ import { usePresenceStore } from '@/store/presence'
 import { useConversationsStore } from '@/store/conversations'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Bot, Zap, Wifi, WifiOff, MessageSquare } from 'lucide-react'
+import { Bot, Zap, Wifi, WifiOff, MessageSquare, Users } from 'lucide-react'
 
 interface Props {
   botMode: boolean
+  friendsMode?: boolean
   settingsMode?: boolean
   onToggleBots: () => void
+  onToggleFriends?: () => void
   onToggleChat?: () => void
   onToggleSettings?: () => void
 }
 
-export function Sidebar({ botMode, settingsMode, onToggleBots, onToggleChat, onToggleSettings }: Props) {
+export function Sidebar({ botMode, friendsMode, settingsMode, onToggleBots, onToggleFriends, onToggleChat, onToggleSettings }: Props) {
   const { t } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
@@ -62,6 +64,20 @@ export function Sidebar({ botMode, settingsMode, onToggleBots, onToggleChat, onT
 
       {/* Spacer */}
       <div className="flex-1" />
+
+      <button
+        onClick={onToggleFriends}
+        className={cn(
+          'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors',
+          friendsMode
+            ? 'bg-[var(--color-success)]/15 text-[var(--color-success)] shadow-sm'
+            : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-success)]'
+        )}
+        title={t('friends.title')}
+        aria-label={t('friends.title')}
+      >
+        <Users className="w-5 h-5" />
+      </button>
 
       {/* Bot manager */}
       <button

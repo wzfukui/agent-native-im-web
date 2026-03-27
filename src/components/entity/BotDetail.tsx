@@ -40,7 +40,9 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const myEntity = useAuthStore((s) => s.entity)!
   const online = usePresenceStore((s) => s.online)
   const [conversations, setConversations] = useState<Conversation[]>([])
+  const [friends, setFriends] = useState<Entity[]>([])
   const [loadingConvs, setLoadingConvs] = useState(false)
+  const [loadingFriends, setLoadingFriends] = useState(false)
   const [activeTab, setActiveTab] = useState<'direct' | 'groups'>('direct')
   const [confirmDisable, setConfirmDisable] = useState(false)
   // credStatus removed — selfCheck provides the same info
@@ -57,6 +59,11 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [opError, setOpError] = useState<string | null>(null)
   const [opInfo, setOpInfo] = useState<string | null>(null)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
+  const [policyDraft, setPolicyDraft] = useState<{ discoverability: 'private' | 'platform_public' | 'external_public'; allow_non_friend_chat: boolean }>({
+    discoverability: 'private',
+    allow_non_friend_chat: false,
+  })
+  const [savingPolicy, setSavingPolicy] = useState(false)
   const previousBotIdRef = useRef<number | null>(null)
 
   // Reset one-time UI state only when switching to a different bot.
@@ -76,9 +83,14 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setRotatedTokenBotId(null)
     setOpError(null)
     setOpInfo(null)
+    setFriends([])
     setSelfCheck(null)
     setDiagnostics(null)
     setLastSeen(null)
+    setPolicyDraft({
+      discoverability: (bot.discoverability as 'private' | 'platform_public' | 'external_public') || 'private',
+      allow_non_friend_chat: !!bot.allow_non_friend_chat,
+    })
   }, [bot?.id])
 
   // Load conversations for the currently selected bot.
@@ -101,6 +113,19 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
       if (!cancelled) setLoadingConvs(false)
     })
 
+    return () => { cancelled = true }
+  }, [bot, token])
+
+  useEffect(() => {
+    if (!bot) return
+    let cancelled = false
+    setLoadingFriends(true)
+    api.listFriends(token, bot.id).then((res) => {
+      if (!cancelled && res.ok && res.data) setFriends(res.data)
+      if (!cancelled) setLoadingFriends(false)
+    }).catch(() => {
+      if (!cancelled) setLoadingFriends(false)
+    })
     return () => { cancelled = true }
   }, [bot, token])
 
@@ -173,6 +198,20 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
       setOpError(detail)
     }
     setRotatingToken(false)
+  }
+
+  const handleSavePolicy = async () => {
+    if (!bot || !isOwner || savingPolicy) return
+    setSavingPolicy(true)
+    setOpError(null)
+    const res = await api.updateEntity(token, bot.id, policyDraft)
+    if (res.ok && res.data) {
+      setOpInfo(t('friends.policySaved'))
+      onRefresh?.()
+    } else {
+      setOpError(typeof res.error === 'string' ? res.error : (res.error?.message || t('common.errorUnexpected')))
+    }
+    setSavingPolicy(false)
   }
 
   // Empty state — minimal, no gradient icon
@@ -658,6 +697,77 @@ ${createdCredentials.doc}`
                   </button>
                 )}
               </>
+            )}
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Link className="w-4 h-4 text-[var(--color-accent)]" />
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.botAccessPolicy')}</p>
+            </div>
+            <div className="grid gap-3">
+              <div>
+                <label className="block text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)] mb-1.5">
+                  {t('friends.discoverability')}
+                </label>
+                <select
+                  disabled={!isOwner || isDisabled}
+                  value={policyDraft.discoverability}
+                  onChange={(e) => setPolicyDraft((draft) => ({ ...draft, discoverability: e.target.value as 'private' | 'platform_public' | 'external_public' }))}
+                  className="w-full h-10 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none"
+                >
+                  <option value="private">{t('friends.discoveryPrivate')}</option>
+                  <option value="platform_public">{t('friends.discoveryPlatform')}</option>
+                  <option value="external_public">{t('friends.discoveryExternal')}</option>
+                </select>
+              </div>
+              <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
+                <span>
+                  <span className="block text-sm font-medium text-[var(--color-text-primary)]">{t('friends.allowNonFriendChat')}</span>
+                  <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">{t('friends.allowNonFriendChatHint')}</span>
+                </span>
+                <input
+                  type="checkbox"
+                  disabled={!isOwner || isDisabled}
+                  checked={policyDraft.allow_non_friend_chat}
+                  onChange={(e) => setPolicyDraft((draft) => ({ ...draft, allow_non_friend_chat: e.target.checked }))}
+                  className="w-4 h-4 accent-[var(--color-accent)]"
+                />
+              </label>
+              {isOwner && !isDisabled && (
+                <button
+                  onClick={handleSavePolicy}
+                  disabled={savingPolicy}
+                  className="h-10 rounded-xl bg-[var(--color-accent)] text-white text-sm font-medium cursor-pointer inline-flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {savingPolicy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                  {t('common.save')}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="mt-4 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Users className="w-4 h-4 text-[var(--color-success)]" />
+              <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.friendsTab', { count: friends.length })}</p>
+            </div>
+            {loadingFriends ? (
+              <div className="flex justify-center py-4"><Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-muted)]" /></div>
+            ) : friends.length === 0 ? (
+              <p className="text-xs text-[var(--color-text-muted)]">{t('friends.botNoFriends')}</p>
+            ) : (
+              <div className="space-y-2">
+                {friends.slice(0, 8).map((friend) => (
+                  <div key={friend.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
+                    <EntityAvatar entity={friend} size="sm" showStatus />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(friend)}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] truncate">{friend.bot_id || friend.public_id || `@${friend.name}`}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         </div>

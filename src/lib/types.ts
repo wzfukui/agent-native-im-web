@@ -12,10 +12,25 @@ export interface Entity {
   status: EntityStatus
   avatar_url?: string
   email?: string
+  discoverability?: 'private' | 'platform_public' | 'external_public'
+  allow_non_friend_chat?: boolean
   metadata: Record<string, unknown>
   owner_id?: number
   created_at: string
   updated_at: string
+}
+
+export interface FriendRequest {
+  id: number
+  source_entity_id: number
+  target_entity_id: number
+  status: 'pending' | 'accepted' | 'rejected' | 'canceled'
+  message?: string
+  resolved_by?: number
+  created_at: string
+  updated_at: string
+  source_entity?: Entity
+  target_entity?: Entity
 }
 
 // ─── Conversation ────────────────────────────────────────────────

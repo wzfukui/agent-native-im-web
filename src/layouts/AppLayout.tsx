@@ -89,7 +89,8 @@ export function AppLayout() {
   }, [totalUnread])
 
   // ─── Derive active view from URL ───
-  const viewMode: 'chat' | 'bots' | 'settings' = (() => {
+  const viewMode: 'chat' | 'friends' | 'bots' | 'settings' = (() => {
+    if (location.pathname.startsWith('/friends')) return 'friends'
     if (location.pathname.startsWith('/bots')) return 'bots'
     if (location.pathname.startsWith('/settings')) return 'settings'
     return 'chat'
@@ -102,10 +103,11 @@ export function AppLayout() {
   )
   const showMobileTabBar = isMobile && !isMobileInDetail
 
-  const mobileTab: MobileTab = viewMode === 'bots' ? 'bots' : viewMode === 'settings' ? 'settings' : 'chat'
+  const mobileTab: MobileTab = viewMode === 'bots' ? 'bots' : viewMode === 'friends' ? 'friends' : viewMode === 'settings' ? 'settings' : 'chat'
 
   const handleMobileTabChange = useCallback((tab: MobileTab) => {
     if (tab === 'chat') navigate('/chat')
+    else if (tab === 'friends') navigate('/friends')
     else if (tab === 'bots') navigate('/bots')
     else if (tab === 'settings') navigate('/settings')
   }, [navigate])
@@ -129,8 +131,10 @@ export function AppLayout() {
         {!isMobile && (
           <Sidebar
             botMode={viewMode === 'bots'}
+            friendsMode={viewMode === 'friends'}
             settingsMode={viewMode === 'settings'}
             onToggleBots={() => navigate(viewMode === 'bots' ? '/chat' : '/bots')}
+            onToggleFriends={() => navigate(viewMode === 'friends' ? '/chat' : '/friends')}
             onToggleChat={() => navigate('/chat')}
             onToggleSettings={() => navigate(viewMode === 'settings' ? '/chat' : '/settings')}
           />

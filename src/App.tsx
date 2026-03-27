@@ -6,6 +6,7 @@ import { LoginPage } from '@/pages/LoginPage'
 import { JoinPage } from '@/pages/JoinPage'
 import { ChatPage } from '@/pages/ChatPage'
 import { BotsPage } from '@/pages/BotsPage'
+import { FriendsPage } from '@/pages/FriendsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import * as api from '@/lib/api'
 import { getCachedUser } from '@/lib/cache'
@@ -105,6 +106,7 @@ export default function App() {
         }>
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/chat/:conversationId" element={<ChatPage />} />
+          <Route path="/friends" element={<FriendsPage />} />
           <Route path="/bots" element={<BotsPage />} />
           <Route path="/bots/:botId" element={<BotsPage />} />
           <Route path="/settings" element={<SettingsPage />} />

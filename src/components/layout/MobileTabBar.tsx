@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useConversationsStore } from '@/store/conversations'
-import { MessageSquare, Bot, Settings2 } from 'lucide-react'
+import { MessageSquare, Bot, Settings2, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type MobileTab = 'chat' | 'bots' | 'settings'
+export type MobileTab = 'chat' | 'friends' | 'bots' | 'settings'
 
 interface Props {
   activeTab: MobileTab
@@ -25,6 +25,7 @@ export function MobileTabBar({ activeTab, onTabChange }: Props) {
 
   const tabs: { key: MobileTab; icon: typeof MessageSquare; label: string; badge?: number }[] = [
     { key: 'chat', icon: MessageSquare, label: t('sidebar.messages'), badge: totalUnread },
+    { key: 'friends', icon: Users, label: t('friends.title') },
     { key: 'bots', icon: Bot, label: t('sidebar.agents') },
     { key: 'settings', icon: Settings2, label: t('settings.title') },
   ]

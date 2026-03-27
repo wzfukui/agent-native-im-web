@@ -1,7 +1,7 @@
 import type {
   APIResponse, LoginResponse, Entity, Conversation,
   MessagesResponse, SearchResponse, GlobalSearchResponse, Message,
-  Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics,
+  Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics, FriendRequest,
 } from './types'
 import { getSessionHooks } from './auth-session'
 import { reportApiError } from './errors'
@@ -229,6 +229,9 @@ export const searchGlobal = (token: string, query: string, limit = 20, offset = 
 export const listEntities = (token: string) =>
   request<Entity[]>('GET', '/api/v1/entities', token)
 
+export const searchDiscoverableEntities = (token: string, query: string, limit = 20) =>
+  request<Entity[]>('GET', `/api/v1/entities/discover?q=${encodeURIComponent(query)}&limit=${limit}`, token)
+
 export const createEntity = (
   token: string,
   name: string,
@@ -254,8 +257,42 @@ export const approveConnection = (token: string, id: number) =>
 export const reactivateEntity = (token: string, id: number) =>
   request<Entity>('POST', `/api/v1/entities/${id}/reactivate`, token)
 
-export const updateEntity = (token: string, id: number, data: { display_name?: string; avatar_url?: string; metadata?: Record<string, unknown> }) =>
+export const updateEntity = (token: string, id: number, data: {
+  display_name?: string
+  avatar_url?: string
+  metadata?: Record<string, unknown>
+  discoverability?: 'private' | 'platform_public' | 'external_public'
+  allow_non_friend_chat?: boolean
+}) =>
   request<Entity>('PUT', `/api/v1/entities/${id}`, token, data)
+
+// Friends
+export const listFriends = (token: string, entityId?: number) =>
+  request<Entity[]>('GET', `/api/v1/friends${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const listFriendRequests = (token: string, options?: { entityId?: number; direction?: 'incoming' | 'outgoing'; status?: string }) => {
+  const params = new URLSearchParams()
+  if (options?.entityId) params.set('entity_id', String(options.entityId))
+  if (options?.direction) params.set('direction', options.direction)
+  if (options?.status) params.set('status', options.status)
+  const qs = params.toString()
+  return request<FriendRequest[]>('GET', `/api/v1/friends/requests${qs ? `?${qs}` : ''}`, token)
+}
+
+export const createFriendRequest = (token: string, data: { target_entity_id: number; source_entity_id?: number; message?: string }) =>
+  request<FriendRequest>('POST', '/api/v1/friends/requests', token, data)
+
+export const acceptFriendRequest = (token: string, id: number, entityId?: number) =>
+  request('POST', `/api/v1/friends/requests/${id}/accept${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const rejectFriendRequest = (token: string, id: number, entityId?: number) =>
+  request('POST', `/api/v1/friends/requests/${id}/reject${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const cancelFriendRequest = (token: string, id: number, entityId?: number) =>
+  request('POST', `/api/v1/friends/requests/${id}/cancel${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const deleteFriend = (token: string, targetEntityId: number, entityId?: number) =>
+  request('DELETE', `/api/v1/friends/${targetEntityId}${entityId ? `?entity_id=${entityId}` : ''}`, token)
 
 export const getEntityStatus = (token: string, id: number) =>
   request<{ online: boolean; last_seen?: string }>('GET', `/api/v1/entities/${id}/status`, token)

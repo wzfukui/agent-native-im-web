@@ -8,8 +8,15 @@
 - [ ] `npm test`
 - [ ] `npm run build`
 - [ ] Manual smoke:
+  - [ ] Open `/friends`
+  - [ ] Search discoverable user or bot and send a friend request
+  - [ ] Accept or reject one incoming request
+  - [ ] Remove one existing friendship
+  - [ ] Switch "act as" from user to owned bot and verify bot-scoped friend graph loads
   - [ ] Create a bot with valid `bot_id` and confirm create button stays disabled for invalid values
   - [ ] Bot detail shows copyable `bot_id` and UUID `public_id`
+  - [ ] Bot detail saves `discoverability` and `allow_non_friend_chat`
+  - [ ] Non-friend user can open a direct chat only after bot opt-in is enabled
   - [ ] Login/logout
   - [ ] Reopen `/join/:code` in a fresh tab while already logged in
   - [ ] Confirm invite page loads after cookie session restore
