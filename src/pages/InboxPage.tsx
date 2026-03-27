@@ -30,6 +30,19 @@ function notificationConversationId(notification: NotificationRecord): number | 
   return null
 }
 
+function notificationConversationPublicId(notification: NotificationRecord): string {
+  const raw = notification.data?.conversation_public_id
+  return typeof raw === 'string' ? raw : ''
+}
+
+function notificationConversationPath(notification: NotificationRecord): string | null {
+  const publicId = notificationConversationPublicId(notification)
+  if (publicId) return `/chat/public/${encodeURIComponent(publicId)}`
+  const numericId = notificationConversationId(notification)
+  if (numericId != null) return `/chat/${numericId}`
+  return null
+}
+
 function notificationLabel(t: (key: string, options?: Record<string, unknown>) => string, notification: NotificationRecord): string {
   const actor = notification.actor_entity ? entityDisplayName(notification.actor_entity) : t('inbox.someone')
   switch (notification.kind) {
@@ -202,7 +215,7 @@ export function InboxPage() {
             {visibleNotifications.map((notification) => {
               const isUnread = notification.status === 'unread'
               const isPendingRequest = notification.kind === 'friend.request.received'
-              const conversationId = notificationConversationId(notification)
+              const conversationPath = notificationConversationPath(notification)
               const actor = notification.actor_entity
               const recipient = notification.recipient_entity
               return (
@@ -270,9 +283,9 @@ export function InboxPage() {
                       </span>
                     )}
 
-                    {conversationId != null && (
+                    {conversationPath && (
                       <button
-                        onClick={() => navigate(`/chat/${conversationId}`)}
+                        onClick={() => navigate(conversationPath)}
                         className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer inline-flex items-center gap-1.5"
                       >
                         <MessageCircleMore className="w-3.5 h-3.5" />

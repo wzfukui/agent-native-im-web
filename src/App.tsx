@@ -109,6 +109,7 @@ export default function App() {
         }>
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/chat/:conversationId" element={<ChatPage />} />
+          <Route path="/chat/public/:conversationPublicId" element={<ChatPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/bots" element={<BotsPage />} />

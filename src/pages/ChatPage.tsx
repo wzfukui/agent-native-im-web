@@ -14,17 +14,33 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { cn } from '@/lib/utils'
 import { needsFirstBot } from '@/lib/first-login'
+import * as api from '@/lib/api'
 import { MessageSquare, Bot, Settings2 } from 'lucide-react'
 import type { Entity } from '@/lib/types'
 import type { AppOutletContext } from '@/layouts/AppLayout'
 
+function conversationPublicIdOf(conversation: { public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
+  if (!conversation) return ''
+  if (typeof conversation.public_id === 'string' && conversation.public_id) return conversation.public_id
+  const meta = conversation.metadata as Record<string, unknown> | undefined
+  if (typeof meta?.public_id === 'string' && meta.public_id) return meta.public_id
+  return ''
+}
+
+function conversationRouteFor(conversation: { id: number; public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
+  const publicId = conversationPublicIdOf(conversation)
+  if (publicId) return `/chat/public/${encodeURIComponent(publicId)}`
+  return conversation ? `/chat/${conversation.id}` : '/chat'
+}
+
 export function ChatPage() {
   const { t } = useTranslation()
-  const { conversationId } = useParams()
+  const { conversationId, conversationPublicId } = useParams()
   const navigate = useNavigate()
   const { ws, convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
   const { loadBotEntities, botEntities } = botManager
   const entity = useAuthStore((s) => s.entity)
+  const token = useAuthStore((s) => s.token)!
   const { conversations, activeId, removeConversation, updateConversation } = useConversationsStore()
   const setActive = useConversationsStore((s) => s.setActive)
 
@@ -36,11 +52,29 @@ export function ChatPage() {
 
   // Sync URL param to store
   useEffect(() => {
+    if (conversationPublicId) return
     const urlId = conversationId ? Number(conversationId) : null
     if (urlId !== activeId) {
       setActive(urlId)
     }
-  }, [conversationId, activeId, setActive])
+  }, [conversationId, conversationPublicId, activeId, setActive])
+
+  useEffect(() => {
+    if (!conversationPublicId) return
+    const cached = conversations.find((conversation) => conversationPublicIdOf(conversation) === conversationPublicId)
+    if (cached) {
+      if (cached.id !== activeId) setActive(cached.id)
+      return
+    }
+    let cancelled = false
+    void api.getConversationByPublicId(token, conversationPublicId).then((res) => {
+      if (cancelled || !res.ok || !res.data) return
+      setActive(res.data.id)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [activeId, conversationPublicId, conversations, setActive, token])
 
   useEffect(() => {
     if (conversations.length === 0 && botEntities.length === 0) {
@@ -50,11 +84,12 @@ export function ChatPage() {
 
   const handleSelectConversation = useCallback((id: number | null) => {
     if (id !== null) {
-      navigate(`/chat/${id}`)
+      const conversation = conversations.find((item) => item.id === id)
+      navigate(conversationRouteFor(conversation))
     } else {
       navigate('/chat')
     }
-  }, [navigate])
+  }, [conversations, navigate])
 
   const handleBackFromChat = useCallback(() => {
     navigate('/chat')
@@ -69,8 +104,9 @@ export function ChatPage() {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleGlobalSearchResult = useCallback((conversationId: number, _messageId: number) => {
     setShowGlobalSearch(false)
-    navigate(`/chat/${conversationId}`)
-  }, [navigate])
+    const conversation = conversations.find((item) => item.id === conversationId)
+    navigate(conversationRouteFor(conversation || { id: conversationId }))
+  }, [conversations, navigate])
 
   const handleEntityViewDetails = useCallback((target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
