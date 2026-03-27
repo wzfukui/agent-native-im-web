@@ -81,7 +81,7 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
       </div>
 
       {/* Form */}
-      <div className="px-5 py-5 space-y-4 overflow-y-auto">
+      <div className="px-5 py-5 space-y-4 overflow-y-auto" style={isMobile ? { paddingBottom: 'max(20px, env(safe-area-inset-bottom))' } : undefined}>
         {/* Avatar + Name row */}
         <div className="flex items-end gap-3">
           <AvatarPicker currentUrl={avatarUrl} onSelect={setAvatarUrl} size="sm" />
@@ -141,7 +141,10 @@ export function CreateBotDialog({ onClose, onCreated }: Props) {
       </div>
 
       {/* Footer */}
-      <div className="flex justify-end gap-2 px-5 pb-5 pt-2">
+      <div
+        className="flex justify-end gap-2 px-5 pb-5 pt-2 border-t border-[var(--color-border)] bg-[var(--color-bg-secondary)]"
+        style={isMobile ? { position: 'sticky', bottom: 0, paddingBottom: 'max(20px, env(safe-area-inset-bottom))' } : undefined}
+      >
         <button
           onClick={onClose}
           className="px-4 py-2 rounded-lg text-xs font-medium text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer transition-colors"

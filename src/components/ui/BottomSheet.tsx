@@ -13,6 +13,8 @@ export function BottomSheet({ open, onClose, children, className }: Props) {
   const backdropRef = useRef<HTMLDivElement>(null)
   const [visible, setVisible] = useState(false)
   const [animating, setAnimating] = useState(false)
+  const [keyboardInset, setKeyboardInset] = useState(0)
+  const [viewportHeight, setViewportHeight] = useState<number | null>(null)
   const startYRef = useRef(0)
   const currentYRef = useRef(0)
   const isDraggingRef = useRef(false)
@@ -40,6 +42,33 @@ export function BottomSheet({ open, onClose, children, className }: Props) {
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
+
+  useEffect(() => {
+    if (!open || typeof window === 'undefined') return
+
+    const updateViewport = () => {
+      const vv = window.visualViewport
+      if (!vv) {
+        setKeyboardInset(0)
+        setViewportHeight(null)
+        return
+      }
+      const visibleBottom = vv.offsetTop + vv.height
+      const occludedBottom = Math.max(0, window.innerHeight - visibleBottom)
+      setKeyboardInset(occludedBottom)
+      setViewportHeight(vv.height)
+    }
+
+    updateViewport()
+    window.visualViewport?.addEventListener('resize', updateViewport)
+    window.visualViewport?.addEventListener('scroll', updateViewport)
+    window.addEventListener('resize', updateViewport)
+    return () => {
+      window.visualViewport?.removeEventListener('resize', updateViewport)
+      window.visualViewport?.removeEventListener('scroll', updateViewport)
+      window.removeEventListener('resize', updateViewport)
+    }
+  }, [open])
 
   // Drag handle logic
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -70,7 +99,10 @@ export function BottomSheet({ open, onClose, children, className }: Props) {
   if (!visible) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center"
+      style={{ paddingBottom: keyboardInset > 0 ? `${keyboardInset}px` : undefined }}
+    >
       {/* Backdrop */}
       <div
         ref={backdropRef}
@@ -91,6 +123,7 @@ export function BottomSheet({ open, onClose, children, className }: Props) {
           animating ? 'translate-y-0' : 'translate-y-full',
           className,
         )}
+        style={viewportHeight ? { maxHeight: `${Math.max(320, Math.min(window.innerHeight * 0.85, viewportHeight - 12))}px` } : undefined}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
