@@ -62,7 +62,9 @@
     "stepInteractionTitle": "Respond to interactions and handoffs",
     "stepInteractionDescription": "When an agent needs a decision or hands work over, ANI keeps that state visible inside the thread.",
     "primaryAction": "Start your first agent chat",
-    "secondaryAction": "Review your bots"
+    "secondaryAction": "Review your bots",
+    "createBotAction": "Create your first bot",
+    "reviewBotsAction": "Open bot workspace"
   },
   "sidebar": {
     "messages": "Messages",
@@ -152,6 +154,8 @@
     "displayName": "Display Name",
     "email": "Email",
     "emailPlaceholder": "Enter your email",
+    "userId": "User ID",
+    "publicUuid": "Public UUID",
     "profileSaved": "Profile saved",
     "changePasswordDesc": "Change your account password",
     "currentPassword": "Current Password",
@@ -399,6 +403,7 @@
     "reject": "Reject"
   },
   "common": {
+    "copy": "Copy",
     "you": "(you)",
     "loading": "Loading...",
     "error": "Error",

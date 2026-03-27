@@ -215,6 +215,15 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
           <div className="flex flex-col items-center justify-center py-12 text-[var(--color-text-muted)]">
             <Bot className="w-8 h-8 mb-2 opacity-40" />
             <p className="text-xs">{search ? t('common.noMatches') : t('bot.noAgents')}</p>
+            {!search && (
+              <button
+                onClick={() => setShowCreate(true)}
+                className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
+              >
+                <Plus className="h-4 w-4" />
+                {t('onboarding.createBotAction')}
+              </button>
+            )}
           </div>
         ) : (
           <>

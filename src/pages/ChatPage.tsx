@@ -13,6 +13,7 @@ import { GlobalSearch } from '@/components/conversation/GlobalSearch'
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { cn } from '@/lib/utils'
+import { needsFirstBot } from '@/lib/first-login'
 import { MessageSquare, Bot, Settings2 } from 'lucide-react'
 import type { Entity } from '@/lib/types'
 import type { AppOutletContext } from '@/layouts/AppLayout'
@@ -22,7 +23,7 @@ export function ChatPage() {
   const { conversationId } = useParams()
   const navigate = useNavigate()
   const { ws, convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
-  const { loadBotEntities } = botManager
+  const { loadBotEntities, botEntities } = botManager
   const entity = useAuthStore((s) => s.entity)
   const { conversations, activeId, removeConversation, updateConversation } = useConversationsStore()
   const setActive = useConversationsStore((s) => s.setActive)
@@ -40,6 +41,12 @@ export function ChatPage() {
       setActive(urlId)
     }
   }, [conversationId, activeId, setActive])
+
+  useEffect(() => {
+    if (conversations.length === 0 && botEntities.length === 0) {
+      loadBotEntities()
+    }
+  }, [conversations.length, botEntities.length, loadBotEntities])
 
   const handleSelectConversation = useCallback((id: number | null) => {
     if (id !== null) {
@@ -74,6 +81,8 @@ export function ChatPage() {
 
   const { activeConv, isArchivedView } = convManager
   const hasConversation = !!activeConv
+  const hasBots = botEntities.some((entity) => entity.entity_type !== 'user' && entity.status !== 'disabled')
+  const shouldCreateFirstBot = needsFirstBot(hasBots)
 
   return (
     <div className="h-full flex min-h-0">
@@ -164,19 +173,31 @@ export function ChatPage() {
               {conversations.length === 0 && (
                 <div className="w-full max-w-xl px-6 mb-8">
                   <OnboardingCard
-                    onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+                    onNewChat={shouldCreateFirstBot ? undefined : () => { setNewChatEntityId(undefined); setShowNewChat(true) }}
                     onManageBots={() => navigate('/bots')}
+                    primaryLabel={shouldCreateFirstBot ? t('onboarding.createBotAction') : undefined}
+                    secondaryLabel={shouldCreateFirstBot ? t('onboarding.reviewBotsAction') : undefined}
                   />
                 </div>
               )}
               <div className="flex flex-col gap-2 w-56">
-                <button
-                  onClick={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
-                >
-                  <MessageSquare className="w-4 h-4 text-[var(--color-accent)] flex-shrink-0" />
-                  <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep2Action')}</span>
-                </button>
+                {!shouldCreateFirstBot ? (
+                  <button
+                    onClick={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
+                  >
+                    <MessageSquare className="w-4 h-4 text-[var(--color-accent)] flex-shrink-0" />
+                    <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep2Action')}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => navigate('/bots')}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
+                  >
+                    <Bot className="w-4 h-4 text-[var(--color-bot)] flex-shrink-0" />
+                    <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('onboarding.createBotAction')}</span>
+                  </button>
+                )}
                 <button
                   onClick={() => navigate('/bots')}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"

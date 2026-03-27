@@ -5,9 +5,11 @@ interface Props {
   onNewChat?: () => void
   onManageBots?: () => void
   compact?: boolean
+  primaryLabel?: string
+  secondaryLabel?: string
 }
 
-export function OnboardingCard({ onNewChat, onManageBots, compact = false }: Props) {
+export function OnboardingCard({ onNewChat, onManageBots, compact = false, primaryLabel, secondaryLabel }: Props) {
   const { t } = useTranslation()
 
   const steps = [
@@ -81,7 +83,7 @@ export function OnboardingCard({ onNewChat, onManageBots, compact = false }: Pro
               onClick={onNewChat}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white text-sm font-medium cursor-pointer transition-colors"
             >
-              {t('onboarding.primaryAction')}
+              {primaryLabel || t('onboarding.primaryAction')}
               <ArrowRight className="w-4 h-4" />
             </button>
           )}
@@ -90,7 +92,7 @@ export function OnboardingCard({ onNewChat, onManageBots, compact = false }: Pro
               onClick={onManageBots}
               className="inline-flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] text-[var(--color-text-secondary)] text-sm font-medium cursor-pointer transition-colors"
             >
-              {t('onboarding.secondaryAction')}
+              {secondaryLabel || t('onboarding.secondaryAction')}
             </button>
           )}
         </div>

@@ -8,6 +8,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { buildInfo } from '@/lib/build-info'
 import { fetchLatestBuildInfo, isBuildStale } from '@/lib/update-check'
 import { applyGatewayUrl } from '@/lib/gateway'
+import { hardReloadToLatest } from '@/lib/reload-latest'
 
 function showUpdateToast(label: string, actionLabel: string, onRefresh: () => void) {
   const existing = document.getElementById('sw-update-toast')
@@ -26,6 +27,10 @@ function showUpdateToast(label: string, actionLabel: string, onRefresh: () => vo
   document.getElementById('sw-dismiss-btn')?.addEventListener('click', () => toast.remove())
 }
 
+function dismissUpdateToast() {
+  document.getElementById('sw-update-toast')?.remove()
+}
+
 // Register PWA service worker with auto-update and refresh notification
 const updateSW = registerSW({
   onNeedRefresh() {
@@ -36,8 +41,13 @@ const updateSW = registerSW({
 
 async function checkForVersionDrift() {
   const latest = await fetchLatestBuildInfo()
-  if (!isBuildStale(buildInfo, latest)) return
-  showUpdateToast('A newer build is available', 'Reload', () => window.location.reload())
+  if (!isBuildStale(buildInfo, latest)) {
+    dismissUpdateToast()
+    return
+  }
+  showUpdateToast('A newer build is available', 'Reload', () => {
+    void hardReloadToLatest()
+  })
 }
 
 // Apply saved theme on load (supports 'system' auto-switch)

@@ -62,7 +62,9 @@
     "stepInteractionTitle": "在会话里完成交互与交接",
     "stepInteractionDescription": "当 agent 需要你的决定，或把任务交给别人时，ANI 会在消息流里持续呈现这个状态。",
     "primaryAction": "开始第一段 agent 对话",
-    "secondaryAction": "先看看 Bot"
+    "secondaryAction": "先看看 Bot",
+    "createBotAction": "创建你的第一个 Bot",
+    "reviewBotsAction": "打开 Bot 工作台"
   },
   "sidebar": {
     "messages": "消息",
@@ -152,6 +154,8 @@
     "displayName": "显示名称",
     "email": "邮箱",
     "emailPlaceholder": "请输入邮箱",
+    "userId": "用户 ID",
+    "publicUuid": "公开 UUID",
     "profileSaved": "资料已保存",
     "changePasswordDesc": "修改您的账户密码",
     "currentPassword": "当前密码",
@@ -399,6 +403,7 @@
     "reject": "拒绝"
   },
   "common": {
+    "copy": "复制",
     "you": "(你)",
     "loading": "加载中...",
     "error": "错误",

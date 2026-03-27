@@ -44,6 +44,7 @@ export function UserSettingsPage({ onBack }: Props) {
   const [passError, setPassError] = useState('')
   const [passSuccess, setPassSuccess] = useState('')
   const [aboutCopied, setAboutCopied] = useState(false)
+  const [copiedProfileField, setCopiedProfileField] = useState<'entity' | 'public' | null>(null)
   const { canInstall, isInstalled, promptInstall } = usePwaInstall()
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
 
@@ -226,6 +227,11 @@ export function UserSettingsPage({ onBack }: Props) {
   // Current theme label for the settings row
   const currentThemeLabel = theme === 'system' ? t('settings.themeSystem') : ([...lightThemes, ...darkThemes].find((th) => th.id === theme)?.label || theme)
   const currentLocaleLabel = locale === 'zh-CN' ? '中文' : 'English'
+  const handleCopyProfileField = async (field: 'entity' | 'public', value: string) => {
+    await navigator.clipboard.writeText(value)
+    setCopiedProfileField(field)
+    setTimeout(() => setCopiedProfileField(null), 1600)
+  }
 
   // ── Section content renderer (shared between mobile and desktop) ──
   const renderSectionContent = (sec: Section) => {
@@ -268,6 +274,40 @@ export function UserSettingsPage({ onBack }: Props) {
                 placeholder={t('settings.emailPlaceholder')}
                 className="w-full h-10 px-3 rounded-xl bg-[var(--color-bg-input)] border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] focus:outline-none focus:border-[var(--color-accent)]/50"
               />
+            </div>
+
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--color-text-secondary)]">{t('settings.userId')}</label>
+                <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-input)] px-3 py-2.5">
+                  <code className="min-w-0 flex-1 truncate text-xs text-[var(--color-text-primary)]">{String(entity?.id || '')}</code>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyProfileField('entity', String(entity?.id || ''))}
+                    className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-2.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)]"
+                  >
+                    <Copy className="h-3.5 w-3.5" />
+                    {copiedProfileField === 'entity' ? t('common.copied') : t('common.copy')}
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-[var(--color-text-secondary)]">{t('settings.publicUuid')}</label>
+                <div className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-input)] px-3 py-2.5">
+                  <code className="min-w-0 flex-1 truncate text-xs text-[var(--color-text-primary)]">{entity?.public_id || '—'}</code>
+                  {entity?.public_id ? (
+                    <button
+                      type="button"
+                      onClick={() => handleCopyProfileField('public', entity.public_id!)}
+                      className="inline-flex h-8 items-center gap-1 rounded-lg border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-2.5 text-xs font-medium text-[var(--color-text-secondary)] transition-colors hover:bg-[var(--color-bg-hover)]"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      {copiedProfileField === 'public' ? t('common.copied') : t('common.copy')}
+                    </button>
+                  ) : null}
+                </div>
+              </div>
             </div>
 
             <button
