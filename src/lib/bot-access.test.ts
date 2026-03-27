@@ -18,11 +18,11 @@ describe('bot access helpers', () => {
     const url = buildBotAccessUrl({
       gatewayUrl: 'https://agent-native.im',
       accessToken: 'aim_test_token',
-      entityId: 42,
+      botIdentifier: 'bot_support_cn',
     })
 
     expect(url).toContain('aim-bot://connect?base=')
     expect(url).toContain('token=aim_test_token')
-    expect(url).toContain('entity_id=42')
+    expect(url).toContain('bot_identifier=bot_support_cn')
   })
 })

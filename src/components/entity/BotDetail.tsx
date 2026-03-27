@@ -293,8 +293,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const gatewayUrl = getGatewayUrl()
   const wsUrl = getGatewayWebSocketUrl()
   const accessText = accessToken ? buildBotAccessText({ gatewayUrl, wsUrl, accessToken }) : ''
-  const accessUrl = accessToken ? buildBotAccessUrl({ gatewayUrl, accessToken, entityId: bot.id }) : ''
   const publicBotIdentifier = bot.bot_id || bot.public_id || ''
+  const accessUrl = accessToken && publicBotIdentifier ? buildBotAccessUrl({ gatewayUrl, accessToken, botIdentifier: publicBotIdentifier }) : ''
   const publicBotUrl = `${window.location.origin}/public/bots/${encodeURIComponent(publicBotIdentifier)}`
   const diagnosticsSnapshot = [
     `entity=${bot.id} (${bot.name})`,

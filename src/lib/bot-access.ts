@@ -22,8 +22,8 @@ export function buildBotAccessText(params: {
 export function buildBotAccessUrl(params: {
   gatewayUrl: string
   accessToken: string
-  entityId: number
+  botIdentifier: string
 }) {
-  const { gatewayUrl, accessToken, entityId } = params
-  return `aim-bot://connect?base=${encodeURIComponent(`${gatewayUrl}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${entityId}`
+  const { gatewayUrl, accessToken, botIdentifier } = params
+  return `aim-bot://connect?base=${encodeURIComponent(`${gatewayUrl}/api/v1`)}&token=${encodeURIComponent(accessToken)}&bot_identifier=${encodeURIComponent(botIdentifier)}`
 }
