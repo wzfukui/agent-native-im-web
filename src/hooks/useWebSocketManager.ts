@@ -7,7 +7,7 @@ import { useTasksStore } from '@/store/tasks'
 import { useNotificationsStore } from '@/store/notifications'
 import { AnimpWebSocket } from '@/lib/ws-client'
 import * as api from '@/lib/api'
-import type { WSMessage, Message, Task } from '@/lib/types'
+import type { WSMessage, Message, Task, FriendRequest, NotificationRecord } from '@/lib/types'
 import { getGatewayWebSocketUrl } from '@/lib/gateway'
 import { isSyntheticSessionToken } from '@/lib/session-token'
 
@@ -245,27 +245,42 @@ export function useWebSocketManager() {
 
         case 'friend.request.created':
         case 'friend.request.updated': {
-          useNotificationsStore.getState().markDirty()
+          const friendRequest = msg.data as FriendRequest | undefined
+          const store = useNotificationsStore.getState()
+          if (friendRequest?.id) {
+            store.upsertFriendRequest(friendRequest)
+          } else {
+            store.markDirty()
+          }
           break
         }
 
         case 'notification.new': {
+          const notification = msg.data as NotificationRecord | undefined
           const store = useNotificationsStore.getState()
-          store.bumpUnreadCount(1)
-          store.markDirty()
+          if (notification?.id) {
+            store.upsertNotification(notification)
+          } else {
+            store.markDirty()
+          }
           break
         }
 
         case 'notification.read': {
+          const notification = msg.data as NotificationRecord | undefined
           const store = useNotificationsStore.getState()
-          store.markReadCount(1)
-          store.markDirty()
+          if (notification?.id) {
+            store.applyNotificationRead(notification)
+          } else {
+            store.markDirty()
+          }
           break
         }
 
         case 'notification.read_all': {
+          const payload = msg.data as { entity_id?: number } | undefined
           const store = useNotificationsStore.getState()
-          store.resetUnreadCount()
+          store.applyNotificationReadAll(payload?.entity_id)
           store.markDirty()
           break
         }

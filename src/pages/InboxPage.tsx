@@ -42,71 +42,51 @@ export function InboxPage() {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const me = useAuthStore((s) => s.entity)!
-  const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
+  const notifications = useNotificationsStore((s) => s.notifications)
+  const applyNotificationRead = useNotificationsStore((s) => s.applyNotificationRead)
+  const applyNotificationReadAll = useNotificationsStore((s) => s.applyNotificationReadAll)
+  const markDirty = useNotificationsStore((s) => s.markDirty)
   const [ownedBots, setOwnedBots] = useState<Entity[]>([])
   const [scope, setScope] = useState<Scope>('all')
   const [filter, setFilter] = useState<Filter>('unread')
-  const [notifications, setNotifications] = useState<NotificationRecord[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loadingOwnedBots, setLoadingOwnedBots] = useState(false)
   const [actingId, setActingId] = useState<number | null>(null)
 
   const scopeOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
 
   const loadOwnedBots = useCallback(async () => {
+    setLoadingOwnedBots(true)
     const res = await api.listEntities(token)
     if (res.ok && res.data) {
       setOwnedBots(res.data.filter((entity) => entity.entity_type !== 'user'))
     }
+    setLoadingOwnedBots(false)
   }, [token])
-
-  const loadNotifications = useCallback(async () => {
-    setLoading(true)
-    const targetIds = scope === 'all'
-      ? Array.from(new Set([me.id, ...ownedBots.map((entity) => entity.id)]))
-      : [Number(scope)]
-    const results = await Promise.all(
-      targetIds.map((entityId) => api.listNotifications(token, {
-        entityId,
-        status: filter === 'unread' ? 'unread' : undefined,
-        limit: 100,
-      })),
-    )
-    const combined = results.flatMap((res) => (res.ok && res.data ? res.data : []))
-    combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-    setNotifications(combined)
-    setLoading(false)
-  }, [filter, me.id, ownedBots, scope, token])
 
   useEffect(() => {
     void loadOwnedBots()
   }, [loadOwnedBots])
 
-  useEffect(() => {
-    void loadNotifications()
-  }, [inboxDirtyVersion, loadNotifications])
-
-  useEffect(() => {
-    const interval = window.setInterval(() => { void loadNotifications() }, 15000)
-    const onFocus = () => {
-      if (document.visibilityState === 'hidden') return
-      void loadNotifications()
-    }
-    window.addEventListener('focus', onFocus)
-    document.addEventListener('visibilitychange', onFocus)
-    return () => {
-      window.clearInterval(interval)
-      window.removeEventListener('focus', onFocus)
-      document.removeEventListener('visibilitychange', onFocus)
-    }
-  }, [loadNotifications])
+  const visibleNotifications = useMemo(() => {
+    const targetIds = scope === 'all'
+      ? new Set([me.id, ...ownedBots.map((entity) => entity.id)])
+      : new Set([Number(scope)])
+    return notifications.filter((notification) => {
+      if (!targetIds.has(notificationRecipientEntityId(notification))) return false
+      if (filter === 'unread' && notification.status !== 'unread') return false
+      return true
+    })
+  }, [filter, me.id, notifications, ownedBots, scope])
 
   const markRead = useCallback(async (notification: NotificationRecord) => {
     const recipientEntityId = notificationRecipientEntityId(notification)
     setActingId(notification.id)
-    await api.markNotificationRead(token, notification.id, recipientEntityId === me.id ? undefined : recipientEntityId)
+    const res = await api.markNotificationRead(token, notification.id, recipientEntityId === me.id ? undefined : recipientEntityId)
+    if (res.ok && res.data) {
+      applyNotificationRead(res.data)
+    }
     setActingId(null)
-    await loadNotifications()
-  }, [loadNotifications, me.id, token])
+  }, [applyNotificationRead, me.id, token])
 
   const markAllRead = useCallback(async () => {
     const targetIds = scope === 'all'
@@ -114,9 +94,9 @@ export function InboxPage() {
       : [Number(scope)]
     setActingId(-1)
     await Promise.all(targetIds.map((entityId) => api.markAllNotificationsRead(token, entityId === me.id ? undefined : entityId)))
+    targetIds.forEach((entityId) => applyNotificationReadAll(entityId))
     setActingId(null)
-    await loadNotifications()
-  }, [loadNotifications, me.id, ownedBots, scope, token])
+  }, [applyNotificationReadAll, me.id, ownedBots, scope, token])
 
   const handleFriendAction = useCallback(async (notification: NotificationRecord, action: 'accept' | 'reject') => {
     const requestId = notificationRequestId(notification)
@@ -128,10 +108,15 @@ export function InboxPage() {
     } else {
       await api.rejectFriendRequest(token, requestId, recipientEntityId === me.id ? undefined : recipientEntityId)
     }
-    await api.markNotificationRead(token, notification.id, recipientEntityId === me.id ? undefined : recipientEntityId)
+    const readRes = await api.markNotificationRead(token, notification.id, recipientEntityId === me.id ? undefined : recipientEntityId)
+    if (readRes.ok && readRes.data) {
+      applyNotificationRead(readRes.data)
+    } else {
+      applyNotificationReadAll(recipientEntityId)
+    }
     setActingId(null)
-    await loadNotifications()
-  }, [loadNotifications, me.id, token])
+    markDirty()
+  }, [applyNotificationRead, applyNotificationReadAll, markDirty, me.id, token])
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-[var(--color-bg-primary)]">
@@ -183,9 +168,9 @@ export function InboxPage() {
       </div>
 
       <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4">
-        {loading ? (
+        {loadingOwnedBots ? (
           <div className="h-full flex items-center justify-center"><Loader2 className="w-5 h-5 animate-spin text-[var(--color-text-muted)]" /></div>
-        ) : notifications.length === 0 ? (
+        ) : visibleNotifications.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <Bell className="w-9 h-9 text-[var(--color-text-muted)] mb-3" />
             <div className="text-sm font-medium text-[var(--color-text-primary)]">{t('inbox.emptyTitle')}</div>
@@ -193,7 +178,7 @@ export function InboxPage() {
           </div>
         ) : (
           <div className="grid gap-3">
-            {notifications.map((notification) => {
+            {visibleNotifications.map((notification) => {
               const isUnread = notification.status === 'unread'
               const isPendingRequest = notification.kind === 'friend.request.received'
               const actor = notification.actor_entity

@@ -60,12 +60,13 @@ export function FriendsPage() {
   }, [inboxDirtyVersion, loadSocial])
 
   useEffect(() => {
-    const interval = window.setInterval(() => { void loadSocial() }, 15000)
-    const onFocus = () => { void loadSocial() }
+    const onFocus = () => {
+      if (document.visibilityState === 'hidden') return
+      void loadSocial()
+    }
     window.addEventListener('focus', onFocus)
     document.addEventListener('visibilitychange', onFocus)
     return () => {
-      window.clearInterval(interval)
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onFocus)
     }

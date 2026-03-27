@@ -53,9 +53,10 @@ export function AppLayout() {
 
   // ─── Global error handler ───
   const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
-  const [friendRequestCount, setFriendRequestCount] = useState(0)
+  const friendRequestCount = useNotificationsStore((s) => s.friendRequestCount)
   const unreadNotificationCount = useNotificationsStore((s) => s.unreadCount)
-  const setUnreadNotificationCount = useNotificationsStore((s) => s.setUnreadCount)
+  const hydrateNotifications = useNotificationsStore((s) => s.hydrateSnapshot)
+  const resetNotifications = useNotificationsStore((s) => s.reset)
   const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
 
   const pushError = useCallback((parsed: ParsedError) => {
@@ -97,8 +98,7 @@ export function AppLayout() {
 
   useEffect(() => {
     if (!token || !entity) {
-      setFriendRequestCount(0)
-      setUnreadNotificationCount(0)
+      resetNotifications()
       return
     }
 
@@ -113,21 +113,22 @@ export function AppLayout() {
       const uniqueIds = Array.from(new Set(actingIds))
       const [friendResults, notificationResults] = await Promise.all([
         Promise.all(
-        uniqueIds.map((id) => api.listFriendRequests(token, { entityId: id, direction: 'incoming', status: 'pending' })),
+          uniqueIds.map((id) => api.listFriendRequests(token, { entityId: id, direction: 'incoming', status: 'pending' })),
         ),
         Promise.all(
-          uniqueIds.map((id) => api.listNotifications(token, { entityId: id, status: 'unread', limit: 100 })),
+          uniqueIds.map((id) => api.listNotifications(token, { entityId: id, limit: 200 })),
         ),
       ])
       if (cancelled) return
-      const nextFriendCount = friendResults.reduce((sum, res) => sum + (res.ok && res.data ? res.data.length : 0), 0)
-      const nextNotificationCount = notificationResults.reduce((sum, res) => sum + (res.ok && res.data ? res.data.length : 0), 0)
-      setFriendRequestCount(nextFriendCount)
-      setUnreadNotificationCount(nextNotificationCount)
+      hydrateNotifications({
+        trackedEntityIds: uniqueIds,
+        pendingFriendRequests: friendResults.flatMap((res) => (res.ok && res.data ? res.data : [])),
+        notifications: notificationResults.flatMap((res) => (res.ok && res.data ? res.data : [])),
+      })
     }
 
     void loadInboxState()
-    const interval = window.setInterval(() => { void loadInboxState() }, 30000)
+    const interval = window.setInterval(() => { void loadInboxState() }, 60000)
     const onFocus = () => {
       if (document.visibilityState === 'hidden') return
       void loadInboxState()
@@ -140,7 +141,7 @@ export function AppLayout() {
       window.removeEventListener('focus', onFocus)
       document.removeEventListener('visibilitychange', onFocus)
     }
-  }, [entity, inboxDirtyVersion, setUnreadNotificationCount, token])
+  }, [entity, hydrateNotifications, inboxDirtyVersion, resetNotifications, token])
 
   // ─── Derive active view from URL ───
   const viewMode: 'chat' | 'friends' | 'inbox' | 'bots' | 'settings' = (() => {
