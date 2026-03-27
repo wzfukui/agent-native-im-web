@@ -57,6 +57,18 @@ export function FriendsPage() {
     void loadSocial()
   }, [loadSocial])
 
+  useEffect(() => {
+    const interval = window.setInterval(() => { void loadSocial() }, 15000)
+    const onFocus = () => { void loadSocial() }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [loadSocial])
+
   const runSearch = useCallback(async () => {
     const trimmed = query.trim()
     if (!trimmed) {

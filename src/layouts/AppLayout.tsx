@@ -17,6 +17,8 @@ import { registerPushNotifications } from '@/lib/push'
 import { setSessionHooks } from '@/lib/auth-session'
 import { setGlobalErrorHandler, type ParsedError } from '@/lib/errors'
 import { useState, useCallback } from 'react'
+import * as api from '@/lib/api'
+import type { Entity } from '@/lib/types'
 
 export function AppLayout() {
   const { t } = useTranslation()
@@ -50,6 +52,7 @@ export function AppLayout() {
 
   // ─── Global error handler ───
   const [errorToasts, setErrorToasts] = useState<ErrorToastData[]>([])
+  const [friendRequestCount, setFriendRequestCount] = useState(0)
 
   const pushError = useCallback((parsed: ParsedError) => {
     const toast: ErrorToastData = {
@@ -87,6 +90,42 @@ export function AppLayout() {
   useEffect(() => {
     document.title = totalUnread > 0 ? `(${totalUnread}) Agent-Native IM` : 'Agent-Native IM'
   }, [totalUnread])
+
+  useEffect(() => {
+    if (!token || !entity) {
+      setFriendRequestCount(0)
+      return
+    }
+
+    let cancelled = false
+
+    const loadFriendRequests = async () => {
+      const entitiesRes = await api.listEntities(token)
+      const ownedBots = entitiesRes.ok && entitiesRes.data
+        ? entitiesRes.data.filter((item: Entity) => item.entity_type !== 'user')
+        : []
+      const actingIds = [entity.id, ...ownedBots.map((item: Entity) => item.id)]
+      const uniqueIds = Array.from(new Set(actingIds))
+      const results = await Promise.all(
+        uniqueIds.map((id) => api.listFriendRequests(token, { entityId: id, direction: 'incoming', status: 'pending' })),
+      )
+      if (cancelled) return
+      const nextCount = results.reduce((sum, res) => sum + (res.ok && res.data ? res.data.length : 0), 0)
+      setFriendRequestCount(nextCount)
+    }
+
+    void loadFriendRequests()
+    const interval = window.setInterval(() => { void loadFriendRequests() }, 30000)
+    const onFocus = () => { void loadFriendRequests() }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+    return () => {
+      cancelled = true
+      window.clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [entity, token])
 
   // ─── Derive active view from URL ───
   const viewMode: 'chat' | 'friends' | 'bots' | 'settings' = (() => {
@@ -133,6 +172,7 @@ export function AppLayout() {
             botMode={viewMode === 'bots'}
             friendsMode={viewMode === 'friends'}
             settingsMode={viewMode === 'settings'}
+            friendRequestCount={friendRequestCount}
             onToggleBots={() => navigate(viewMode === 'bots' ? '/chat' : '/bots')}
             onToggleFriends={() => navigate(viewMode === 'friends' ? '/chat' : '/friends')}
             onToggleChat={() => navigate('/chat')}
@@ -164,7 +204,7 @@ export function AppLayout() {
 
       {/* Mobile bottom tab bar */}
       {showMobileTabBar && (
-        <MobileTabBar activeTab={mobileTab} onTabChange={handleMobileTabChange} />
+        <MobileTabBar activeTab={mobileTab} friendRequestCount={friendRequestCount} onTabChange={handleMobileTabChange} />
       )}
     </div>
   )

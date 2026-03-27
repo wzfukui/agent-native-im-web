@@ -11,13 +11,14 @@ interface Props {
   botMode: boolean
   friendsMode?: boolean
   settingsMode?: boolean
+  friendRequestCount?: number
   onToggleBots: () => void
   onToggleFriends?: () => void
   onToggleChat?: () => void
   onToggleSettings?: () => void
 }
 
-export function Sidebar({ botMode, friendsMode, settingsMode, onToggleBots, onToggleFriends, onToggleChat, onToggleSettings }: Props) {
+export function Sidebar({ botMode, friendsMode, settingsMode, friendRequestCount = 0, onToggleBots, onToggleFriends, onToggleChat, onToggleSettings }: Props) {
   const { t } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
@@ -77,6 +78,11 @@ export function Sidebar({ botMode, friendsMode, settingsMode, onToggleBots, onTo
         aria-label={t('friends.title')}
       >
         <Users className="w-5 h-5" />
+        {friendRequestCount > 0 && (
+          <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
+            {friendRequestCount > 99 ? '99+' : friendRequestCount}
+          </span>
+        )}
       </button>
 
       {/* Bot manager */}

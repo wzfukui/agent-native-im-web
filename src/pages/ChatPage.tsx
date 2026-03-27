@@ -100,6 +100,8 @@ export function ChatPage() {
           myEntityId={entity?.id || 0}
           onSelect={handleSelectConversation}
           onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
+          emptyActionLabel={shouldCreateFirstBot ? t('onboarding.createBotAction') : t('onboarding.primaryAction')}
+          onEmptyAction={shouldCreateFirstBot ? () => navigate('/bots') : () => { setNewChatEntityId(undefined); setShowNewChat(true) }}
           onGlobalSearch={() => setShowGlobalSearch(true)}
           onUpdateConversation={(id, title) => {
             updateConversation(id, { title })
@@ -190,14 +192,14 @@ export function ChatPage() {
                     <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('app.welcomeStep2Action')}</span>
                   </button>
                 ) : (
-                  <button
-                    onClick={() => navigate('/bots')}
-                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
-                  >
-                    <Bot className="w-4 h-4 text-[var(--color-bot)] flex-shrink-0" />
-                    <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('onboarding.createBotAction')}</span>
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate('/bots')}
+                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"
+                >
+                  <Bot className="w-4 h-4 text-[var(--color-bot)] flex-shrink-0" />
+                  <span className="text-sm text-[var(--color-text-secondary)] group-hover:text-[var(--color-text-primary)] transition-colors">{t('onboarding.createBotAction')}</span>
+                </button>
+              )}
                 <button
                   onClick={() => navigate('/bots')}
                   className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer group text-left"

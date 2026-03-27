@@ -148,6 +148,7 @@
     "unnamed": "Unnamed Conversation",
     "cachedSnapshot": "Showing a cached workspace snapshot. Reconnect to sync the latest messages and metadata.",
     "cachedShort": "Cached",
+    "all": "All",
     "direct": "Direct",
     "groups": "Groups",
     "group": "Group",

@@ -25,9 +25,11 @@ interface Props {
   archiveRefresh?: number
   loading?: boolean
   showCachedSnapshot?: boolean
+  emptyActionLabel?: string
+  onEmptyAction?: () => void
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading, showCachedSnapshot = false }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading, showCachedSnapshot = false, emptyActionLabel, onEmptyAction }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
@@ -219,11 +221,11 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
               description={t('conversation.noConversationsDesc')}
               action={
                 <button
-                  onClick={onNewChat}
+                  onClick={onEmptyAction || onNewChat}
                   className="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-accent)] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[var(--color-accent-hover)]"
                 >
                   <Plus className="h-4 w-4" />
-                  {t('onboarding.primaryAction')}
+                  {emptyActionLabel || t('onboarding.primaryAction')}
                 </button>
               }
             />

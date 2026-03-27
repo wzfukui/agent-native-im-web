@@ -8,10 +8,11 @@ export type MobileTab = 'chat' | 'friends' | 'bots' | 'settings'
 
 interface Props {
   activeTab: MobileTab
+  friendRequestCount?: number
   onTabChange: (tab: MobileTab) => void
 }
 
-export function MobileTabBar({ activeTab, onTabChange }: Props) {
+export function MobileTabBar({ activeTab, friendRequestCount = 0, onTabChange }: Props) {
   const { t } = useTranslation()
   const conversations = useConversationsStore((s) => s.conversations)
   const mutedIds = useConversationsStore((s) => s.mutedIds)
@@ -25,7 +26,7 @@ export function MobileTabBar({ activeTab, onTabChange }: Props) {
 
   const tabs: { key: MobileTab; icon: typeof MessageSquare; label: string; badge?: number }[] = [
     { key: 'chat', icon: MessageSquare, label: t('sidebar.messages'), badge: totalUnread },
-    { key: 'friends', icon: Users, label: t('friends.title') },
+    { key: 'friends', icon: Users, label: t('friends.title'), badge: friendRequestCount },
     { key: 'bots', icon: Bot, label: t('sidebar.agents') },
     { key: 'settings', icon: Settings2, label: t('settings.title') },
   ]
