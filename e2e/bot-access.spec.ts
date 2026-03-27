@@ -66,5 +66,9 @@ test.describe('Bot access pack', () => {
     await expect(page.getByTestId('copy-bot-token-button')).toBeEnabled()
     await expect(page.getByTestId('copy-bot-access-button')).toBeEnabled()
     await expect(page.getByTestId('download-quickstart-button')).toBeEnabled()
+
+    await page.waitForTimeout(800)
+    await expect(page.getByText(/token rotated\./i)).toBeVisible()
+    await expect(page.getByTestId('copy-bot-token-button')).toBeEnabled()
   })
 })
