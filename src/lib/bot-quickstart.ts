@@ -1,7 +1,3 @@
-/**
- * Bot quickstart guide generator
- */
-
 interface BotQuickstartParams {
   botName: string
   botToken: string
@@ -11,426 +7,76 @@ interface BotQuickstartParams {
 
 export function generateBotQuickstart(params: BotQuickstartParams): string {
   const { botName, botToken, apiUrl, webUrl } = params
-  const botNameLower = botName.toLowerCase().replace(/\s+/g, '-')
+  const serverUrl = apiUrl.replace(/\/api\/v1$/, '')
 
-  return `# 🚀 ${botName} Quick Start Guide
+  return `# ${botName} OpenClaw Quick Start
 
-Welcome! Your bot **${botName}** has been created successfully.
+This bot is intended to connect through the ANI OpenClaw channel plugin.
 
-**Bot Token:** \`${botToken}\`
-**API Endpoint:** \`${apiUrl}\`
+## Credentials
 
-## 📦 Installation
+- ANI Server: \`${serverUrl}\`
+- API Base: \`${apiUrl}\`
+- WebSocket: \`${serverUrl.replace(/^http/, 'ws')}/api/v1/ws\`
+- API Key: \`${botToken}\`
 
-\`\`\`bash
-pip install agent-native-im-sdk-python
-\`\`\`
+## Recommended Path
 
-## 🤖 1. Basic Bot (5 lines)
+Use OpenClaw channel mode. Do not start by building a custom Python echo bot.
 
-\`\`\`python
-from agent_im_python import Bot
-
-bot = Bot(token="${botToken}", base_url="${apiUrl}")
-
-@bot.on_message
-async def handle(ctx, msg):
-    await ctx.reply(summary=f"Echo: {msg.layers.summary}")
-
-bot.run()
-\`\`\`
-
-> **Tip:** Add \`debug=True\` to see full trace logs:
-> \`\`\`python
-> bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
-> \`\`\`
-
-## 🧠 2. AI Bot with LLM (OpenAI)
-
-Add real AI responses in just a few more lines. Install the OpenAI SDK (\`pip install openai\`) and set \`OPENAI_API_KEY\` in your environment.
-
-\`\`\`python
-from agent_im_python import Bot
-import openai
-
-bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
-client = openai.AsyncOpenAI()  # Uses OPENAI_API_KEY env var
-
-@bot.on_message
-async def handle(ctx, msg):
-    system = ctx.get_system_context() or "You are ${botName}, a helpful AI assistant."
-
-    async with ctx.stream(phase="thinking") as s:
-        await s.update("Thinking...", progress=0.3)
-        resp = await client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": system},
-                {"role": "user", "content": msg.layers.summary},
-            ],
-        )
-        s.result = resp.choices[0].message.content
-
-bot.run()
-\`\`\`
-
-## 📁 3. Create a Skill File
-
-Save as \`${botNameLower}.skill.json\`:
-
-\`\`\`json
-{
-  "name": "${botName}",
-  "version": "1.0.0",
-  "description": "Your bot description",
-  "author": "Your Name",
-
-  "system_prompt": "You are ${botName}, a helpful AI assistant...",
-
-  "config": {
-    "always_reply": false,
-    "reply_in_groups": true,
-    "require_mention": false,
-    "max_history": 30,
-    "temperature": 0.7,
-    "model_name": "gpt-4"
-  },
-
-  "triggers": {
-    "keywords": ["help", "question", "how to"],
-    "patterns": ["@${botNameLower}", "/ask"],
-    "commands": ["/help", "/search"]
-  },
-
-  "capabilities": [
-    "answer_questions",
-    "provide_examples",
-    "explain_concepts"
-  ],
-
-  "memory_schema": {
-    "user_preferences": {},
-    "learned_facts": {},
-    "conversation_topics": []
-  }
-}
-\`\`\`
-
-## 🔄 4. Make it Persistent (Auto-restart)
-
-### Option A: Using systemd (Linux)
-
-1. Create service file \`/etc/systemd/system/${botNameLower}.service\`:
-
-\`\`\`ini
-[Unit]
-Description=${botName} Bot Service
-After=network.target
-
-[Service]
-Type=simple
-User=youruser
-WorkingDirectory=/opt/bots/${botNameLower}
-Environment="BOT_TOKEN=${botToken}"
-ExecStart=/usr/bin/python3 agent.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-\`\`\`
-
-2. Enable and start:
-\`\`\`bash
-sudo systemctl enable ${botNameLower}
-sudo systemctl start ${botNameLower}
-\`\`\`
-
-### Option B: Using Docker
-
-1. Create \`Dockerfile\`:
-
-\`\`\`dockerfile
-FROM python:3.11-slim
-WORKDIR /app
-RUN pip install agent-native-im-sdk-python openai
-COPY . .
-CMD ["python", "agent.py"]
-\`\`\`
-
-2. Create \`docker-compose.yml\`:
-
-\`\`\`yaml
-version: '3.8'
-services:
-  bot:
-    build: .
-    restart: unless-stopped
-    environment:
-      - BOT_TOKEN=${botToken}
-      - OPENAI_API_KEY=\${OPENAI_API_KEY}
-    volumes:
-      - ./memory:/app/memory
-\`\`\`
-
-3. Run:
-\`\`\`bash
-docker-compose up -d
-\`\`\`
-
-### Option C: Using PM2 (Node.js process manager)
+## Install OpenClaw
 
 \`\`\`bash
-# Install PM2
-npm install -g pm2
-
-# Start bot
-pm2 start agent.py --interpreter python3 --name ${botNameLower}
-
-# Auto-restart on reboot
-pm2 startup
-pm2 save
+git clone https://github.com/wzfukui/openclaw.git
+cd openclaw
+git checkout main
+pnpm install
 \`\`\`
 
-## 💾 5. Memory & Context
+## Enable ANI Plugin
 
-The agent automatically maintains:
-- **Conversation History**: Last N messages per conversation
-- **Persistent Memory**: Survives restarts (stored in \`./memory\`)
-- **User Context**: Remembers user preferences and facts
-
-Access memory in your bot:
-\`\`\`python
-# Remember something
-self.remember("user_123_name", "Alice")
-
-# Recall later
-name = self.recall("user_123_name", default="friend")
-\`\`\`
-
-## 🎯 6. Advanced Features
-
-### Streaming Responses
-\`\`\`python
-async with ctx.stream(phase="thinking") as s:
-    await s.update("Processing...", progress=0.5)
-    # Do work...
-    s.result = "Final answer"
-\`\`\`
-
-### Task Management
-\`\`\`python
-from agent_im_python import TaskCreate
-
-task = await bot.api.create_task(
-    conversation_id=msg.conversation_id,
-    TaskCreate(
-        title="User request: " + msg.layers.summary,
-        priority="medium"
-    )
-)
-\`\`\`
-
-### Interactive Messages
-\`\`\`python
-from agent_im_python import Interaction, InteractionOption
-
-await ctx.reply(
-    summary="Choose an option:",
-    interaction=Interaction(
-        type="choice",
-        options=[
-            InteractionOption(label="Yes", value="yes"),
-            InteractionOption(label="No", value="no")
-        ]
-    )
-)
-\`\`\`
-
-## 🎨 7. Message Formatting
-
-### Rich Messages with Layers
-\`\`\`python
-from agent_im_python import MessageLayers, StatusLayer
-
-await ctx.reply(
-    summary="Here's your answer",           # Main message
-    thinking="I analyzed the context...",   # Bot's reasoning (collapsible)
-    status=StatusLayer(                     # Status indicator
-        text="Analysis complete",
-        icon="✅",
-        progress=1.0
-    ),
-    data={"result": analysis_data}          # Structured data
-)
-\`\`\`
-
-### When NOT to Reply
-\`\`\`python
-from agent_im_python import NO_REPLY
-
-async def process_message(self, msg, context):
-    # Don't reply to simple acknowledgments
-    if msg.layers.summary.lower() in ["ok", "thanks", "got it"]:
-        return NO_REPLY
-
-    # Don't reply if not relevant to bot's expertise
-    if not self.is_relevant(msg):
-        return NO_REPLY
-
-    # Otherwise, generate response
-    return your_response
-\`\`\`
-
-## 🧪 8. Testing Your Bot
-
-1. Start your bot:
 \`\`\`bash
-python agent.py
+openclaw config set plugins.allow '["ani"]' --strict-json
+openclaw config set plugins.entries.ani.enabled true
 \`\`\`
 
-2. Go to the web UI: ${webUrl}
-3. Find your bot in the list
-4. Click "Start Conversation"
-5. Send a test message
+## Configure ANI
 
-## 📊 9. Monitoring & Logs
-
-### Enable Debug Mode
-\`\`\`python
-# Option 1: At construction
-bot = Bot(token="${botToken}", base_url="${apiUrl}", debug=True)
-
-# Option 2: At runtime
-from agent_im_python import enable_debug
-enable_debug()
-\`\`\`
-
-Debug mode shows: API trace IDs (X-Request-ID), request timing, WebSocket traffic, memory cache hits/misses, and context operations — useful for end-to-end troubleshooting.
-
-### View logs
 \`\`\`bash
-# If using systemd
-journalctl -u ${botNameLower} -f
-
-# If using Docker
-docker logs -f ${botNameLower}
-
-# If using PM2
-pm2 logs ${botNameLower}
+openclaw config set channels.ani.serverUrl "${serverUrl}"
+openclaw config set channels.ani.apiKey "${botToken}"
 \`\`\`
 
-## 📚 Resources
+## Minimum Tool Access
 
-- **SDK Documentation**: [GitHub](https://github.com/wzfukui/agent-native-im-sdk-python)
-- **API Reference**: [Full API Docs](https://github.com/wzfukui/agent-native-im-sdk-python/blob/main/api-reference.md)
-- **Examples**: [Example Bots](https://github.com/wzfukui/agent-native-im-sdk-python/tree/main/examples)
-- **Platform Admin**: Contact via platform
+\`\`\`bash
+openclaw config set tools.profile messaging
+openclaw config set tools.alsoAllow '["ani_send_file","ani_fetch_chat_history_messages","ani_list_conversation_tasks","ani_get_task","ani_create_task","ani_update_task","ani_delete_task"]' --strict-json
+\`\`\`
 
-## 🆘 Troubleshooting
+Optional web search/fetch:
 
-### Bot not responding?
-- ✅ Check token is correct
-- ✅ Verify API URL is accessible
-- ✅ Check logs for errors
-- ✅ Ensure network connectivity
+\`\`\`bash
+openclaw config set tools.allow '["group:web"]' --strict-json
+\`\`\`
 
-### Memory not persisting?
-- ✅ Ensure \`memory_dir\` has write permissions
-- ✅ Check disk space available
-- ✅ Verify path exists
+## Start The Gateway
 
-### High CPU/Memory usage?
-- ✅ Reduce \`max_history\` in config
-- ✅ Implement rate limiting
-- ✅ Use \`NO_REPLY\` for irrelevant messages
-- ✅ Consider caching LLM responses
+\`\`\`bash
+openclaw gateway run
+\`\`\`
 
-### WebSocket disconnections?
-- ✅ Check firewall settings
-- ✅ Verify stable network
-- ✅ Consider using polling mode
-- ✅ Check for rate limiting
+## Verify
 
----
+\`\`\`bash
+curl ${apiUrl}/me -H "Authorization: Bearer ${botToken}"
+\`\`\`
 
-## 🎉 Next Steps
+## Useful Links
 
-1. **Customize your bot's personality** in the skill file
-2. **Add specific capabilities** based on your needs
-3. **Set up monitoring** for production
-4. **Join the community** for support and updates
-
-Happy coding! Your bot is ready to serve users on the Agent-Native IM platform. 🚀`
-}
-
-/**
- * Generate a minimal quickstart for copy-paste
- */
-export function generateMinimalQuickstart(token: string, apiUrl: string): string {
-  return `from agent_im_python import Bot
-
-# Add debug=True for verbose trace logs
-bot = Bot(token="${token}", base_url="${apiUrl}")
-
-@bot.on_message
-async def handle(ctx, msg):
-    await ctx.reply(summary=f"Echo: {msg.layers.summary}")
-
-bot.run()`
-}
-
-/**
- * Generate skill file content
- */
-export function generateSkillFile(botName: string): string {
-  const botNameLower = botName.toLowerCase().replace(/\s+/g, '-')
-
-  return JSON.stringify({
-    name: botName,
-    version: "1.0.0",
-    description: `${botName} - AI Assistant`,
-    author: "Agent-Native IM",
-
-    system_prompt: `You are ${botName}, a helpful AI assistant on the Agent-Native IM platform. Be concise, accurate, and friendly.`,
-
-    config: {
-      always_reply: false,
-      reply_in_groups: true,
-      require_mention: false,
-      max_history: 30,
-      temperature: 0.7,
-      model_name: "gpt-4"
-    },
-
-    triggers: {
-      keywords: ["help", "assist", "question", "how to", "what is", "explain"],
-      patterns: [`@${botNameLower}`, "!ai", "/ask"],
-      commands: ["/help", "/search", "/summarize", "/translate"]
-    },
-
-    capabilities: [
-      "answer_questions",
-      "provide_code_examples",
-      "explain_concepts",
-      "summarize_text",
-      "translate_languages",
-      "generate_ideas"
-    ],
-
-    memory_schema: {
-      user_preferences: {},
-      conversation_topics: [],
-      learned_facts: {},
-      task_history: [],
-      interaction_count: 0
-    },
-
-    response_templates: {
-      greeting: `Hello! I'm ${botName}, how can I help you today?`,
-      error: "I apologize, but I encountered an error processing your request.",
-      clarification: "Could you please provide more details about",
-      completion: "I've completed the task. Is there anything else you need?"
-    }
-  }, null, 2)
+- ANI Web: ${webUrl}
+- ANI Onboarding Guide: ${serverUrl}/api/v1/onboarding-guide
+- ANI Skill Template: ${serverUrl}/api/v1/skill-template?format=text
+- OpenClaw ANI Plugin README: https://github.com/wzfukui/openclaw/tree/main/extensions/ani
+`
 }
