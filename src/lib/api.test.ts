@@ -120,4 +120,19 @@ describe('api auth refresh', () => {
     expect(secondRes.ok).toBe(true)
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
+
+  it('uses cookie-backed auth without a synthetic Authorization header', async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true, data: [] }))
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const res = await api.listEntities('__cookie_session__')
+    expect(res.ok).toBe(true)
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+
+    const requestInit = fetchMock.mock.calls[0][1] as RequestInit
+    expect(requestInit.credentials).toBe('include')
+    expect(requestInit.headers).toEqual({ 'Content-Type': 'application/json' })
+  })
 })

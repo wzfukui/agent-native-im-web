@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Brain, ChevronRight, ListTodo, MessagesSquare, TerminalSquare } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
@@ -28,6 +28,7 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
   const [recentMemories, setRecentMemories] = useState<ConversationMemory[]>([])
   const [tasks, setTasks] = useState<Task[]>([])
   const [isCachedSnapshot, setIsCachedSnapshot] = useState(false)
+  const lastFetchKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     setResolvedPrompt(prompt)
@@ -47,6 +48,10 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
   }, [conversationId, prompt])
 
   useEffect(() => {
+    const fetchKey = `${token}:${conversationId}`
+    if (lastFetchKeyRef.current === fetchKey) return
+    lastFetchKeyRef.current = fetchKey
+
     let cancelled = false
     void Promise.allSettled([
       api.listMemories(token, conversationId),
@@ -88,7 +93,7 @@ export function ConversationContextCard({ conversationId, prompt = '', messageCo
       }
     }).catch(() => {})
     return () => { cancelled = true }
-  }, [token, conversationId, prompt])
+  }, [token, conversationId])
 
   const promptPreview = useMemo(() => truncate(resolvedPrompt), [resolvedPrompt])
   const hasContext = !!promptPreview || memoryCount > 0

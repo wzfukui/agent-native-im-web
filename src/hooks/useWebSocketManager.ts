@@ -8,6 +8,7 @@ import { AnimpWebSocket } from '@/lib/ws-client'
 import * as api from '@/lib/api'
 import type { WSMessage, Message, Task } from '@/lib/types'
 import { getGatewayWebSocketUrl } from '@/lib/gateway'
+import { isSyntheticSessionToken } from '@/lib/session-token'
 
 interface TypingEntry {
   name: string
@@ -74,7 +75,7 @@ export function useWebSocketManager() {
 
     const wsUrl = getGatewayWebSocketUrl()
 
-    const ws = new AnimpWebSocket(wsUrl, token)
+    const ws = new AnimpWebSocket(wsUrl, isSyntheticSessionToken(token) ? '' : token)
     wsRef.current = ws
     queueMicrotask(() => setWsClient(ws))
 

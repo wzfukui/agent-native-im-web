@@ -9,6 +9,7 @@ import { BotsPage } from '@/pages/BotsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import * as api from '@/lib/api'
 import { getCachedUser } from '@/lib/cache'
+import { getCookieSessionToken, getOfflineCachedToken } from '@/lib/session-token'
 
 /** Redirect old #c=xxx hash URLs to /chat/xxx */
 function HashRedirect() {
@@ -48,14 +49,13 @@ function SessionRestore() {
         // Cookie is valid — restore session. We use a placeholder token since
         // the cookie handles auth; sessionStorage token is a convenience for
         // the current tab only.
-        const placeholder = '__cookie_session__'
-        setAuth(placeholder, res.data)
+        setAuth(getCookieSessionToken(), res.data)
       }
     }).catch(async () => {
       if (typeof navigator !== 'undefined' && !navigator.onLine) {
         const cachedUser = await getCachedUser()
         if (cachedUser) {
-          setAuth('__offline_cached__', cachedUser)
+          setAuth(getOfflineCachedToken(), cachedUser)
           return
         }
       }

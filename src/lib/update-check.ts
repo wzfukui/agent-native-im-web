@@ -23,5 +23,5 @@ export function isBuildStale(current: BuildInfo, latest: BuildInfo | null): bool
   if (!latest) return false
   if (latest.commit && latest.commit !== current.commit) return true
   if (latest.version !== current.version) return true
-  return latest.buildTime !== current.buildTime
+  return false
 }

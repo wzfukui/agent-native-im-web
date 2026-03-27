@@ -9,6 +9,13 @@ describe('update-check', () => {
     )).toBe(true)
   })
 
+  it('does not flag rebuilds with the same version and commit as stale', () => {
+    expect(isBuildStale(
+      { version: '1.0.0', commit: 'abc', buildTime: '2026-03-21T00:00:00Z' },
+      { version: '1.0.0', commit: 'abc', buildTime: '2026-03-22T00:00:00Z' },
+    )).toBe(false)
+  })
+
   it('coalesces missing or invalid build info to null', async () => {
     const fetchImpl = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
     const latest = await fetchLatestBuildInfo(fetchImpl as unknown as typeof fetch)

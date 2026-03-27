@@ -97,4 +97,34 @@ describe('ConversationContextCard', () => {
 
     expect(cacheConversationContext).toHaveBeenCalledTimes(1)
   })
+
+  it('does not refetch when only the prompt prop changes', async () => {
+    const { rerender } = render(
+      <ConversationContextCard
+        conversationId={123}
+        prompt="first"
+        messageCount={4}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(listMemories).toHaveBeenCalledTimes(1)
+      expect(listTasks).toHaveBeenCalledTimes(1)
+    })
+
+    rerender(
+      <ConversationContextCard
+        conversationId={123}
+        prompt="second"
+        messageCount={4}
+      />,
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('second')).toBeInTheDocument()
+    })
+
+    expect(listMemories).toHaveBeenCalledTimes(1)
+    expect(listTasks).toHaveBeenCalledTimes(1)
+  })
 })

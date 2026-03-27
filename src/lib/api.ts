@@ -5,6 +5,7 @@ import type {
 } from './types'
 import { getSessionHooks } from './auth-session'
 import { reportApiError } from './errors'
+import { isSyntheticSessionToken } from './session-token'
 
 let baseUrl = ''
 let refreshInFlight: Promise<string | null> | null = null
@@ -15,6 +16,9 @@ export function setBaseUrl(url: string) {
 }
 
 function authHeaders(token: string): Record<string, string> {
+  if (isSyntheticSessionToken(token)) {
+    return { 'Content-Type': 'application/json' }
+  }
   return { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' }
 }
 
@@ -37,8 +41,7 @@ async function fetchWithAuthRetry<T>(
   body?: unknown,
   retry = true,
 ): Promise<APIResponse<T>> {
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
-  headers.Authorization = `Bearer ${token}`
+  const headers = authHeaders(token)
 
   const res = await fetch(`${baseUrl}${path}`, {
     method,
@@ -278,7 +281,7 @@ export async function uploadFile(token: string, file: File): Promise<APIResponse
   const doUpload = async (accessToken: string) => {
     return fetch(`${baseUrl}/api/v1/files/upload`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: isSyntheticSessionToken(accessToken) ? undefined : { Authorization: `Bearer ${accessToken}` },
       credentials: 'include',
       body: form,
     })
