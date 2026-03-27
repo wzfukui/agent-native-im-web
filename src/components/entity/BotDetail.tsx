@@ -26,7 +26,7 @@ interface Props {
   createdCredentials?: { entity: Entity; key: string; doc: string } | null
   onDismissCredentials?: () => void
   onBack: () => void
-  onOpenConversation: (convId: number) => void
+  onOpenConversation: (conv: Conversation) => void
   onDisable: (id: number) => void
   onReactivate: (id: number) => void
   onHardDelete: (id: number) => void
@@ -962,7 +962,7 @@ ${createdCredentials.doc}`
               {tabConvs.map((conv) => (
                 <button
                   key={conv.id}
-                  onClick={() => onOpenConversation(conv.id)}
+                  onClick={() => onOpenConversation(conv)}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--color-bg-hover)] transition-colors text-left group cursor-pointer"
                 >
                   <div className={cn(

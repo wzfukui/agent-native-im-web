@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import type { AppOutletContext } from '@/layouts/AppLayout'
 
 export function BotsPage() {
-  const { botId } = useParams()
+  const { botId, botIdentifier } = useParams()
   const navigate = useNavigate()
   const { convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
   const {
@@ -27,6 +27,19 @@ export function BotsPage() {
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
 
+  const botRouteFor = useCallback((bot: { id: number; bot_id?: string; public_id?: string } | null | undefined) => {
+    if (!bot) return '/bots'
+    const identifier = bot.bot_id || bot.public_id
+    return identifier ? `/bots/public/${encodeURIComponent(identifier)}` : `/bots/${bot.id}`
+  }, [])
+
+  const conversationRouteFor = useCallback((conversation: { id: number; public_id?: string; metadata?: Record<string, unknown> } | null | undefined) => {
+    if (!conversation) return '/chat'
+    const meta = conversation.metadata as Record<string, unknown> | undefined
+    const publicId = conversation.public_id || (typeof meta?.public_id === 'string' ? meta.public_id : '')
+    return publicId ? `/chat/public/${encodeURIComponent(publicId)}` : `/chat/${conversation.id}`
+  }, [])
+
   // Load bot entities when entering bots view
   useEffect(() => {
     loadBotEntities()
@@ -34,28 +47,31 @@ export function BotsPage() {
 
   // Also reload when navigating to a specific bot
   useEffect(() => {
-    if (selectedBotId) loadBotEntities()
-  }, [selectedBotId, loadBotEntities])
+    if (selectedBotId || botIdentifier) loadBotEntities()
+  }, [selectedBotId, botIdentifier, loadBotEntities])
 
-  const selectedBot = botEntities.find((e) => e.id === selectedBotId) || null
+  const selectedBot = botIdentifier
+    ? (botEntities.find((e) => e.bot_id === botIdentifier || e.public_id === botIdentifier) || null)
+    : (botEntities.find((e) => e.id === selectedBotId) || null)
 
   const handleSelectBot = useCallback((id: number | null) => {
     if (id !== null) {
-      navigate(`/bots/${id}`)
+      const bot = botEntities.find((item) => item.id === id)
+      navigate(botRouteFor(bot || { id }))
       loadBotEntities()
     } else {
       navigate('/bots')
     }
-  }, [navigate, loadBotEntities])
+  }, [botEntities, botRouteFor, navigate, loadBotEntities])
 
   const handleStartChatFromBot = useCallback((entityId: number) => {
     setNewChatEntityId(entityId)
     setShowNewChat(true)
   }, [])
 
-  const handleOpenConversation = useCallback((convId: number) => {
-    navigate(`/chat/${convId}`)
-  }, [navigate])
+  const handleOpenConversation = useCallback((conv: { id: number; public_id?: string; metadata?: Record<string, unknown> }) => {
+    navigate(conversationRouteFor(conv))
+  }, [conversationRouteFor, navigate])
 
   const handleBotDetailBack = useCallback(() => {
     navigate('/bots')
@@ -73,8 +89,8 @@ export function BotsPage() {
         'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
         isMobile ? 'w-full h-full' : 'w-72',
         isMobile
-          ? (selectedBotId ? 'hidden' : 'flex flex-col')
-          : (selectedBotId ? 'hidden md:flex md:flex-col' : 'flex flex-col'),
+          ? (selectedBot ? 'hidden' : 'flex flex-col')
+          : (selectedBot ? 'hidden md:flex md:flex-col' : 'flex flex-col'),
       )}>
         <BotList
           selectedId={selectedBotId}
@@ -82,7 +98,7 @@ export function BotsPage() {
           onStartChat={handleStartChatFromBot}
           onCreated={(result) => {
             setCreatedCredentials(result)
-            navigate(`/bots/${result.entity.id}`)
+            navigate(botRouteFor(result.entity))
             loadBotEntities()
           }}
           refreshTrigger={botListRefresh}
@@ -92,7 +108,7 @@ export function BotsPage() {
       {/* Right panel: BotDetail */}
       <div className={cn(
         'flex-1 min-w-0 flex',
-        isMobile && selectedBotId && 'mobile-chat-panel',
+        isMobile && selectedBot && 'mobile-chat-panel',
       )}>
         {(selectedBot || !isMobile) ? (
           <div className="flex-1 min-w-0" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>

@@ -114,6 +114,7 @@ export default function App() {
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/bots" element={<BotsPage />} />
           <Route path="/bots/:botId" element={<BotsPage />} />
+          <Route path="/bots/public/:botIdentifier" element={<BotsPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />
           <Route path="/admin" element={<Navigate to="/chat" replace />} />
