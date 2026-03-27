@@ -24,6 +24,16 @@ const EXTENDED_EMOJIS = [
   '\uD83C\uDF39', '\uD83C\uDF3B', '\uD83C\uDF3A', '\uD83C\uDF38', '\uD83C\uDF40', '\uD83C\uDF1E', '\uD83C\uDF19', '\uD83C\uDF08',
 ]
 
+export function normalizeCopiedMessageText(text: string): string {
+  return text
+    .replace(/\r\n/g, '\n')
+    .split('\n')
+    .map((line) => line.replace(/[ \t]+$/g, ''))
+    .join('\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export function MessageActionMenu({ message, isSelf, anchorRect, onClose, onReply, onReact, onRevoke, onCopyText }: Props) {
   const { t } = useTranslation()
   const menuRef = useRef<HTMLDivElement>(null)
@@ -37,7 +47,8 @@ export function MessageActionMenu({ message, isSelf, anchorRect, onClose, onRepl
   )
   const canReply = !isRevoked && onReply
   const canReact = !isRevoked && onReact
-  const textContent = message.layers?.data?.body as string || message.layers?.summary || ''
+  const rawTextContent = message.layers?.data?.body as string || message.layers?.summary || ''
+  const textContent = normalizeCopiedMessageText(rawTextContent)
 
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true))
