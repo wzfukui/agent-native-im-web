@@ -137,6 +137,8 @@
     "changeRequested": "{{actor}} requested a conversation change",
     "changeApproved": "{{actor}} approved your conversation change",
     "changeRejected": "{{actor}} rejected your conversation change",
+    "taskHandover": "{{actor}} handed over work to you",
+    "publicBotSessionCreated": "A visitor started a public bot session",
     "friendsNowVisible": "You can now find each other in Friends",
     "openConversation": "Open conversation"
   },

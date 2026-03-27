@@ -49,6 +49,10 @@ function notificationLabel(t: (key: string, options?: Record<string, unknown>) =
       return t('inbox.changeApproved', { actor })
     case 'conversation.change_rejected':
       return t('inbox.changeRejected', { actor })
+    case 'task.handover':
+      return t('inbox.taskHandover', { actor })
+    case 'public.bot_session_created':
+      return t('inbox.publicBotSessionCreated')
     default:
       return notification.title || t('inbox.generic')
   }

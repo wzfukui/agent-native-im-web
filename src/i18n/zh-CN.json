@@ -137,6 +137,8 @@
     "changeRequested": "{{actor}} 提交了会话变更请求",
     "changeApproved": "{{actor}} 已通过你的会话变更请求",
     "changeRejected": "{{actor}} 已拒绝你的会话变更请求",
+    "taskHandover": "{{actor}} 向你移交了工作",
+    "publicBotSessionCreated": "有访客发起了公开 Bot 会话",
     "friendsNowVisible": "双方现在都会出现在好友列表中",
     "openConversation": "打开会话"
   },
