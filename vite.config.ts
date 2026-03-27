@@ -112,12 +112,16 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://192.168.44.43:9800',
+        target: process.env.ANI_DEV_PROXY_TARGET ?? 'https://agent-native.im',
         changeOrigin: true,
         ws: true,
       },
       '/files': {
-        target: 'http://192.168.44.43:9800',
+        target: process.env.ANI_DEV_PROXY_TARGET ?? 'https://agent-native.im',
+        changeOrigin: true,
+      },
+      '/avatar-files': {
+        target: process.env.ANI_DEV_PROXY_TARGET ?? 'https://agent-native.im',
         changeOrigin: true,
       },
     },

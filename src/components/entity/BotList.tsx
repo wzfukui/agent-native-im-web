@@ -108,6 +108,7 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
       <button
         key={entity.id}
         onClick={() => onSelect(entity.id)}
+        data-testid={`bot-list-item-${entity.id}`}
         className={cn(
           'w-full flex items-start gap-3 p-3 rounded-xl border transition-all text-left cursor-pointer',
           isActive

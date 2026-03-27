@@ -9,6 +9,7 @@ import { AvatarPicker } from './AvatarPicker'
 import { entityDisplayName, cn } from '@/lib/utils'
 import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
 import { getGatewayUrl, getGatewayWebSocketUrl } from '@/lib/gateway'
+import { buildBotAccessText, buildBotAccessUrl } from '@/lib/bot-access'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
@@ -151,7 +152,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     if (res.ok && res.data?.api_key) {
       setRotatedToken(res.data.api_key)
       handleCopy(res.data.api_key, 'rotated-token')
-      setOpInfo(t('bot.regenerateResult', { count: res.data.disconnected ?? 0 }))
+      setOpInfo(`${t('bot.regenerateResult', { count: res.data.disconnected ?? 0 })} ${t('bot.regenerateReconnectHint')}`)
       onRefresh?.()
     } else {
       const detail = typeof res.error === 'string'
@@ -190,19 +191,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const accessToken = rotatedToken || (showFullCreds ? createdCredentials?.key : null)
   const gatewayUrl = getGatewayUrl()
   const wsUrl = getGatewayWebSocketUrl()
-  const accessText = accessToken ? [
-    `AGENT_IM_BASE=${gatewayUrl}/api/v1`,
-    `AGENT_IM_TOKEN=${accessToken}`,
-    `AGENT_IM_WS=${wsUrl}`,
-    '',
-    '# Quick check',
-    `curl ${gatewayUrl}/api/v1/me -H "Authorization: Bearer ${accessToken}"`,
-    '',
-    '# WebSocket clients should send Authorization: Bearer <token> during the handshake',
-  ].join('\n') : ''
-  const accessUrl = accessToken
-    ? `aim-bot://connect?base=${encodeURIComponent(`${gatewayUrl}/api/v1`)}&token=${encodeURIComponent(accessToken)}&entity_id=${bot.id}`
-    : ''
+  const accessText = accessToken ? buildBotAccessText({ gatewayUrl, wsUrl, accessToken }) : ''
+  const accessUrl = accessToken ? buildBotAccessUrl({ gatewayUrl, accessToken, entityId: bot.id }) : ''
   const diagnosticsSnapshot = [
     `entity=${bot.id} (${bot.name})`,
     `status=${bot.status}`,
@@ -422,6 +412,7 @@ ${createdCredentials.doc}`
               <button
                 onClick={() => setConfirmRegenerate(true)}
                 disabled={rotatingToken || isDisabled}
+                data-testid="regenerate-token-button"
                 className="py-1.5 px-3 rounded-lg text-xs text-[var(--color-accent)] hover:bg-[var(--color-accent)]/10 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1.5"
               >
                 {rotatingToken ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Key className="w-3 h-3" />}
@@ -441,10 +432,23 @@ ${createdCredentials.doc}`
                 <span className="ml-auto text-xs text-[var(--color-warning)]">{t('bot.regenerateToGetToken')}</span>
               )}
             </div>
+            <p className="mb-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
+              {rotatedToken ? t('bot.rotatedTokenCopied') : t('bot.openclawTokenHint')}
+            </p>
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => accessToken && handleCopy(accessToken, 'rotated-token')}
+                disabled={!accessToken}
+                data-testid="copy-bot-token-button"
+                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+              >
+                {copyBtn('rotated-token')}
+                {copied === 'rotated-token' ? t('common.copied') : t('bot.copyBotToken')}
+              </button>
               <button
                 onClick={() => handleCopy(accessText, 'bot-access-text')}
                 disabled={!accessToken}
+                data-testid="copy-bot-access-button"
                 className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
                 {copyBtn('bot-access-text')}
@@ -453,6 +457,7 @@ ${createdCredentials.doc}`
               <button
                 onClick={() => handleCopy(accessUrl, 'bot-access-url')}
                 disabled={!accessToken}
+                data-testid="copy-bot-url-button"
                 className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
                 <Link className="w-3 h-3 text-[var(--color-text-muted)]" />
@@ -461,6 +466,7 @@ ${createdCredentials.doc}`
               <button
                 onClick={downloadQuickstart}
                 disabled={!accessToken}
+                data-testid="download-quickstart-button"
                 className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
               >
                 <Download className="w-3 h-3 text-[var(--color-text-muted)]" />
