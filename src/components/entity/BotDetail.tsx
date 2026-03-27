@@ -48,6 +48,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [diagnostics, setDiagnostics] = useState<{ online: boolean; connections: number; disconnect_count: number; forced_disconnect_count?: number; last_seen?: string; hub: { total_ws_connections: number } } | null>(null)
   const [lastSeen, setLastSeen] = useState<string | null>(null)
   const [copied, setCopied] = useState<string | false>(false)
+  const [accessPackExpanded, setAccessPackExpanded] = useState(false)
   const [docExpanded, setDocExpanded] = useState(false)
   const [convsCollapsed, setConvsCollapsed] = useState(false)
   const [rotatingToken, setRotatingToken] = useState(false)
@@ -67,6 +68,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     if (!switchedBot) return
 
     setActiveTab('direct')
+    setAccessPackExpanded(false)
     setConfirmDisable(false)
     setDocExpanded(false)
     setRotatingToken(false)
@@ -445,53 +447,64 @@ ${createdCredentials.doc}`
             <p className="mb-3 text-xs leading-relaxed text-[var(--color-text-muted)]">
               {rotatedToken ? t('bot.rotatedTokenCopied') : t('bot.openclawTokenHint')}
             </p>
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => accessToken && handleCopy(accessToken, 'rotated-token')}
-                disabled={!accessToken}
-                data-testid="copy-bot-token-button"
-                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
-              >
-                {copyBtn('rotated-token')}
-                {copied === 'rotated-token' ? t('common.copied') : t('bot.copyBotToken')}
-              </button>
+            <div className="flex flex-wrap gap-2 items-center">
               <button
                 onClick={() => handleCopy(accessText, 'bot-access-text')}
                 disabled={!accessToken}
                 data-testid="copy-bot-access-button"
-                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+                className="py-1.5 px-3 rounded-lg text-xs bg-[var(--color-accent)]/10 text-[var(--color-accent)] hover:bg-[var(--color-accent)]/15 transition-colors cursor-pointer flex items-center gap-1.5 border border-[var(--color-accent)]/20 disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {copyBtn('bot-access-text')}
                 {copied === 'bot-access-text' ? t('common.copied') : t('bot.copyBotAccess')}
               </button>
               <button
-                onClick={() => handleCopy(accessUrl, 'bot-access-url')}
-                disabled={!accessToken}
-                data-testid="copy-bot-url-button"
-                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+                onClick={() => setAccessPackExpanded((v) => !v)}
+                className={cn(secondaryBtn, 'border border-[var(--color-border)]')}
               >
-                <Link className="w-3 h-3 text-[var(--color-text-muted)]" />
-                {copied === 'bot-access-url' ? t('common.copied') : t('bot.copyBotUrl')}
+                {accessPackExpanded ? <ChevronUp className="w-3 h-3 text-[var(--color-text-muted)]" /> : <ChevronDown className="w-3 h-3 text-[var(--color-text-muted)]" />}
+                {accessPackExpanded ? t('bot.hideAdvancedAccess') : t('bot.showAdvancedAccess')}
               </button>
-              <button
-                onClick={downloadQuickstart}
-                disabled={!accessToken}
-                data-testid="download-quickstart-button"
-                className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
-              >
-                <Download className="w-3 h-3 text-[var(--color-text-muted)]" />
-                {t('bot.downloadQuickstart')}
-              </button>
-              <a
-                href={`${gatewayUrl}/api/v1/onboarding-guide`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(secondaryBtn, 'border border-[var(--color-border)] no-underline')}
-              >
-                <ExternalLink className="w-3 h-3 text-[var(--color-text-muted)]" />
-                {t('bot.onboardingGuide')}
-              </a>
             </div>
+            {accessPackExpanded && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  onClick={() => accessToken && handleCopy(accessToken, 'rotated-token')}
+                  disabled={!accessToken}
+                  data-testid="copy-bot-token-button"
+                  className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+                >
+                  {copyBtn('rotated-token')}
+                  {copied === 'rotated-token' ? t('common.copied') : t('bot.copyBotToken')}
+                </button>
+                <button
+                  onClick={() => handleCopy(accessUrl, 'bot-access-url')}
+                  disabled={!accessToken}
+                  data-testid="copy-bot-url-button"
+                  className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+                >
+                  <Link className="w-3 h-3 text-[var(--color-text-muted)]" />
+                  {copied === 'bot-access-url' ? t('common.copied') : t('bot.copyBotUrl')}
+                </button>
+                <button
+                  onClick={downloadQuickstart}
+                  disabled={!accessToken}
+                  data-testid="download-quickstart-button"
+                  className={cn(secondaryBtn, 'border border-[var(--color-border)] disabled:opacity-40 disabled:cursor-not-allowed')}
+                >
+                  <Download className="w-3 h-3 text-[var(--color-text-muted)]" />
+                  {t('bot.downloadQuickstart')}
+                </button>
+                <a
+                  href={`${gatewayUrl}/api/v1/onboarding-guide`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={cn(secondaryBtn, 'border border-[var(--color-border)] no-underline')}
+                >
+                  <ExternalLink className="w-3 h-3 text-[var(--color-text-muted)]" />
+                  {t('bot.onboardingGuide')}
+                </a>
+              </div>
+            )}
           </div>
         )}
 
