@@ -7,6 +7,7 @@ import { NewConversationSheet } from '@/components/conversation/NewConversationS
 import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { cn } from '@/lib/utils'
 import type { AppOutletContext } from '@/layouts/AppLayout'
+import { useConversationsStore } from '@/store/conversations'
 
 export function BotsPage() {
   const { botId, botIdentifier } = useParams()
@@ -26,6 +27,7 @@ export function BotsPage() {
   const selectedBotId = botId ? Number(botId) : null
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
+  const getConversations = useConversationsStore((s) => s.conversations)
 
   const botRouteFor = useCallback((bot: { id: number; bot_id?: string; public_id?: string } | null | undefined) => {
     if (!bot) return '/bots'
@@ -138,7 +140,10 @@ export function BotsPage() {
           onClose={() => setShowNewChat(false)}
           onCreated={(convId) => {
             setShowNewChat(false)
-            convManager.loadConversations().then(() => navigate(`/chat/${convId}`))
+            convManager.loadConversations().then(() => {
+              const conversation = useConversationsStore.getState().conversations.find((item) => item.id === convId) || getConversations.find((item) => item.id === convId)
+              navigate(conversationRouteFor(conversation || { id: convId }))
+            })
           }}
         />
       ) : (
@@ -148,7 +153,10 @@ export function BotsPage() {
             onClose={() => setShowNewChat(false)}
             onCreated={(convId) => {
               setShowNewChat(false)
-              convManager.loadConversations().then(() => navigate(`/chat/${convId}`))
+              convManager.loadConversations().then(() => {
+                const conversation = useConversationsStore.getState().conversations.find((item) => item.id === convId) || getConversations.find((item) => item.id === convId)
+                navigate(conversationRouteFor(conversation || { id: convId }))
+              })
             }}
           />
         )

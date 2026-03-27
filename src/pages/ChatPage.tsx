@@ -33,6 +33,12 @@ function conversationRouteFor(conversation: { id: number; public_id?: string; me
   return conversation ? `/chat/${conversation.id}` : '/chat'
 }
 
+function botRouteFor(entity: { id: number; bot_id?: string; public_id?: string } | null | undefined): string {
+  if (!entity) return '/bots'
+  const identifier = entity.bot_id || entity.public_id
+  return identifier ? `/bots/public/${encodeURIComponent(identifier)}` : `/bots/${entity.id}`
+}
+
 export function ChatPage() {
   const { t } = useTranslation()
   const { conversationId, conversationPublicId } = useParams()
@@ -110,7 +116,7 @@ export function ChatPage() {
 
   const handleEntityViewDetails = useCallback((target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
-      navigate(`/bots/${target.id}`)
+      navigate(botRouteFor(target))
       loadBotEntities()
     }
   }, [navigate, loadBotEntities])
@@ -127,7 +133,7 @@ export function ChatPage() {
         'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
         isMobile ? 'w-full h-full' : 'w-72',
         isMobile
-          ? (conversationId ? 'hidden' : 'flex flex-col')
+          ? ((conversationId || conversationPublicId) ? 'hidden' : 'flex flex-col')
           : (activeId ? 'hidden md:flex md:flex-col' : 'flex flex-col'),
       )}>
         <ConversationList
