@@ -16,10 +16,7 @@ Use OpenClaw channel mode. Do not start by building a custom Python echo bot.
 ## Install OpenClaw
 
 ```bash
-git clone https://github.com/wzfukui/openclaw.git
-cd openclaw
-git checkout main
-pnpm install
+openclaw plugin install ani-openclaw-plugin
 ```
 
 ## Enable ANI Plugin
@@ -53,6 +50,15 @@ openclaw config set tools.allow '["group:web"]' --strict-json
 
 ```bash
 openclaw gateway run
+```
+
+## Source Install (fallback)
+
+```bash
+git clone https://github.com/wzfukui/openclaw.git
+cd openclaw
+git checkout main
+pnpm install
 ```
 
 ## Verify
