@@ -33,7 +33,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
-  const [scope, setScope] = useState<'all' | 'direct' | 'groups'>('all')
+  const [scope, setScope] = useState<'direct' | 'groups'>('direct')
   const [archivedOpen, setArchivedOpen] = useState(false)
   const [archived, setArchived] = useState<Conversation[]>([])
 
@@ -74,8 +74,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
 
   const scoped = sorted.filter((c) => {
     if (scope === 'direct') return c.conv_type === 'direct'
-    if (scope === 'groups') return c.conv_type === 'group' || c.conv_type === 'channel'
-    return true
+    return c.conv_type === 'group' || c.conv_type === 'channel'
   })
 
   const filtered = search
@@ -168,8 +167,8 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
             {t('conversation.cachedSnapshot')}
           </div>
         )}
-        <div className="mt-3 grid grid-cols-3 gap-1 rounded-2xl bg-[var(--color-bg-secondary)] p-1">
-          {(['all', 'direct', 'groups'] as const).map((nextScope) => (
+        <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl bg-[var(--color-bg-secondary)] p-1">
+          {(['direct', 'groups'] as const).map((nextScope) => (
             <button
               key={nextScope}
               onClick={() => setScope(nextScope)}
