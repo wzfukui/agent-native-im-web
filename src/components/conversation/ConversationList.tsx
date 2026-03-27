@@ -31,6 +31,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
+  const [scope, setScope] = useState<'all' | 'direct' | 'groups'>('all')
   const [archivedOpen, setArchivedOpen] = useState(false)
   const [archived, setArchived] = useState<Conversation[]>([])
 
@@ -69,15 +70,21 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
     })
   }, [conversations, myEntityId])
 
+  const scoped = sorted.filter((c) => {
+    if (scope === 'direct') return c.conv_type === 'direct'
+    if (scope === 'groups') return c.conv_type === 'group' || c.conv_type === 'channel'
+    return true
+  })
+
   const filtered = search
-    ? sorted.filter((c) =>
+    ? scoped.filter((c) =>
         c.title?.toLowerCase().includes(search.toLowerCase()) ||
         c.participants?.some((p) =>
           p.entity?.display_name?.toLowerCase().includes(search.toLowerCase()) ||
           p.entity?.name?.toLowerCase().includes(search.toLowerCase())
         )
       )
-    : sorted
+    : scoped
 
   // Pull-to-refresh handlers
   const handleTouchStart = useCallback((e: React.TouchEvent) => {
@@ -159,6 +166,17 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
             {t('conversation.cachedSnapshot')}
           </div>
         )}
+        <div className="mt-3 grid grid-cols-3 gap-1 rounded-2xl bg-[var(--color-bg-secondary)] p-1">
+          {(['all', 'direct', 'groups'] as const).map((nextScope) => (
+            <button
+              key={nextScope}
+              onClick={() => setScope(nextScope)}
+              className={`h-8 rounded-xl text-xs font-medium transition-colors cursor-pointer ${scope === nextScope ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] border border-[var(--color-border)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
+            >
+              {t(`conversation.${nextScope}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Pull-to-refresh indicator */}

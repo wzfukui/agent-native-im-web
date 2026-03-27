@@ -1,7 +1,7 @@
 import type {
   APIResponse, LoginResponse, Entity, Conversation,
   MessagesResponse, SearchResponse, GlobalSearchResponse, Message,
-  Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics, FriendRequest,
+  Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics, FriendRequest, BotAccessLink, PublicBotProfile,
 } from './types'
 import { getSessionHooks } from './auth-session'
 import { reportApiError } from './errors'
@@ -263,6 +263,8 @@ export const updateEntity = (token: string, id: number, data: {
   metadata?: Record<string, unknown>
   discoverability?: 'private' | 'platform_public' | 'external_public'
   allow_non_friend_chat?: boolean
+  require_access_password?: boolean
+  access_password?: string
 }) =>
   request<Entity>('PUT', `/api/v1/entities/${id}`, token, data)
 
@@ -293,6 +295,21 @@ export const cancelFriendRequest = (token: string, id: number, entityId?: number
 
 export const deleteFriend = (token: string, targetEntityId: number, entityId?: number) =>
   request('DELETE', `/api/v1/friends/${targetEntityId}${entityId ? `?entity_id=${entityId}` : ''}`, token)
+
+export const listBotAccessLinks = (token: string, botId: number) =>
+  request<BotAccessLink[]>('GET', `/api/v1/bots/${botId}/access-links`, token)
+
+export const createBotAccessLink = (token: string, botId: number, data?: { label?: string; expires_at?: string; max_uses?: number }) =>
+  request<BotAccessLink>('POST', `/api/v1/bots/${botId}/access-links`, token, data ?? {})
+
+export const deleteBotAccessLink = (token: string, id: number) =>
+  request('DELETE', `/api/v1/bot-access-links/${id}`, token)
+
+export const getPublicBot = (identifier: string, accessCode?: string) =>
+  request<{ bot: PublicBotProfile; access_code?: string }>('GET', `/api/v1/public/bots/${encodeURIComponent(identifier)}${accessCode ? `?code=${encodeURIComponent(accessCode)}` : ''}`)
+
+export const createPublicBotSession = (identifier: string, data: { access_code?: string; password?: string; display_name?: string }) =>
+  request<{ token: string; visitor: Entity; conversation: Conversation }>('POST', `/api/v1/public/bots/${encodeURIComponent(identifier)}/session`, undefined, data)
 
 export const getEntityStatus = (token: string, id: number) =>
   request<{ online: boolean; last_seen?: string }>('GET', `/api/v1/entities/${id}/status`, token)

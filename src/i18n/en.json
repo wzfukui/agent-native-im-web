@@ -68,6 +68,7 @@
   },
   "sidebar": {
     "messages": "Messages",
+    "all": "All",
     "agents": "Manage Bots",
     "signOut": "Sign out"
   },
@@ -100,6 +101,16 @@
     "discoveryExternal": "Visible for external access",
     "allowNonFriendChat": "Allow direct chat before friendship",
     "allowNonFriendChatHint": "Useful for support or assistant bots that should accept first contact.",
+    "requireAccessPassword": "Require password for public access",
+    "requireAccessPasswordHint": "Gate external visitors behind a shared password when the bot is externally public.",
+    "accessPassword": "Public access password",
+    "accessPasswordPlaceholder": "Set or rotate password",
+    "publicBotUrl": "Public bot URL",
+    "publicAccessLinks": "Public access links",
+    "publicAccessLinksHint": "Create shareable links for customer-service style entry points.",
+    "createAccessLink": "Create Link",
+    "noAccessLinks": "No public access links yet.",
+    "accessLinkCreated": "Public access link created and copied.",
     "botNoFriends": "This bot does not have any friends yet.",
     "policySaved": "Bot access policy saved."
   },
@@ -136,6 +147,7 @@
     "cachedSnapshot": "Showing a cached workspace snapshot. Reconnect to sync the latest messages and metadata.",
     "cachedShort": "Cached",
     "direct": "Direct",
+    "groups": "Groups",
     "group": "Group",
     "chat": "Chat",
     "create": "Create",

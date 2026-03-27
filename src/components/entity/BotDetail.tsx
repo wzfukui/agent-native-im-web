@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
-import type { Entity, Conversation } from '@/lib/types'
+import type { Entity, Conversation, BotAccessLink } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { AvatarPicker } from './AvatarPicker'
 import { entityDisplayName, cn } from '@/lib/utils'
@@ -59,12 +59,18 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [opError, setOpError] = useState<string | null>(null)
   const [opInfo, setOpInfo] = useState<string | null>(null)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
-  const [policyDraft, setPolicyDraft] = useState<{ discoverability: 'private' | 'platform_public' | 'external_public'; allow_non_friend_chat: boolean }>({
+  const [policyDraft, setPolicyDraft] = useState<{ discoverability: 'private' | 'platform_public' | 'external_public'; allow_non_friend_chat: boolean; require_access_password: boolean; access_password: string }>({
     discoverability: 'private',
     allow_non_friend_chat: false,
+    require_access_password: false,
+    access_password: '',
   })
   const [savingPolicy, setSavingPolicy] = useState(false)
+  const [accessLinks, setAccessLinks] = useState<BotAccessLink[]>([])
+  const [loadingAccessLinks, setLoadingAccessLinks] = useState(false)
+  const [creatingAccessLink, setCreatingAccessLink] = useState(false)
   const previousBotIdRef = useRef<number | null>(null)
+  const isOwner = !!(bot && myEntity && bot.owner_id === myEntity.id)
 
   // Reset one-time UI state only when switching to a different bot.
   useEffect(() => {
@@ -90,6 +96,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setPolicyDraft({
       discoverability: (bot.discoverability as 'private' | 'platform_public' | 'external_public') || 'private',
       allow_non_friend_chat: !!bot.allow_non_friend_chat,
+      require_access_password: !!bot.require_access_password,
+      access_password: '',
     })
   }, [bot?.id])
 
@@ -117,6 +125,19 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   }, [bot, token])
 
   useEffect(() => {
+    if (!bot || !isOwner) return
+    let cancelled = false
+    setLoadingAccessLinks(true)
+    api.listBotAccessLinks(token, bot.id).then((res) => {
+      if (!cancelled && res.ok && res.data) setAccessLinks(res.data)
+      if (!cancelled) setLoadingAccessLinks(false)
+    }).catch(() => {
+      if (!cancelled) setLoadingAccessLinks(false)
+    })
+    return () => { cancelled = true }
+  }, [bot?.id, isOwner, token])
+
+  useEffect(() => {
     if (!bot) return
     let cancelled = false
     setLoadingFriends(true)
@@ -128,8 +149,6 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     })
     return () => { cancelled = true }
   }, [bot, token])
-
-  const isOwner = !!(bot && myEntity && bot.owner_id === myEntity.id)
 
   // Load credential status + entity status (owner-only APIs)
   useEffect(() => {
@@ -204,14 +223,45 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     if (!bot || !isOwner || savingPolicy) return
     setSavingPolicy(true)
     setOpError(null)
-    const res = await api.updateEntity(token, bot.id, policyDraft)
+    const res = await api.updateEntity(token, bot.id, {
+      discoverability: policyDraft.discoverability,
+      allow_non_friend_chat: policyDraft.allow_non_friend_chat,
+      require_access_password: policyDraft.require_access_password,
+      access_password: policyDraft.access_password,
+    })
     if (res.ok && res.data) {
+      setPolicyDraft((draft) => ({ ...draft, access_password: '' }))
       setOpInfo(t('friends.policySaved'))
       onRefresh?.()
     } else {
       setOpError(typeof res.error === 'string' ? res.error : (res.error?.message || t('common.errorUnexpected')))
     }
     setSavingPolicy(false)
+  }
+
+  const handleCreateAccessLink = async () => {
+    if (!bot || !isOwner || creatingAccessLink) return
+    setCreatingAccessLink(true)
+    setOpError(null)
+    const res = await api.createBotAccessLink(token, bot.id, {})
+    if (res.ok && res.data) {
+      setAccessLinks((prev) => [res.data!, ...prev])
+      const shareUrl = `${window.location.origin}/public/bots/${encodeURIComponent(bot.bot_id || bot.public_id || String(bot.id))}?code=${encodeURIComponent(res.data.code)}`
+      handleCopy(shareUrl, 'public-bot-link')
+      setOpInfo(t('friends.accessLinkCreated'))
+    } else {
+      setOpError(typeof res.error === 'string' ? res.error : (res.error?.message || t('common.errorUnexpected')))
+    }
+    setCreatingAccessLink(false)
+  }
+
+  const handleDeleteAccessLink = async (linkId: number) => {
+    const res = await api.deleteBotAccessLink(token, linkId)
+    if (res.ok) {
+      setAccessLinks((prev) => prev.filter((link) => link.id !== linkId))
+    } else {
+      setOpError(typeof res.error === 'string' ? res.error : (res.error?.message || t('common.errorUnexpected')))
+    }
   }
 
   // Empty state — minimal, no gradient icon
@@ -244,6 +294,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const wsUrl = getGatewayWebSocketUrl()
   const accessText = accessToken ? buildBotAccessText({ gatewayUrl, wsUrl, accessToken }) : ''
   const accessUrl = accessToken ? buildBotAccessUrl({ gatewayUrl, accessToken, entityId: bot.id }) : ''
+  const publicBotIdentifier = bot.bot_id || bot.public_id || String(bot.id)
+  const publicBotUrl = `${window.location.origin}/public/bots/${encodeURIComponent(publicBotIdentifier)}`
   const diagnosticsSnapshot = [
     `entity=${bot.id} (${bot.name})`,
     `status=${bot.status}`,
@@ -734,6 +786,47 @@ ${createdCredentials.doc}`
                   className="w-4 h-4 accent-[var(--color-accent)]"
                 />
               </label>
+              <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
+                <span>
+                  <span className="block text-sm font-medium text-[var(--color-text-primary)]">{t('friends.requireAccessPassword')}</span>
+                  <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">{t('friends.requireAccessPasswordHint')}</span>
+                </span>
+                <input
+                  type="checkbox"
+                  disabled={!isOwner || isDisabled || policyDraft.discoverability !== 'external_public'}
+                  checked={policyDraft.require_access_password}
+                  onChange={(e) => setPolicyDraft((draft) => ({ ...draft, require_access_password: e.target.checked }))}
+                  className="w-4 h-4 accent-[var(--color-accent)]"
+                />
+              </label>
+              {policyDraft.discoverability === 'external_public' && policyDraft.require_access_password && (
+                <div>
+                  <label className="block text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)] mb-1.5">
+                    {t('friends.accessPassword')}
+                  </label>
+                  <input
+                    type="password"
+                    disabled={!isOwner || isDisabled}
+                    value={policyDraft.access_password}
+                    onChange={(e) => setPolicyDraft((draft) => ({ ...draft, access_password: e.target.value }))}
+                    placeholder={t('friends.accessPasswordPlaceholder')}
+                    className="w-full h-10 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none"
+                  />
+                </div>
+              )}
+              {policyDraft.discoverability === 'external_public' && (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] px-3 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.publicBotUrl')}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5 truncate">{publicBotUrl}</p>
+                    </div>
+                    <button onClick={() => handleCopy(publicBotUrl, 'public-bot-url')} className="p-2 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                      <Copy className="w-4 h-4 text-[var(--color-text-muted)]" />
+                    </button>
+                  </div>
+                </div>
+              )}
               {isOwner && !isDisabled && (
                 <button
                   onClick={handleSavePolicy}
@@ -743,6 +836,53 @@ ${createdCredentials.doc}`
                   {savingPolicy ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
                   {t('common.save')}
                 </button>
+              )}
+              {isOwner && !isDisabled && policyDraft.discoverability === 'external_public' && (
+                <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3">
+                  <div className="flex items-center justify-between gap-3 mb-3">
+                    <div>
+                      <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.publicAccessLinks')}</p>
+                      <p className="text-xs text-[var(--color-text-muted)] mt-0.5">{t('friends.publicAccessLinksHint')}</p>
+                    </div>
+                    <button
+                      onClick={handleCreateAccessLink}
+                      disabled={creatingAccessLink}
+                      className="h-9 px-3 rounded-xl bg-[var(--color-accent)]/10 text-[var(--color-accent)] text-xs font-medium inline-flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {creatingAccessLink ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Link className="w-3.5 h-3.5" />}
+                      {t('friends.createAccessLink')}
+                    </button>
+                  </div>
+                  {loadingAccessLinks ? (
+                    <div className="flex justify-center py-3"><Loader2 className="w-4 h-4 animate-spin text-[var(--color-text-muted)]" /></div>
+                  ) : accessLinks.length === 0 ? (
+                    <p className="text-xs text-[var(--color-text-muted)]">{t('friends.noAccessLinks')}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {accessLinks.map((link) => {
+                        const shareUrl = `${publicBotUrl}?code=${encodeURIComponent(link.code)}`
+                        return (
+                          <div key={link.id} className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-3 py-2.5">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{link.label || link.code}</p>
+                                <p className="text-xs text-[var(--color-text-muted)] truncate">{shareUrl}</p>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button onClick={() => handleCopy(shareUrl, `access-link-${link.id}`)} className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                                  <Copy className="w-3.5 h-3.5 text-[var(--color-text-muted)]" />
+                                </button>
+                                <button onClick={() => handleDeleteAccessLink(link.id)} className="p-1.5 rounded-lg hover:bg-[var(--color-bg-hover)] cursor-pointer">
+                                  <PowerOff className="w-3.5 h-3.5 text-[var(--color-warning)]" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>

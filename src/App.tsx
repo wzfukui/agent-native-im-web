@@ -8,6 +8,7 @@ import { ChatPage } from '@/pages/ChatPage'
 import { BotsPage } from '@/pages/BotsPage'
 import { FriendsPage } from '@/pages/FriendsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
+import { PublicBotPage } from '@/pages/PublicBotPage'
 import * as api from '@/lib/api'
 import { getCachedUser } from '@/lib/cache'
 import { getCookieSessionToken, getOfflineCachedToken } from '@/lib/session-token'
@@ -94,6 +95,7 @@ export default function App() {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<LoginPage />} />
+        <Route path="/public/bots/:identifier" element={<PublicBotPage />} />
 
         {/* Join invite (requires auth) */}
         <Route path="/join/:code" element={

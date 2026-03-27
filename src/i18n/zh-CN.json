@@ -68,6 +68,7 @@
   },
   "sidebar": {
     "messages": "消息",
+    "all": "全部",
     "agents": "Bot 管理",
     "signOut": "退出登录"
   },
@@ -100,6 +101,16 @@
     "discoveryExternal": "支持外部访问",
     "allowNonFriendChat": "允许非好友先发起对话",
     "allowNonFriendChatHint": "适合客服或助手类 Bot，在加好友前先接受第一条消息。",
+    "requireAccessPassword": "外部访问需要密码",
+    "requireAccessPasswordHint": "当 Bot 对外公开时，可用共享密码限制外部访客访问。",
+    "accessPassword": "公开访问密码",
+    "accessPasswordPlaceholder": "设置或轮换密码",
+    "publicBotUrl": "公开访问地址",
+    "publicAccessLinks": "公开访问链接",
+    "publicAccessLinksHint": "为客服或演示场景创建可分享的入口链接。",
+    "createAccessLink": "创建链接",
+    "noAccessLinks": "还没有公开访问链接。",
+    "accessLinkCreated": "已创建并复制公开访问链接。",
     "botNoFriends": "这个 Bot 还没有好友。",
     "policySaved": "Bot 访问策略已保存。"
   },
@@ -136,6 +147,7 @@
     "cachedSnapshot": "当前显示的是缓存快照。重新联网后会同步最新消息和会话元数据。",
     "cachedShort": "缓存",
     "direct": "私聊",
+    "groups": "群组",
     "group": "群组",
     "chat": "聊天",
     "create": "创建",

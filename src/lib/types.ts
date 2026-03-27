@@ -14,6 +14,7 @@ export interface Entity {
   email?: string
   discoverability?: 'private' | 'platform_public' | 'external_public'
   allow_non_friend_chat?: boolean
+  require_access_password?: boolean
   metadata: Record<string, unknown>
   owner_id?: number
   created_at: string
@@ -31,6 +32,29 @@ export interface FriendRequest {
   updated_at: string
   source_entity?: Entity
   target_entity?: Entity
+}
+
+export interface BotAccessLink {
+  id: number
+  bot_entity_id: number
+  code: string
+  label?: string
+  expires_at?: string
+  max_uses: number
+  used_count: number
+  created_by_entity_id: number
+  created_at: string
+}
+
+export interface PublicBotProfile {
+  id: number
+  public_id?: string
+  bot_id?: string
+  display_name: string
+  name: string
+  avatar_url?: string
+  discoverability?: 'private' | 'platform_public' | 'external_public'
+  require_access_password?: boolean
 }
 
 // ─── Conversation ────────────────────────────────────────────────

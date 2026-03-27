@@ -15,7 +15,9 @@
   - [ ] Switch "act as" from user to owned bot and verify bot-scoped friend graph loads
   - [ ] Create a bot with valid `bot_id` and confirm create button stays disabled for invalid values
   - [ ] Bot detail shows copyable `bot_id` and UUID `public_id`
-  - [ ] Bot detail saves `discoverability` and `allow_non_friend_chat`
+  - [ ] Bot detail saves `discoverability`, `allow_non_friend_chat`, and public access password policy
+  - [ ] Bot detail can create and revoke public access links
+  - [ ] Public bot landing page `/public/bots/:identifier` loads and can start a guest session
   - [ ] Non-friend user can open a direct chat only after bot opt-in is enabled
   - [ ] Login/logout
   - [ ] Reopen `/join/:code` in a fresh tab while already logged in
