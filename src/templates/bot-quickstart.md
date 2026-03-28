@@ -11,12 +11,12 @@ This bot is intended to connect through the ANI OpenClaw channel plugin.
 
 ## Recommended Path
 
-Use OpenClaw channel mode. Do not start by building a custom Python echo bot.
+Use the ANI OpenClaw channel plugin.
 
 ## Install OpenClaw
 
 ```bash
-openclaw plugin install ani-openclaw-plugin
+openclaw plugins install ani-openclaw-plugin
 ```
 
 ## Enable ANI Plugin
@@ -40,26 +40,13 @@ openclaw config set tools.profile messaging
 openclaw config set tools.alsoAllow '["ani_send_file","ani_fetch_chat_history_messages","ani_list_conversation_tasks","ani_get_task","ani_create_task","ani_update_task","ani_delete_task"]' --strict-json
 ```
 
-Optional web search/fetch:
+## Check The Gateway
 
 ```bash
-openclaw config set tools.allow '["group:web"]' --strict-json
+openclaw gateway status
 ```
 
-## Start The Gateway
-
-```bash
-openclaw gateway run
-```
-
-## Source Install (fallback)
-
-```bash
-git clone https://github.com/wzfukui/openclaw.git
-cd openclaw
-git checkout main
-pnpm install
-```
+If ANI does not appear online after updating the config, reconnect or restart the OpenClaw gateway.
 
 ## Verify
 
