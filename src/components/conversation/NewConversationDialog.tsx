@@ -6,10 +6,9 @@ import * as api from '@/lib/api'
 import { getCachedEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
-import { OnboardingCard } from '@/components/ui/OnboardingCard'
-import { entityDisplayName, cn } from '@/lib/utils'
-import { openOrCreateDirectConversation } from '@/lib/direct-conversation'
-import { X, Plus, Users, MessageSquare, Loader2, Check, Search, HeartHandshake } from 'lucide-react'
+import { entityDisplayName, cn, isBotOrService } from '@/lib/utils'
+import { openOrCreateDirectConversation, shouldReuseDirectConversation } from '@/lib/direct-conversation'
+import { X, Plus, Users, MessageSquare, Loader2, Check, Search, HeartHandshake, ChevronDown, Sparkles } from 'lucide-react'
 import { useFocusTrap } from '@/lib/accessibility'
 
 interface Props {
@@ -58,6 +57,9 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   }, [friends, ownedBots])
 
   const groupCandidates = directCandidates
+  const filteredCandidates = (isGroup ? groupCandidates : directCandidates).filter((e) =>
+    !search || entityDisplayName(e).toLowerCase().includes(search.toLowerCase()) || e.name?.toLowerCase().includes(search.toLowerCase())
+  )
 
   const toggleSelect = (id: number) => {
     const next = new Set(selected)
@@ -108,7 +110,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
         aria-modal="true"
         aria-labelledby="new-conv-dialog-title"
         tabIndex={-1}
-        className="w-full max-w-md bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 max-h-[70vh] flex flex-col"
+        className="w-full max-w-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] rounded-2xl shadow-2xl shadow-black/30 max-h-[78vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
         style={{ animation: 'slide-up 0.2s ease-out' }}
       >
@@ -124,7 +126,30 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
         </div>
 
         <div className="flex-1 overflow-y-auto p-5 space-y-4">
-          {!preselectedEntityId && <OnboardingCard compact />}
+          {!preselectedEntityId && (
+            <details className="group rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)]">
+              <summary className="list-none cursor-pointer px-3.5 py-3 text-sm font-medium text-[var(--color-text-primary)] flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+                  {t('newConversation.guideSummary')}
+                </span>
+                <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)] transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-3.5 pb-3 text-xs leading-5 text-[var(--color-text-secondary)] space-y-2">
+                <p>{t('newConversation.guideBody')}</p>
+                <div className="grid gap-1.5 sm:grid-cols-2">
+                  <div className="rounded-lg bg-[var(--color-bg-primary)]/70 px-2.5 py-2">
+                    <span className="font-medium text-[var(--color-text-primary)]">{t('newConversation.directModeLabel')}</span>
+                    <span className="block">{t('newConversation.directModeDesc')}</span>
+                  </div>
+                  <div className="rounded-lg bg-[var(--color-bg-primary)]/70 px-2.5 py-2">
+                    <span className="font-medium text-[var(--color-text-primary)]">{t('newConversation.groupModeLabel')}</span>
+                    <span className="block">{t('newConversation.groupModeDesc')}</span>
+                  </div>
+                </div>
+              </div>
+            </details>
+          )}
 
           {/* Type toggle */}
           <div className="flex gap-2">
@@ -163,7 +188,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
           {!isGroup && (
             <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] px-3 py-2.5 text-xs text-[var(--color-text-secondary)] flex items-start gap-2">
               <HeartHandshake className="w-3.5 h-3.5 mt-0.5 text-[var(--color-accent)] flex-shrink-0" />
-              <span>{t('friends.directSelectionHelp')}</span>
+              <span>{t('newConversation.directModeHelp')}</span>
             </div>
           )}
 
@@ -181,22 +206,33 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
                 className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
               />
             </div>
-            {(isGroup ? groupCandidates : directCandidates).filter((e) =>
-              !search || entityDisplayName(e).toLowerCase().includes(search.toLowerCase()) || e.name?.toLowerCase().includes(search.toLowerCase())
-            ).map((entity) => (
+            {filteredCandidates.map((entity) => (
               <button
                 key={entity.id}
                 onClick={() => toggleSelect(entity.id)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer text-left',
+                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer text-left',
                   selected.has(entity.id) ? 'bg-[var(--color-accent-dim)]' : 'hover:bg-[var(--color-bg-hover)]',
                 )}
               >
                 <EntityAvatar entity={entity} size="sm" showStatus />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</p>
-                  <p className="text-[10px] text-[var(--color-text-muted)]">{entity.entity_type === 'user' ? t('friends.friend') : t('friends.yourBot')}</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)] truncate">
+                    {isGroup
+                      ? (isBotOrService(entity) ? t('friends.yourBot') : t('friends.friend'))
+                      : (shouldReuseDirectConversation(entity)
+                        ? t('newConversation.directContinueLabel')
+                        : t('newConversation.directNewThreadLabel'))}
+                  </p>
                 </div>
+                {!isGroup && (
+                  <span className="hidden sm:inline text-[10px] font-medium text-[var(--color-text-muted)]">
+                    {shouldReuseDirectConversation(entity)
+                      ? t('newConversation.openExistingShort')
+                      : t('newConversation.newThreadShort')}
+                  </span>
+                )}
                 <div className={cn(
                   'w-5 h-5 rounded-md border flex items-center justify-center transition-all',
                   selected.has(entity.id) ? 'bg-[var(--color-accent)] border-[var(--color-accent)]' : 'border-[var(--color-border)]',

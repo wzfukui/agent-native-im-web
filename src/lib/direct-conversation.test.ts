@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findExistingDirectConversation, conversationRouteFor } from './direct-conversation'
+import { findExistingDirectConversation, conversationRouteFor, shouldReuseDirectConversation } from './direct-conversation'
 import type { Conversation } from './types'
 
 describe('direct-conversation helpers', () => {
@@ -54,5 +54,29 @@ describe('direct-conversation helpers', () => {
     ] satisfies Conversation[]
 
     expect(findExistingDirectConversation(conversations, 1, 9)).toBeUndefined()
+  })
+
+  it('reuses user directs but not bot directs in smart mode', () => {
+    expect(shouldReuseDirectConversation({
+      id: 1,
+      entity_type: 'user',
+      name: 'alice',
+      display_name: 'Alice',
+      status: 'active',
+      metadata: {},
+      created_at: '',
+      updated_at: '',
+    })).toBe(true)
+
+    expect(shouldReuseDirectConversation({
+      id: 2,
+      entity_type: 'bot',
+      name: 'helper',
+      display_name: 'Helper',
+      status: 'active',
+      metadata: {},
+      created_at: '',
+      updated_at: '',
+    })).toBe(false)
   })
 })

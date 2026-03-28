@@ -8,10 +8,9 @@ import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EmptyState } from '@/components/ui/EmptyState'
-import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
-import { openOrCreateDirectConversation } from '@/lib/direct-conversation'
-import { Users, Search, X, Check, Loader2, Plus, ArrowLeft, MessageSquare, HeartHandshake } from 'lucide-react'
+import { openOrCreateDirectConversation, shouldReuseDirectConversation } from '@/lib/direct-conversation'
+import { Users, Search, X, Check, Loader2, Plus, ArrowLeft, MessageSquare, HeartHandshake, ChevronDown, Sparkles } from 'lucide-react'
 
 type SheetStep = 'choose' | 'direct-chat' | 'create-group'
 
@@ -141,9 +140,18 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
             {t('conversation.newChat')}
           </h2>
           {!preselectedEntityId && (
-            <div className="mb-4">
-              <OnboardingCard compact />
-            </div>
+            <details className="group mb-4 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)]">
+              <summary className="list-none cursor-pointer px-3.5 py-3 text-sm font-medium text-[var(--color-text-primary)] flex items-center justify-between gap-3">
+                <span className="inline-flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[var(--color-accent)]" />
+                  {t('newConversation.guideSummary')}
+                </span>
+                <ChevronDown className="w-4 h-4 text-[var(--color-text-muted)] transition-transform group-open:rotate-180" />
+              </summary>
+              <div className="px-3.5 pb-3 text-xs leading-5 text-[var(--color-text-secondary)] space-y-2">
+                <p>{t('newConversation.guideBody')}</p>
+              </div>
+            </details>
           )}
           <div className="space-y-2">
             <button
@@ -155,7 +163,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
               </div>
               <div className="text-left">
                 <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.directFromFriends')}</p>
-                <p className="text-xs text-[var(--color-text-muted)]">{t('friends.directSelectionHelp')}</p>
+                <p className="text-xs text-[var(--color-text-muted)]">{t('newConversation.directModeHelp')}</p>
               </div>
             </button>
             <button
@@ -204,7 +212,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
             <div className="px-4 pb-3 flex-shrink-0">
               <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] px-3 py-2.5 text-xs text-[var(--color-text-secondary)] flex items-start gap-2">
                 <HeartHandshake className="w-3.5 h-3.5 mt-0.5 text-[var(--color-accent)] flex-shrink-0" />
-                <span>{t('friends.directSelectionHelp')}</span>
+                <span>{t('newConversation.directModeHelp')}</span>
               </div>
             </div>
           )}
@@ -232,11 +240,15 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</p>
                     <p className="text-xs text-[var(--color-text-muted)] truncate">
-                      {entity.bot_id || entity.public_id || `@${entity.name}`}
+                      {shouldReuseDirectConversation(entity)
+                        ? t('newConversation.directContinueLabel')
+                        : t('newConversation.directNewThreadLabel')}
                     </p>
                   </div>
-                  <span className="text-[10px] font-medium text-[var(--color-text-muted)]">
-                    {isBotOrService(entity) ? t('friends.yourBot') : t('friends.friend')}
+                  <span className="text-[10px] font-medium text-[var(--color-text-muted)] text-right">
+                    {shouldReuseDirectConversation(entity)
+                      ? t('newConversation.openExistingShort')
+                      : t('newConversation.newThreadShort')}
                   </span>
                   <MessageSquare className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
                 </button>
@@ -314,6 +326,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
             ) : (
               allFiltered.map((entity) => (
                 <button
+                  type="button"
                   key={entity.id}
                   onClick={() => toggleSelect(entity.id)}
                   className={cn(

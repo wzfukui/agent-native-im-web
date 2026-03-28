@@ -17,12 +17,18 @@ export function conversationRouteFor(conversation: { id: number; public_id?: str
   return conversation ? `/chat/${conversation.id}` : '/chat'
 }
 
+export function shouldReuseDirectConversation(target: Entity): boolean {
+  return target.entity_type === 'user'
+}
+
 export function findExistingDirectConversation(conversations: Conversation[], myEntityId: number, targetEntityId: number): Conversation | undefined {
-  return conversations.find((conversation) => {
+  return conversations
+    .filter((conversation) => {
     if (conversation.conv_type !== 'direct') return false
     const participantIds = new Set((conversation.participants || []).map((participant) => participant.entity_id))
     return participantIds.has(myEntityId) && participantIds.has(targetEntityId) && participantIds.size === 2
   })
+    .sort((a, b) => Date.parse(b.updated_at || '') - Date.parse(a.updated_at || ''))[0]
 }
 
 export async function openOrCreateDirectConversation(options: {
@@ -32,10 +38,14 @@ export async function openOrCreateDirectConversation(options: {
   target: Entity
   conversations: Conversation[]
   addConversation: (conversation: Conversation) => void
+  mode?: 'smart' | 'existing' | 'new'
 }): Promise<Conversation | null> {
-  const { token, t, myEntity, target, conversations, addConversation } = options
+  const { token, t, myEntity, target, conversations, addConversation, mode = 'smart' } = options
   const existing = findExistingDirectConversation(conversations, myEntity.id, target.id)
-  if (existing) return existing
+  const shouldReuse =
+    mode === 'existing' || (mode === 'smart' && shouldReuseDirectConversation(target))
+
+  if (existing && shouldReuse) return existing
 
   const res = await api.createConversation(token, {
     title: buildDirectConversationTitle(t, target),
