@@ -482,18 +482,18 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
         )}
 
         {/* Bubble + revoke */}
-        <div className={cn('relative flex items-center w-full', isSelf ? 'flex-row-reverse' : '')}>
-          <div
-            className={cn(
-              'rounded-2xl min-w-0',
-              usesCompactBubble ? 'w-fit max-w-full md:max-w-[min(42rem,100%)]' : 'max-w-full flex-1',
-              (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
-              isSelf
-                ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
-                : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
-              isMentioned && !isSelf && 'border-l-2 border-l-[var(--color-accent)] bg-[var(--color-accent)]/5',
-            )}
-          >
+        <div className={cn('flex items-center w-full', isSelf ? 'flex-row-reverse' : '')}>
+          <div className={cn('relative min-w-0', usesCompactBubble ? 'w-fit max-w-full md:max-w-[min(42rem,100%)]' : 'max-w-full flex-1')}>
+            <div
+              className={cn(
+                'rounded-2xl min-w-0',
+                (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
+                isSelf
+                  ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
+                  : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
+                isMentioned && !isSelf && 'border-l-2 border-l-[var(--color-accent)] bg-[var(--color-accent)]/5',
+              )}
+            >
             {/* Collapsible content wrapper */}
             <div className="relative">
               <div
@@ -547,40 +547,40 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
                 disabled={!onInteractionReply}
               />
             )}
-          </div>
+            </div>
 
-          {/* Action buttons */}
-          <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all absolute top-0', isSelf ? 'flex-row-reverse right-full mr-1' : 'left-full ml-1')}>
-            {canReply && (
-              <button
-                onClick={() => onReply!(message)}
-                className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
-                title={t('chat.reply')}
-                aria-label={t('chat.reply')}
-              >
-                <Reply className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
-              </button>
-            )}
-            {canReact && (
-              <button
-                onClick={() => setShowQuickReact(!showQuickReact)}
-                className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
-                title={t('chat.addReaction')}
-                aria-label={t('chat.addReaction')}
-              >
-                <SmilePlus className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
-              </button>
-            )}
-            {canRevoke && (
-              <button
-                onClick={() => onRevoke!(message.id)}
-                className="w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer"
-                title={t('message.revoke')}
-                aria-label={t('message.revoke')}
-              >
-                <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
-              </button>
-            )}
+            {/* Action buttons */}
+            <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all absolute top-1', isSelf ? 'flex-row-reverse right-full mr-1.5' : 'left-full ml-1.5')}>
+              {canReply && (
+                <button
+                  onClick={() => onReply!(message)}
+                  className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
+                  title={t('chat.reply')}
+                  aria-label={t('chat.reply')}
+                >
+                  <Reply className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
+                </button>
+              )}
+              {canReact && (
+                <button
+                  onClick={() => setShowQuickReact(!showQuickReact)}
+                  className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
+                  title={t('chat.addReaction')}
+                  aria-label={t('chat.addReaction')}
+                >
+                  <SmilePlus className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
+                </button>
+              )}
+              {canRevoke && (
+                <button
+                  onClick={() => onRevoke!(message.id)}
+                  className="w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer"
+                  title={t('message.revoke')}
+                  aria-label={t('message.revoke')}
+                >
+                  <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
+                </button>
+              )}
             {/* Quick emoji picker with extended grid */}
             {showQuickReact && (
               <>
@@ -616,6 +616,7 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
                 </div>
               </>
             )}
+            </div>
           </div>
         </div>
 
