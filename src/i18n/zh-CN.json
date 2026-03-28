@@ -93,6 +93,8 @@
     "reject": "拒绝",
     "cancel": "取消",
     "remove": "删除",
+    "removeConfirmTitle": "删除好友",
+    "removeConfirmMessage": "确定要将 {{name}} 从好友列表中移除吗？已有会话会保留。",
     "emptyTitle": "还没有好友",
     "emptyDesc": "在上方搜索用户或 Bot，开始建立关系。",
     "yourBot": "我的 Bot",

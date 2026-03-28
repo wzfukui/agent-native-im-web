@@ -8,6 +8,7 @@ import * as api from '@/lib/api'
 import type { Entity, FriendRequest } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { EntityPopoverCard } from '@/components/entity/EntityPopoverCard'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { entityDisplayName, cn, isBotOrService } from '@/lib/utils'
 import { openOrCreateDirectConversation, conversationRouteFor, findExistingDirectConversation } from '@/lib/direct-conversation'
 import { Loader2, Search, UserPlus, UserCheck, X, Users, SendHorizonal, MessageSquare, RotateCcw } from 'lucide-react'
@@ -35,6 +36,7 @@ export function FriendsPage() {
   const [submittingId, setSubmittingId] = useState<number | null>(null)
   const [popoverEntity, setPopoverEntity] = useState<Entity | null>(null)
   const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null)
+  const [removeCandidate, setRemoveCandidate] = useState<Entity | null>(null)
   const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
 
   const actingOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
@@ -102,12 +104,18 @@ export function FriendsPage() {
   const outgoingTargets = new Set(outgoing.map((req) => req.target_entity_id))
   const friendIds = new Set(friends.map((entity) => entity.id))
 
+  const compactUuid = useCallback((value?: string) => {
+    if (!value) return ''
+    if (value.length <= 16) return value
+    return `${value.slice(0, 8)}…${value.slice(-6)}`
+  }, [])
+
   const secondaryLabelOf = useCallback((entity?: Entity | null) => {
     if (!entity) return ''
     if (entity.bot_id) return entity.bot_id
-    if (entity.name) return `@${entity.name}`
-    return entity.public_id || ''
-  }, [])
+    if (entity.public_id) return compactUuid(entity.public_id)
+    return ''
+  }, [compactUuid])
 
   const sendRequest = useCallback(async (targetId: number) => {
     setSubmittingId(targetId)
@@ -223,7 +231,7 @@ export function FriendsPage() {
                 const pending = outgoingTargets.has(entity.id)
                 const isFriend = friendIds.has(entity.id)
                 return (
-                  <div key={entity.id} className="flex flex-col gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] sm:flex-row sm:items-center">
+                  <div key={entity.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -239,26 +247,25 @@ export function FriendsPage() {
                       <div className="text-xs text-[var(--color-text-muted)] truncate">{secondaryLabelOf(entity)}</div>
                     </div>
                     {isFriend ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-success)] self-start sm:self-auto">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-success)] shrink-0">
                         <UserCheck className="w-3.5 h-3.5" />
                         {t('friends.friend')}
                       </span>
                     ) : pending ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] self-start sm:self-auto">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-text-muted)] shrink-0">
                         <SendHorizonal className="w-3.5 h-3.5" />
                         {t('friends.requestSent')}
                       </span>
                     ) : (
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => void sendRequest(entity.id)}
-                          disabled={submittingId === entity.id}
-                          className="h-9 px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
-                        >
-                          {submittingId === entity.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
-                          {t('friends.add')}
-                        </button>
-                      </div>
+                      <button
+                        onClick={() => void sendRequest(entity.id)}
+                        disabled={submittingId === entity.id}
+                        aria-label={t('friends.add')}
+                        className="h-9 px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5 shrink-0"
+                      >
+                        {submittingId === entity.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserPlus className="w-3.5 h-3.5" />}
+                        <span className="hidden sm:inline">{t('friends.add')}</span>
+                      </button>
                     )}
                   </div>
                 )
@@ -299,7 +306,7 @@ export function FriendsPage() {
             <div className="grid gap-3">
               {friends.map((entity) => (
                 <div key={entity.id} className="rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] p-4">
-                  <div className="flex items-start gap-3">
+                  <div className="flex items-center gap-3">
                     <button
                       type="button"
                       onClick={(e) => {
@@ -319,30 +326,30 @@ export function FriendsPage() {
                     >
                       <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</div>
                       <div className="text-xs text-[var(--color-text-muted)] truncate">{secondaryLabelOf(entity)}</div>
-                      <div className="mt-1 text-[10px] text-[var(--color-text-muted)]">
-                        {isBotOrService(entity) ? t('friends.botThreadHint') : t('friends.personThreadHint')}
-                      </div>
                     </button>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2">
+                    <div className="ml-auto flex items-center gap-2 shrink-0">
                     {isBotOrService(entity) ? (
                       <>
                         <button
                           onClick={() => void handleOpenDirect(entity, 'new')}
                           disabled={submittingId === entity.id}
-                          className="h-9 px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+                          aria-label={t('friends.newBotChat')}
+                          title={t('friends.newBotChat')}
+                          className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
                         >
                           {submittingId === entity.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5" />}
-                          {t('friends.newBotChat')}
+                          <span className="hidden sm:inline">{t('friends.newBotChat')}</span>
                         </button>
                         {findExistingDirectConversation(conversations, me.id, entity.id) && (
                           <button
                             onClick={() => void handleOpenDirect(entity, 'existing')}
                             disabled={submittingId === entity.id}
-                            className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+                            aria-label={t('friends.continueBotChat')}
+                            title={t('friends.continueBotChat')}
+                            className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
-                            {t('friends.continueBotChat')}
+                            <span className="hidden sm:inline">{t('friends.continueBotChat')}</span>
                           </button>
                         )}
                       </>
@@ -350,20 +357,25 @@ export function FriendsPage() {
                       <button
                         onClick={() => void handleOpenDirect(entity, 'existing')}
                         disabled={submittingId === entity.id}
-                        className="h-9 px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+                        aria-label={t('friends.message')}
+                        title={t('friends.message')}
+                        className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
                       >
                         {submittingId === entity.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5" />}
-                        {t('friends.message')}
+                        <span className="hidden sm:inline">{t('friends.message')}</span>
                       </button>
                     )}
                     <button
-                      onClick={() => void removeFriend(entity.id)}
+                      onClick={() => setRemoveCandidate(entity)}
                       disabled={submittingId === entity.id}
-                      className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+                      aria-label={t('friends.remove')}
+                      title={t('friends.remove')}
+                      className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer inline-flex items-center justify-center gap-1.5 disabled:opacity-50"
                     >
                       <X className="w-3.5 h-3.5" />
-                      {t('friends.remove')}
+                      <span className="hidden sm:inline">{t('friends.remove')}</span>
                     </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -377,15 +389,15 @@ export function FriendsPage() {
                 {incoming.length === 0 ? (
                   <div className="px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">{t('friends.noIncoming')}</div>
                 ) : incoming.map((request) => (
-                  <div key={request.id} className="flex flex-col gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] sm:flex-row sm:items-center">
+                  <div key={request.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
                     <EntityAvatar entity={request.source_entity} size="sm" showStatus />
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(request.source_entity)}</div>
                       <div className="text-xs text-[var(--color-text-muted)] truncate">{secondaryLabelOf(request.source_entity)}</div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => void acceptRequest(request.id)} disabled={submittingId === request.id} className="h-9 px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer">{t('friends.accept')}</button>
-                      <button onClick={() => void rejectRequest(request.id)} disabled={submittingId === request.id} className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] cursor-pointer">{t('friends.reject')}</button>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button onClick={() => void acceptRequest(request.id)} disabled={submittingId === request.id} aria-label={t('friends.accept')} className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl bg-[var(--color-accent)] text-white text-xs font-medium cursor-pointer inline-flex items-center justify-center">{submittingId === request.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <UserCheck className="w-3.5 h-3.5" />}<span className="hidden sm:inline sm:ml-1.5">{t('friends.accept')}</span></button>
+                      <button onClick={() => void rejectRequest(request.id)} disabled={submittingId === request.id} aria-label={t('friends.reject')} className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] cursor-pointer inline-flex items-center justify-center"><X className="w-3.5 h-3.5" /><span className="hidden sm:inline sm:ml-1.5">{t('friends.reject')}</span></button>
                     </div>
                   </div>
                 ))}
@@ -398,18 +410,16 @@ export function FriendsPage() {
                 {outgoing.length === 0 ? (
                   <div className="px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-sm text-[var(--color-text-muted)]">{t('friends.noOutgoing')}</div>
                 ) : outgoing.map((request) => (
-                  <div key={request.id} className="flex flex-col gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] sm:flex-row sm:items-center">
+                  <div key={request.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
                     <EntityAvatar entity={request.target_entity} size="sm" showStatus />
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(request.target_entity)}</div>
                       <div className="text-xs text-[var(--color-text-muted)] truncate">{secondaryLabelOf(request.target_entity)}</div>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button onClick={() => void cancelRequest(request.id)} disabled={submittingId === request.id} className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] cursor-pointer inline-flex items-center gap-1.5">
-                        <X className="w-3.5 h-3.5" />
-                        {t('friends.cancel')}
-                      </button>
-                    </div>
+                    <button onClick={() => void cancelRequest(request.id)} disabled={submittingId === request.id} aria-label={t('friends.cancel')} className="h-9 w-9 sm:w-auto sm:px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] cursor-pointer inline-flex items-center justify-center gap-1.5 shrink-0">
+                      <X className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{t('friends.cancel')}</span>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -427,6 +437,19 @@ export function FriendsPage() {
           onViewDetails={(entity) => navigate(entity.bot_id || entity.public_id ? `/bots/public/${encodeURIComponent(entity.bot_id || entity.public_id!)}` : `/bots/${entity.id}`)}
         />
       )}
+      <ConfirmDialog
+        open={!!removeCandidate}
+        title={t('friends.removeConfirmTitle')}
+        message={t('friends.removeConfirmMessage', { name: entityDisplayName(removeCandidate) })}
+        confirmLabel={t('friends.remove')}
+        variant="danger"
+        onCancel={() => setRemoveCandidate(null)}
+        onConfirm={() => {
+          if (!removeCandidate) return
+          void removeFriend(removeCandidate.id)
+          setRemoveCandidate(null)
+        }}
+      />
     </div>
   )
 }

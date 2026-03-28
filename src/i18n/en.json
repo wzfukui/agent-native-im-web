@@ -93,6 +93,8 @@
     "reject": "Reject",
     "cancel": "Cancel",
     "remove": "Remove",
+    "removeConfirmTitle": "Remove friend",
+    "removeConfirmMessage": "Remove {{name}} from this friend list? Existing conversations will be kept.",
     "emptyTitle": "No friends yet",
     "emptyDesc": "Search for users or bots above to start building your graph.",
     "yourBot": "Your bot",
