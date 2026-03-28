@@ -6,7 +6,6 @@ import { cn, entityDisplayName, entityColor, isBotOrService, formatTime } from '
 import type { Entity } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
 import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
-import { getEntityCapabilityChips, getEntityCapabilitySummary } from '@/lib/entity-capabilities'
 import { Bot, User, MessageSquare, ExternalLink, X } from 'lucide-react'
 
 interface Props {
@@ -25,8 +24,6 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
   const color = entityColor(entity)
   const isOnline = usePresenceStore((s) => s.online.has(entity.id))
   const description = entity.metadata?.description as string | undefined
-  const capabilityChips = isBot ? getEntityCapabilityChips(t, entity) : []
-  const capabilitySummary = isBot ? getEntityCapabilitySummary(t, entity) : ''
   const identityLabel = entity.bot_id || entity.public_id || ''
 
   // Position the popover relative to the anchor (layout effect to avoid flicker)
@@ -152,24 +149,6 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
             <p className="text-xs text-[var(--color-text-secondary)] mt-2 leading-relaxed line-clamp-3">
               {description}
             </p>
-          )}
-
-          {isBot && (
-            <div className="mt-3 rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] p-2.5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-muted)]">
-                {t('bot.capabilityTitle')}
-              </p>
-              <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-text-secondary)]">
-                {capabilitySummary}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-1">
-                {capabilityChips.map((chip) => (
-                  <span key={chip} className="px-1.5 py-0.5 rounded-full bg-[var(--color-bg-primary)] border border-[var(--color-border)] text-[10px] text-[var(--color-text-secondary)]">
-                    {chip}
-                  </span>
-                ))}
-              </div>
-            </div>
           )}
 
           {/* Status + Created */}
