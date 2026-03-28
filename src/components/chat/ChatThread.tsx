@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { MessageList } from './MessageList'
 import { MessageComposer, type UploadedAttachment } from './MessageComposer'
-import { ConversationContextCard } from './ConversationContextCard'
 import { GroupMembersPanel } from '@/components/conversation/GroupMembersPanel'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useAuthStore } from '@/store/auth'
@@ -709,16 +708,6 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
             </p>
           )}
         </div>
-      )}
-
-      {!searching && (
-        <ConversationContextCard
-          conversationId={conversation.id}
-          prompt={conversation.prompt}
-          messageCount={messages.length}
-          onOpenSettings={onToggleSettings}
-          onOpenTasks={onToggleTasks}
-        />
       )}
 
       {/* Messages */}
