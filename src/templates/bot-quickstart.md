@@ -16,7 +16,7 @@ Use the ANI OpenClaw channel plugin.
 ## Install OpenClaw
 
 ```bash
-openclaw plugins install ani-openclaw-plugin
+openclaw plugins install @wzfukui/ani
 ```
 
 ## Enable ANI Plugin
