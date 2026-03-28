@@ -1,6 +1,17 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { useNotificationsStore } from './notifications'
-import type { FriendRequest, NotificationRecord } from '@/lib/types'
+import type { Entity, FriendRequest, NotificationRecord } from '@/lib/types'
+
+const makeEntity = (id: number, entityType: Entity['entity_type'] = 'user'): Entity => ({
+  id,
+  entity_type: entityType,
+  name: `entity-${id}`,
+  display_name: `Entity ${id}`,
+  status: 'active',
+  metadata: {},
+  created_at: '2026-03-27T10:00:00Z',
+  updated_at: '2026-03-27T10:00:00Z',
+})
 
 const makeNotification = (overrides: Partial<NotificationRecord> = {}): NotificationRecord => ({
   id: 1,
@@ -32,6 +43,7 @@ describe('hydrateSnapshot', () => {
   it('deduplicates notifications and derives unread/friend counts', () => {
     useNotificationsStore.getState().hydrateSnapshot({
       trackedEntityIds: [10, 20, 10],
+      actingEntities: [makeEntity(10), makeEntity(20, 'bot'), makeEntity(10)],
       notifications: [
         makeNotification({ id: 1, status: 'unread' }),
         makeNotification({ id: 1, status: 'read', read_at: '2026-03-27T10:05:00Z' }),
@@ -46,6 +58,7 @@ describe('hydrateSnapshot', () => {
 
     const state = useNotificationsStore.getState()
     expect(state.trackedEntityIds).toEqual([10, 20])
+    expect(state.actingEntities.map((entity) => entity.id)).toEqual([10, 20])
     expect(state.notifications).toHaveLength(2)
     expect(state.notifications[0].id).toBe(2)
     expect(state.unreadCount).toBe(1)
@@ -58,6 +71,7 @@ describe('notification mutations', () => {
     const store = useNotificationsStore.getState()
     store.hydrateSnapshot({
       trackedEntityIds: [10],
+      actingEntities: [makeEntity(10)],
       notifications: [makeNotification({ id: 1 }), makeNotification({ id: 2, created_at: '2026-03-27T11:00:00Z' })],
       pendingFriendRequests: [],
     })
@@ -83,6 +97,7 @@ describe('friend request mutations', () => {
     const store = useNotificationsStore.getState()
     store.hydrateSnapshot({
       trackedEntityIds: [10],
+      actingEntities: [makeEntity(10)],
       notifications: [],
       pendingFriendRequests: [],
     })

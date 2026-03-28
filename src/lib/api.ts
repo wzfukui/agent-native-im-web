@@ -2,7 +2,7 @@ import type {
   APIResponse, LoginResponse, Entity, Conversation,
   MessagesResponse, SearchResponse, GlobalSearchResponse, Message,
   Task, ConversationMemory, ChangeRequest, EntitySelfCheck, EntityDiagnostics, FriendRequest, BotAccessLink, PublicBotProfile,
-  NotificationRecord,
+  NotificationRecord, InboxSnapshot,
 } from './types'
 import { getSessionHooks } from './auth-session'
 import { reportApiError } from './errors'
@@ -305,6 +305,9 @@ export const listNotifications = (token: string, options?: { entityId?: number; 
   const qs = params.toString()
   return request<NotificationRecord[]>('GET', `/api/v1/notifications${qs ? `?${qs}` : ''}`, token)
 }
+
+export const getInboxSnapshot = (token: string) =>
+  request<InboxSnapshot>('GET', '/api/v1/inbox/snapshot', token)
 
 export const markNotificationRead = (token: string, id: number, entityId?: number) =>
   request<NotificationRecord>('POST', `/api/v1/notifications/${id}/read${entityId ? `?entity_id=${entityId}` : ''}`, token)

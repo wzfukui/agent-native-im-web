@@ -52,6 +52,13 @@ export interface NotificationRecord {
   actor_entity?: Entity
 }
 
+export interface InboxSnapshot {
+  tracked_entity_ids: number[]
+  acting_entities: Entity[]
+  pending_friend_requests: FriendRequest[]
+  notifications: NotificationRecord[]
+}
+
 export interface BotAccessLink {
   id: number
   bot_entity_id: number

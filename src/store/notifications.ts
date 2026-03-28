@@ -1,8 +1,9 @@
 import { create } from 'zustand'
-import type { FriendRequest, NotificationRecord } from '@/lib/types'
+import type { Entity, FriendRequest, NotificationRecord } from '@/lib/types'
 
 interface NotificationSnapshot {
   trackedEntityIds: number[]
+  actingEntities: Entity[]
   notifications: NotificationRecord[]
   pendingFriendRequests: FriendRequest[]
 }
@@ -59,8 +60,10 @@ function unreadCountFor(notifications: NotificationRecord[]): number {
 function withDerived(snapshot: NotificationSnapshot, dirtyVersion = 0) {
   const notifications = dedupeNotifications(snapshot.notifications)
   const pendingFriendRequests = dedupePendingRequests(snapshot.pendingFriendRequests)
+  const actingEntities = Array.from(new Map(snapshot.actingEntities.map((entity) => [entity.id, entity])).values())
   return {
     trackedEntityIds: Array.from(new Set(snapshot.trackedEntityIds)),
+    actingEntities,
     notifications,
     pendingFriendRequests,
     unreadCount: unreadCountFor(notifications),
@@ -71,6 +74,7 @@ function withDerived(snapshot: NotificationSnapshot, dirtyVersion = 0) {
 
 const emptyState = withDerived({
   trackedEntityIds: [],
+  actingEntities: [],
   notifications: [],
   pendingFriendRequests: [],
 })
@@ -85,6 +89,7 @@ export const useNotificationsStore = create<NotificationState>((set) => ({
   upsertNotification: (notification) => set((state) => ({
     ...withDerived({
       trackedEntityIds: state.trackedEntityIds,
+      actingEntities: state.actingEntities,
       notifications: [notification, ...state.notifications.filter((item) => item.id !== notification.id)],
       pendingFriendRequests: state.pendingFriendRequests,
     }, state.dirtyVersion),
@@ -93,6 +98,7 @@ export const useNotificationsStore = create<NotificationState>((set) => ({
   applyNotificationRead: (notification) => set((state) => ({
     ...withDerived({
       trackedEntityIds: state.trackedEntityIds,
+      actingEntities: state.actingEntities,
       notifications: [notification, ...state.notifications.filter((item) => item.id !== notification.id)],
       pendingFriendRequests: state.pendingFriendRequests,
     }, state.dirtyVersion),
@@ -101,6 +107,7 @@ export const useNotificationsStore = create<NotificationState>((set) => ({
   applyNotificationReadById: (notificationId, recipientEntityId) => set((state) => ({
     ...withDerived({
       trackedEntityIds: state.trackedEntityIds,
+      actingEntities: state.actingEntities,
       notifications: state.notifications.map((notification) => {
         if (notification.id !== notificationId) return notification
         if (recipientEntityId != null && notification.recipient_entity_id !== recipientEntityId) return notification
@@ -117,6 +124,7 @@ export const useNotificationsStore = create<NotificationState>((set) => ({
   applyNotificationReadAll: (recipientEntityId) => set((state) => ({
     ...withDerived({
       trackedEntityIds: state.trackedEntityIds,
+      actingEntities: state.actingEntities,
       notifications: state.notifications.map((notification) => {
         if (recipientEntityId != null && notification.recipient_entity_id !== recipientEntityId) return notification
         if (notification.status === 'read') return notification
@@ -133,6 +141,7 @@ export const useNotificationsStore = create<NotificationState>((set) => ({
   upsertFriendRequest: (request) => set((state) => ({
     ...withDerived({
       trackedEntityIds: state.trackedEntityIds,
+      actingEntities: state.actingEntities,
       notifications: state.notifications,
       pendingFriendRequests: request.status === 'pending' && state.trackedEntityIds.includes(request.target_entity_id)
         ? [request, ...state.pendingFriendRequests.filter((item) => item.id !== request.id)]
@@ -143,6 +152,7 @@ export const useNotificationsStore = create<NotificationState>((set) => ({
   removeFriendRequest: (requestId) => set((state) => ({
     ...withDerived({
       trackedEntityIds: state.trackedEntityIds,
+      actingEntities: state.actingEntities,
       notifications: state.notifications,
       pendingFriendRequests: state.pendingFriendRequests.filter((item) => item.id !== requestId),
     }, state.dirtyVersion + 1),

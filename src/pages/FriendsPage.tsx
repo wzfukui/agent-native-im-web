@@ -22,9 +22,9 @@ export function FriendsPage() {
   const me = useAuthStore((s) => s.entity)!
   const conversations = useConversationsStore((s) => s.conversations)
   const addConversation = useConversationsStore((s) => s.addConversation)
+  const actingEntities = useNotificationsStore((s) => s.actingEntities)
   const [tab, setTab] = useState<Tab>('friends')
   const [actingEntityId, setActingEntityId] = useState<number>(me.id)
-  const [ownedBots, setOwnedBots] = useState<Entity[]>([])
   const [friends, setFriends] = useState<Entity[]>([])
   const [incoming, setIncoming] = useState<FriendRequest[]>([])
   const [outgoing, setOutgoing] = useState<FriendRequest[]>([])
@@ -39,15 +39,11 @@ export function FriendsPage() {
   const [removeCandidate, setRemoveCandidate] = useState<Entity | null>(null)
   const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
 
-  const actingOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
+  const actingOptions = useMemo(() => {
+    if (actingEntities.length === 0) return [me]
+    return actingEntities
+  }, [actingEntities, me])
   const actingEntity = actingOptions.find((item) => item.id === actingEntityId) || me
-
-  const loadOwnedBots = useCallback(async () => {
-    const res = await api.listEntities(token)
-    if (res.ok && res.data) {
-      setOwnedBots((res.data || []).filter((entity) => entity.entity_type !== 'user'))
-    }
-  }, [token])
 
   const loadSocial = useCallback(async () => {
     setLoading(true)
@@ -61,10 +57,6 @@ export function FriendsPage() {
     if (outgoingRes.ok && outgoingRes.data) setOutgoing(outgoingRes.data)
     setLoading(false)
   }, [actingEntityId, token])
-
-  useEffect(() => {
-    void loadOwnedBots()
-  }, [loadOwnedBots])
 
   useEffect(() => {
     void loadSocial()

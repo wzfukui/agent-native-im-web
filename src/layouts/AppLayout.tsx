@@ -105,12 +105,23 @@ export function AppLayout() {
     let cancelled = false
 
     const loadInboxState = async () => {
+      const snapshotRes = await api.getInboxSnapshot(token)
+      if (!cancelled && snapshotRes.ok && snapshotRes.data) {
+        hydrateNotifications({
+          trackedEntityIds: snapshotRes.data.tracked_entity_ids,
+          actingEntities: snapshotRes.data.acting_entities,
+          pendingFriendRequests: snapshotRes.data.pending_friend_requests,
+          notifications: snapshotRes.data.notifications,
+        })
+        return
+      }
+
       const entitiesRes = await api.listEntities(token)
       const ownedBots = entitiesRes.ok && entitiesRes.data
         ? entitiesRes.data.filter((item: Entity) => item.entity_type !== 'user')
         : []
-      const actingIds = [entity.id, ...ownedBots.map((item: Entity) => item.id)]
-      const uniqueIds = Array.from(new Set(actingIds))
+      const actingEntities = [entity, ...ownedBots]
+      const uniqueIds = Array.from(new Set(actingEntities.map((item: Entity) => item.id)))
       const [friendResults, notificationResults] = await Promise.all([
         Promise.all(
           uniqueIds.map((id) => api.listFriendRequests(token, { entityId: id, direction: 'incoming', status: 'pending' })),
@@ -122,6 +133,7 @@ export function AppLayout() {
       if (cancelled) return
       hydrateNotifications({
         trackedEntityIds: uniqueIds,
+        actingEntities,
         pendingFriendRequests: friendResults.flatMap((res) => (res.ok && res.data ? res.data : [])),
         notifications: notificationResults.flatMap((res) => (res.ok && res.data ? res.data : [])),
       })
