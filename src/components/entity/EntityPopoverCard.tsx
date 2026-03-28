@@ -27,6 +27,7 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
   const description = entity.metadata?.description as string | undefined
   const capabilityChips = isBot ? getEntityCapabilityChips(t, entity) : []
   const capabilitySummary = isBot ? getEntityCapabilitySummary(t, entity) : ''
+  const identityLabel = entity.bot_id || entity.public_id || ''
 
   // Position the popover relative to the anchor (layout effect to avoid flicker)
    
@@ -139,10 +140,12 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
             </span>
           </div>
 
-          {/* Username */}
-          <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5">
-            @{entity.name}
-          </p>
+          {/* Public identity */}
+          {identityLabel && (
+            <p className="text-[11px] text-[var(--color-text-muted)] mt-0.5 break-all">
+              {identityLabel}
+            </p>
+          )}
 
           {/* Description */}
           {description && (
