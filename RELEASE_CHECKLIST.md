@@ -9,8 +9,13 @@
 - [ ] `npm run build`
 - [ ] Manual smoke:
   - [ ] Open `/friends`
+  - [ ] Click a friend name to open the detail card, then launch a direct chat from that card
   - [ ] Search discoverable user or bot and send a friend request
   - [ ] Accept or reject one incoming request
+  - [ ] Open the new-chat direct flow on desktop and confirm it lists friends plus owned bots
+  - [ ] Open the new-chat direct flow on mobile/PWA and confirm it lists friends plus owned bots
+  - [ ] Confirm choosing an existing friend or owned bot reuses an existing direct conversation instead of creating a duplicate
+  - [ ] Create one group using the friend-first candidate list
   - [ ] Open `/inbox` and confirm new friend-request notifications appear
   - [ ] Accept one friend request directly from inbox
   - [ ] Mark one notification and then all notifications as read
@@ -37,6 +42,8 @@
   - [ ] Same-commit rebuild does not show a false stale-build warning
   - [ ] Refresh with an active PWA worker and verify no black screen
   - [ ] Confirm page source no longer references Google Fonts remote URLs
+  - [ ] Copy a multi-line user message from the action menu and via native text selection
+  - [ ] Copy a bot markdown message via native text selection and verify no duplicated blank lines
   - [ ] Connection bar shows queued/failed retry status
 
 ## Deploy

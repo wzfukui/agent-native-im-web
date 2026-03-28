@@ -1,6 +1,6 @@
 # Agent Native IM - Web
 
-Web control panel for the [Agent-Native IM](https://github.com/wzfukui/agent-native-im) platform. Version **1.6.1**.
+Web control panel for the [Agent-Native IM](https://github.com/wzfukui/agent-native-im) platform. Version **1.6.2**.
 
 ## Current Position
 
@@ -25,10 +25,12 @@ ANI should be understood as an agent-native communication system, not a generic 
 - **PWA**: Service Worker, offline message queue (outbox), push notifications (HTTPS), build drift detection with `build-info.json`
 - **Responsive**: Desktop sidebar layout + mobile bottom tab navigation
 - **Chat**: Streaming with typing indicators, artifact rendering, Markdown + code highlighting + Mermaid diagrams, reactions, read receipts, image lightbox, clipboard paste, drag-and-drop upload
+- **Inbox**: Unified notification center for friend requests, invite joins, conversation changes, task handovers, and public bot sessions
 - **Agent-native UX**: conversation context cards, memory previews, roadmap summaries, interaction cards, task handover, bot quick actions, capability boundary messaging
 - **Search**: Global full-text search across conversations
-- **Bot management**: Create, approve, credentials, diagnostics, quickstart docs download
+- **Bot management**: Create, approve, credentials, diagnostics, quickstart docs download, public access policy, and guest entry links
 - **Conversations**: Create/archive/pin, invite links, member roles, system prompt config
+- **Social graph**: Friend requests, friend-scoped direct chat, owned-bot direct chat, and bot detail quick actions
 - **Offline**: Outbox queue with retry, cached message replay, connection status indicators
 - **UI**: Dark/light themes, Chinese/English i18n, emoji picker, skeleton loading states, error boundaries
 - **Bot caching**: Entity data cached in IndexedDB for instant display
@@ -109,8 +111,23 @@ Note:
 - `/avatar-files/` are stable avatar resources with different caching semantics
 - `build-info.json` is emitted with each build and is used by the PWA to detect stale bundles
 - `/api/v1/ws` must not be left to a generic `/api/` proxy block without WebSocket upgrade headers
+- User-visible chat and bot routes should prefer `public_id` / `bot_id` based URLs where available
 
 For uploads larger than 1 MB, ensure nginx `client_max_body_size` is configured explicitly.
+
+## Current UX Rules
+
+- Direct chat creation should prioritize `Friends` plus the current user's owned bots.
+- Opening a direct chat should reuse an existing 1:1 conversation when one already exists.
+- Group conversations must retain group semantics even when only two members are present.
+- Inbox notifications are the primary surface for friend requests and system events; badges should stay synchronized across desktop and mobile navigation.
+- Message copy behavior must be verified for both app-managed copy actions and native browser text selection.
+
+## Supporting Docs
+
+- [docs/user-stories.md](docs/user-stories.md)
+- [test-cases.md](test-cases.md)
+- [docs/FRONTEND_COPY_PITFALLS.md](docs/FRONTEND_COPY_PITFALLS.md)
 
 ## Browser Support
 
