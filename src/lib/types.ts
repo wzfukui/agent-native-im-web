@@ -4,6 +4,7 @@ export type EntityStatus = 'active' | 'pending' | 'disabled'
 
 export interface Entity {
   id: number
+  online?: boolean
   public_id?: string
   bot_id?: string
   entity_type: EntityType

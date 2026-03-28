@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
@@ -31,7 +31,7 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
 
   const { setOnline } = usePresenceStore()
 
-  const fetchPresence = async (list: Entity[]) => {
+  const fetchPresence = useCallback(async (list: Entity[]) => {
     const botIds = list.filter((e) => e.entity_type !== 'user').map((e) => e.id)
     if (botIds.length > 0) {
       const presRes = await api.batchPresence(token, botIds)
@@ -41,14 +41,20 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
         }
       }
     }
-  }
+  }, [setOnline, token])
 
-  const loadEntities = async () => {
+  const loadEntities = useCallback(async () => {
     try {
       const res = await api.listEntities(token)
       const list = res.ok && res.data ? (Array.isArray(res.data) ? res.data : []) : []
       setEntities(list)
       setLoading(false)
+
+      for (const entity of list) {
+        if (entity.entity_type !== 'user' && typeof entity.online === 'boolean') {
+          setOnline(entity.id, entity.online)
+        }
+      }
 
       // Cache entities for offline use
       if (list.length > 0) {
@@ -66,7 +72,7 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
     } finally {
       setLoading(false)
     }
-  }
+  }, [entities.length, fetchPresence, setOnline, token])
 
   // Stale-while-revalidate: show cached entities instantly, then refresh from network
   useEffect(() => {
@@ -79,8 +85,29 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
     })
     loadEntities()
     return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadEntities depends on token which is stable after login
-  }, [refreshTrigger])
+  }, [loadEntities, refreshTrigger])
+
+  useEffect(() => {
+    if (entities.length === 0) return
+
+    const refreshVisiblePresence = () => {
+      if (document.hidden) return
+      void fetchPresence(entities)
+    }
+
+    const onFocus = () => refreshVisiblePresence()
+    const onVisibility = () => refreshVisiblePresence()
+    const timer = window.setInterval(refreshVisiblePresence, 15000)
+
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [entities, fetchPresence])
 
   const bots = entities.filter((e) => e.entity_type !== 'user')
   const filtered = search
