@@ -355,9 +355,12 @@ export const updateProfile = (token: string, data: { display_name?: string; avat
   request<Entity>('PUT', '/api/v1/me', token, data)
 
 // Files
-export async function uploadFile(token: string, file: File): Promise<APIResponse<{ url: string }>> {
+export async function uploadFile(token: string, file: File, conversationId?: number): Promise<APIResponse<{ url: string }>> {
   const form = new FormData()
   form.append('file', file)
+  if (conversationId != null) {
+    form.append('conversation_id', String(conversationId))
+  }
   const doUpload = async (accessToken: string) => {
     return fetch(`${baseUrl}/api/v1/files/upload`, {
       method: 'POST',

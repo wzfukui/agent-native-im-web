@@ -299,10 +299,10 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
 
   // Send message
   const handleFileUpload = useCallback(async (file: File): Promise<string | null> => {
-    const res = await api.uploadFile(token, file)
+    const res = await api.uploadFile(token, file, conversation.id)
     if (res.ok && res.data) return res.data.url
     return null
-  }, [token])
+  }, [conversation.id, token])
 
   const handleSend = useCallback(async (text: string, uploadedAttachments?: UploadedAttachment[], mentions?: number[]) => {
     // Capture reply target before clearing
@@ -464,7 +464,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     addOptimisticMessage(tempId, optimisticMsg)
 
     try {
-      const uploadRes = await api.uploadFile(token, file)
+      const uploadRes = await api.uploadFile(token, file, conversation.id)
       if (!uploadRes.ok || !uploadRes.data) {
         setOptimisticState(tempId, 'failed')
         return
