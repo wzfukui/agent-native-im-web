@@ -87,6 +87,7 @@ export function InboxPage() {
   const [actingId, setActingId] = useState<number | null>(null)
 
   const scopeOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
+  const unreadCount = useMemo(() => notifications.filter((item) => item.status === 'unread').length, [notifications])
 
   const loadOwnedBots = useCallback(async () => {
     setLoadingOwnedBots(true)
@@ -154,49 +155,68 @@ export function InboxPage() {
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-[var(--color-bg-primary)]">
-      <div className="px-6 py-5 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/95">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h1 className="text-lg font-semibold text-[var(--color-text-primary)]">{t('inbox.title')}</h1>
-            <p className="text-sm text-[var(--color-text-muted)]">{t('inbox.subtitle')}</p>
+      <div className="px-6 py-6 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/95">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-semibold tracking-[-0.02em] text-[var(--color-text-primary)]">{t('inbox.title')}</h1>
+              {unreadCount > 0 && (
+                <span className="inline-flex min-w-6 h-6 items-center justify-center rounded-full bg-[var(--color-accent)]/12 px-2 text-xs font-semibold text-[var(--color-accent)]">
+                  {unreadCount}
+                </span>
+              )}
+            </div>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">{t('inbox.subtitle')}</p>
           </div>
-          <button
-            onClick={() => void markAllRead()}
-            disabled={actingId === -1 || notifications.length === 0}
-            className="h-10 px-3 rounded-xl border border-[var(--color-border)] text-sm text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
-          >
-            {actingId === -1 ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
-            {t('inbox.markAllRead')}
-          </button>
+          <div className="flex w-full lg:w-auto">
+            <button
+              onClick={() => void markAllRead()}
+              disabled={actingId === -1 || notifications.length === 0}
+              className="h-11 w-full lg:w-auto px-4 rounded-2xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+            >
+              {actingId === -1 ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
+              {t('inbox.markAllRead')}
+            </button>
+          </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <select
-            value={scope}
-            onChange={(e) => setScope(e.target.value)}
-            className="h-10 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none"
-          >
-            <option value="all">{t('inbox.scopeAll')}</option>
-            {scopeOptions.map((entity) => (
-              <option key={entity.id} value={String(entity.id)}>
-                {entity.id === me.id ? t('friends.actAsSelf', { name: entityDisplayName(entity) }) : t('friends.actAsBot', { name: entityDisplayName(entity) })}
-              </option>
-            ))}
-          </select>
+        <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3">
+            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+              {t('inbox.scopeAll')}
+            </label>
+            <select
+              value={scope}
+              onChange={(e) => setScope(e.target.value)}
+              className="h-11 w-full rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none"
+            >
+              <option value="all">{t('inbox.scopeAll')}</option>
+              {scopeOptions.map((entity) => (
+                <option key={entity.id} value={String(entity.id)}>
+                  {entity.id === me.id ? t('friends.actAsSelf', { name: entityDisplayName(entity) }) : t('friends.actAsBot', { name: entityDisplayName(entity) })}
+                </option>
+              ))}
+            </select>
+          </div>
 
-          <div className="inline-flex rounded-2xl bg-[var(--color-bg-secondary)] p-1 border border-[var(--color-border)]">
-            {(['unread', 'all'] as Filter[]).map((item) => (
-              <button
-                key={item}
-                onClick={() => setFilter(item)}
-                className={cn(
-                  'h-8 px-4 rounded-xl text-sm font-medium cursor-pointer transition-colors',
-                  filter === item ? 'bg-[var(--color-accent)] text-white' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
-                )}
-              >
-                {item === 'unread' ? t('inbox.filterUnread') : t('inbox.filterAll')}
-              </button>
-            ))}
+          <div className="rounded-3xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3">
+            <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">
+              {t('inbox.filterAll')}
+            </label>
+            <div className="inline-flex w-full rounded-2xl bg-[var(--color-bg-secondary)] p-1 border border-[var(--color-border)]">
+              {(['unread', 'all'] as Filter[]).map((item) => (
+                <button
+                  key={item}
+                  onClick={() => setFilter(item)}
+                  className={cn(
+                    'h-9 flex-1 rounded-xl px-4 text-sm font-medium cursor-pointer transition-colors whitespace-nowrap',
+                    filter === item ? 'bg-[var(--color-accent)] text-white shadow-sm' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]',
+                  )}
+                >
+                  {item === 'unread' ? t('inbox.filterUnread') : t('inbox.filterAll')}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>
