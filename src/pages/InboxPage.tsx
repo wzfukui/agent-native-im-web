@@ -168,16 +168,18 @@ export function InboxPage() {
             </div>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--color-text-muted)]">{t('inbox.subtitle')}</p>
           </div>
-          <div className="flex w-full lg:w-auto">
-            <button
-              onClick={() => void markAllRead()}
-              disabled={actingId === -1 || notifications.length === 0}
-              className="h-11 w-full lg:w-auto px-4 rounded-2xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
-            >
-              {actingId === -1 ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
-              {t('inbox.markAllRead')}
-            </button>
-          </div>
+          {unreadCount > 0 && (
+            <div className="flex w-full lg:w-auto">
+              <button
+                onClick={() => void markAllRead()}
+                disabled={actingId === -1}
+                className="h-11 w-full lg:w-auto px-4 rounded-2xl border border-[var(--color-border)] text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-bg-primary)] disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap"
+              >
+                {actingId === -1 ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCheck className="w-4 h-4" />}
+                {t('inbox.markAllRead')}
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
