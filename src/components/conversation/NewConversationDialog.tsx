@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
+import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import { getCachedEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { buildDirectConversationTitle } from '@/lib/conversation-title'
-import { X, Plus, Users, MessageSquare, Loader2, Check, Search } from 'lucide-react'
+import { openOrCreateDirectConversation } from '@/lib/direct-conversation'
+import { X, Plus, Users, MessageSquare, Loader2, Check, Search, HeartHandshake } from 'lucide-react'
 import { useFocusTrap } from '@/lib/accessibility'
 
 interface Props {
@@ -21,7 +22,10 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
-  const [entities, setEntities] = useState<Entity[]>([])
+  const conversations = useConversationsStore((s) => s.conversations)
+  const addConversation = useConversationsStore((s) => s.addConversation)
+  const [ownedBots, setOwnedBots] = useState<Entity[]>([])
+  const [friends, setFriends] = useState<Entity[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set(preselectedEntityId ? [preselectedEntityId] : []))
   const [title, setTitle] = useState('')
   const [isGroup, setIsGroup] = useState(false)
@@ -31,21 +35,29 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   useFocusTrap(dialogRef as React.RefObject<HTMLElement>, true)
 
   useEffect(() => {
-    // Show cached entities immediately, then refresh from network
     getCachedEntities().then((cached) => {
       if (cached.length > 0) {
-        setEntities(cached.filter((e) => e.id !== myEntity.id))
+        setOwnedBots(cached.filter((e) => e.id !== myEntity.id && e.entity_type !== 'user'))
       }
     })
-    api.listEntities(token).then((res) => {
-      if (res.ok && res.data) {
-        const all = Array.isArray(res.data) ? res.data : []
-        setEntities(all.filter((e) => e.id !== myEntity.id))
+    void Promise.all([api.listEntities(token), api.listFriends(token)]).then(([entitiesRes, friendsRes]) => {
+      if (entitiesRes.ok && entitiesRes.data) {
+        const all = Array.isArray(entitiesRes.data) ? entitiesRes.data : []
+        setOwnedBots(all.filter((e) => e.id !== myEntity.id && e.entity_type !== 'user'))
       }
-    }).catch(() => {
-      // Network failed — cached data remains visible
-    })
+      if (friendsRes.ok && friendsRes.data) {
+        setFriends(friendsRes.data.filter((e) => e.id !== myEntity.id))
+      }
+    }).catch(() => {})
   }, [myEntity.id, token])
+
+  const directCandidates = useMemo(() => {
+    const deduped = new Map<number, Entity>()
+    for (const entity of [...friends, ...ownedBots]) deduped.set(entity.id, entity)
+    return Array.from(deduped.values())
+  }, [friends, ownedBots])
+
+  const groupCandidates = directCandidates
 
   const toggleSelect = (id: number) => {
     const next = new Set(selected)
@@ -58,11 +70,23 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
   const handleCreate = async () => {
     if (selected.size === 0) return
     setCreating(true)
-    const selectedEntity = entities.find((e) => selected.has(e.id))
+    const selectedEntity = directCandidates.find((e) => selected.has(e.id))
 
-    const convTitle = isGroup
-      ? (title || `Group (${selected.size + 1} members)`)
-      : (title || (selectedEntity ? buildDirectConversationTitle(t, selectedEntity) : 'Direct chat'))
+    if (!isGroup && selectedEntity) {
+      const conversation = await openOrCreateDirectConversation({
+        token,
+        t,
+        myEntity,
+        target: selectedEntity,
+        conversations,
+        addConversation,
+      })
+      if (conversation) onCreated(conversation.id)
+      setCreating(false)
+      return
+    }
+
+    const convTitle = title || `Group (${selected.size + 1} members)`
 
     const res = await api.createConversation(token, {
       title: convTitle,
@@ -111,8 +135,8 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
                 !isGroup ? 'bg-[var(--color-accent-dim)] border-[var(--color-accent)]/40 text-[var(--color-accent)]' : 'border-[var(--color-border)] text-[var(--color-text-muted)] hover:bg-[var(--color-bg-hover)]',
               )}
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              {t('conversation.direct')}
+              <HeartHandshake className="w-3.5 h-3.5" />
+              {t('friends.directFromFriends')}
             </button>
             <button
               onClick={() => setIsGroup(true)}
@@ -136,10 +160,17 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
             />
           )}
 
+          {!isGroup && (
+            <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] px-3 py-2.5 text-xs text-[var(--color-text-secondary)] flex items-start gap-2">
+              <HeartHandshake className="w-3.5 h-3.5 mt-0.5 text-[var(--color-accent)] flex-shrink-0" />
+              <span>{t('friends.directSelectionHelp')}</span>
+            </div>
+          )}
+
           {/* Participant list */}
           <div className="space-y-1">
             <label className="text-xs font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-              {t('conversation.selectParticipants')}
+              {isGroup ? t('conversation.selectParticipants') : t('friends.selectFriendOrBot')}
             </label>
             <div className="relative mb-2">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[var(--color-text-muted)]" />
@@ -150,7 +181,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
                 className="w-full h-8 pl-8 pr-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-xs text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
               />
             </div>
-            {entities.filter((e) =>
+            {(isGroup ? groupCandidates : directCandidates).filter((e) =>
               !search || entityDisplayName(e).toLowerCase().includes(search.toLowerCase()) || e.name?.toLowerCase().includes(search.toLowerCase())
             ).map((entity) => (
               <button
@@ -164,7 +195,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
                 <EntityAvatar entity={entity} size="sm" showStatus />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</p>
-                  <p className="text-[10px] text-[var(--color-text-muted)]">{entity.entity_type}</p>
+                  <p className="text-[10px] text-[var(--color-text-muted)]">{entity.entity_type === 'user' ? t('friends.friend') : t('friends.yourBot')}</p>
                 </div>
                 <div className={cn(
                   'w-5 h-5 rounded-md border flex items-center justify-center transition-all',

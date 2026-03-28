@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
+import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import { getCachedEntities } from '@/lib/cache'
 import type { Entity } from '@/lib/types'
@@ -9,10 +10,10 @@ import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
-import { buildDirectConversationTitle } from '@/lib/conversation-title'
-import { Bot, Users, Search, X, Check, Loader2, Plus, ArrowLeft, MessageSquare } from 'lucide-react'
+import { openOrCreateDirectConversation } from '@/lib/direct-conversation'
+import { Users, Search, X, Check, Loader2, Plus, ArrowLeft, MessageSquare, HeartHandshake } from 'lucide-react'
 
-type SheetStep = 'choose' | 'chat-with-bot' | 'create-group'
+type SheetStep = 'choose' | 'direct-chat' | 'create-group'
 
 interface Props {
   open: boolean
@@ -25,9 +26,12 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
-  const [entities, setEntities] = useState<Entity[]>([])
+  const conversations = useConversationsStore((s) => s.conversations)
+  const addConversation = useConversationsStore((s) => s.addConversation)
+  const [ownedBots, setOwnedBots] = useState<Entity[]>([])
+  const [friends, setFriends] = useState<Entity[]>([])
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState<SheetStep>(preselectedEntityId ? 'create-group' : 'choose')
+  const [step, setStep] = useState<SheetStep>(preselectedEntityId ? 'direct-chat' : 'choose')
   const [search, setSearch] = useState('')
   const [groupTitle, setGroupTitle] = useState('')
   const [selected, setSelected] = useState<Set<number>>(new Set(preselectedEntityId ? [preselectedEntityId] : []))
@@ -41,14 +45,17 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
     // Show cached entities immediately, then refresh from network
     getCachedEntities().then((cached) => {
       if (cached.length > 0) {
-        setEntities(cached.filter((e) => e.id !== myEntity.id))
+        setOwnedBots(cached.filter((e) => e.id !== myEntity.id && e.entity_type !== 'user'))
         setLoading(false)
       }
     })
-    api.listEntities(token).then((res) => {
-      if (res.ok && res.data) {
-        const all = Array.isArray(res.data) ? res.data : []
-        setEntities(all.filter((e) => e.id !== myEntity.id))
+    Promise.all([api.listEntities(token), api.listFriends(token)]).then(([entitiesRes, friendsRes]) => {
+      if (entitiesRes.ok && entitiesRes.data) {
+        const all = Array.isArray(entitiesRes.data) ? entitiesRes.data : []
+        setOwnedBots(all.filter((e) => e.id !== myEntity.id && e.entity_type !== 'user'))
+      }
+      if (friendsRes.ok && friendsRes.data) {
+        setFriends(friendsRes.data.filter((e) => e.id !== myEntity.id))
       }
       setLoading(false)
     }).catch(() => {
@@ -62,7 +69,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
   useEffect(() => {
     if (!open) {
       setTimeout(() => {
-        setStep(preselectedEntityId ? 'create-group' : 'choose')
+        setStep(preselectedEntityId ? 'direct-chat' : 'choose')
         setSearch('')
         setGroupTitle('')
         setSelected(new Set(preselectedEntityId ? [preselectedEntityId] : []))
@@ -70,22 +77,19 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
     }
   }, [open, preselectedEntityId])
 
-  const bots = useMemo(() => entities.filter((e) => isBotOrService(e)), [entities])
-  const allFiltered = useMemo(() => {
-    if (!search) return entities
-    const q = search.toLowerCase()
-    return entities.filter((e) =>
-      entityDisplayName(e).toLowerCase().includes(q) || e.name.toLowerCase().includes(q)
-    )
-  }, [entities, search])
+  const directCandidates = useMemo(() => {
+    const deduped = new Map<number, Entity>()
+    for (const entity of [...friends, ...ownedBots]) deduped.set(entity.id, entity)
+    return Array.from(deduped.values())
+  }, [friends, ownedBots])
 
-  const botsFiltered = useMemo(() => {
-    if (!search) return bots
+  const allFiltered = useMemo(() => {
+    if (!search) return directCandidates
     const q = search.toLowerCase()
-    return bots.filter((e) =>
+    return directCandidates.filter((e) =>
       entityDisplayName(e).toLowerCase().includes(q) || e.name.toLowerCase().includes(q)
     )
-  }, [bots, search])
+  }, [directCandidates, search])
 
   const toggleSelect = (id: number) => {
     const next = new Set(selected)
@@ -94,16 +98,17 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
     setSelected(next)
   }
 
-  const handleChatWithBot = async (bot: Entity) => {
+  const handleOpenDirect = async (target: Entity) => {
     setCreating(true)
-    const res = await api.createConversation(token, {
-      title: buildDirectConversationTitle(t, bot),
-      conv_type: 'direct',
-      participant_ids: [bot.id],
+    const conversation = await openOrCreateDirectConversation({
+      token,
+      t,
+      myEntity,
+      target,
+      conversations,
+      addConversation,
     })
-    if (res.ok && res.data) {
-      onCreated(res.data.id)
-    }
+    if (conversation) onCreated(conversation.id)
     setCreating(false)
   }
 
@@ -142,15 +147,15 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
           )}
           <div className="space-y-2">
             <button
-              onClick={() => setStep('chat-with-bot')}
+              onClick={() => setStep('direct-chat')}
               className="w-full flex items-center gap-4 px-4 py-4 rounded-xl bg-[var(--color-bg-tertiary)] hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer min-h-[56px]"
             >
               <div className="w-10 h-10 rounded-xl bg-[var(--color-bot)]/15 flex items-center justify-center flex-shrink-0">
-                <Bot className="w-5 h-5 text-[var(--color-bot)]" />
+                <HeartHandshake className="w-5 h-5 text-[var(--color-bot)]" />
               </div>
               <div className="text-left">
-                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('newConversation.chatWithBot')}</p>
-                <p className="text-xs text-[var(--color-text-muted)]">{t('newConversation.chatWithBotDesc')}</p>
+                <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.directFromFriends')}</p>
+                <p className="text-xs text-[var(--color-text-muted)]">{t('friends.directSelectionHelp')}</p>
               </div>
             </button>
             <button
@@ -169,8 +174,8 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
         </div>
       )}
 
-      {/* Step: Chat with Bot */}
-      {step === 'chat-with-bot' && (
+      {/* Step: Direct chat */}
+      {step === 'direct-chat' && (
         <div className="flex flex-col max-h-[70vh]">
           {/* Header */}
           <div className="flex items-center gap-3 px-4 pb-3 flex-shrink-0">
@@ -178,7 +183,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
               <ArrowLeft className="w-4 h-4 text-[var(--color-text-muted)]" />
             </button>
             <h2 className="text-base font-semibold text-[var(--color-text-primary)]">
-              {t('newConversation.chatWithBot')}
+              {t('friends.directFromFriends')}
             </h2>
           </div>
 
@@ -189,36 +194,50 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder={t('bot.searchPlaceholder')}
+                placeholder={t('friends.selectFriendOrBot')}
                 className="w-full h-10 pl-10 pr-3 rounded-xl bg-[var(--color-bg-tertiary)] border border-transparent focus:border-[var(--color-border)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none transition-colors"
               />
             </div>
           </div>
 
-          {/* Bot list */}
+          {!preselectedEntityId && (
+            <div className="px-4 pb-3 flex-shrink-0">
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-tertiary)] px-3 py-2.5 text-xs text-[var(--color-text-secondary)] flex items-start gap-2">
+                <HeartHandshake className="w-3.5 h-3.5 mt-0.5 text-[var(--color-accent)] flex-shrink-0" />
+                <span>{t('friends.directSelectionHelp')}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Candidate list */}
           <div className="flex-1 overflow-y-auto px-4 pb-6 space-y-1">
             {loading ? (
               <div className="flex justify-center py-8">
                 <Loader2 className="w-5 h-5 text-[var(--color-text-muted)] animate-spin" />
               </div>
-            ) : botsFiltered.length === 0 ? (
+            ) : allFiltered.length === 0 ? (
               <EmptyState
-                icon={<Bot className="w-7 h-7" />}
-                title={t('bot.noAgents')}
+                icon={<MessageSquare className="w-7 h-7" />}
+                title={t('friends.noDirectCandidates')}
               />
             ) : (
-              botsFiltered.map((bot) => (
+              allFiltered.map((entity) => (
                 <button
-                  key={bot.id}
-                  onClick={() => handleChatWithBot(bot)}
+                  key={entity.id}
+                  onClick={() => void handleOpenDirect(entity)}
                   disabled={creating}
                   className="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-[var(--color-bg-hover)] transition-colors cursor-pointer text-left min-h-[52px]"
                 >
-                  <EntityAvatar entity={bot} size="md" showStatus />
+                  <EntityAvatar entity={entity} size="md" showStatus />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(bot)}</p>
-                    <p className="text-xs text-[var(--color-text-muted)] truncate">@{bot.name}</p>
+                    <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</p>
+                    <p className="text-xs text-[var(--color-text-muted)] truncate">
+                      {entity.bot_id || entity.public_id || `@${entity.name}`}
+                    </p>
                   </div>
+                  <span className="text-[10px] font-medium text-[var(--color-text-muted)]">
+                    {isBotOrService(entity) ? t('friends.yourBot') : t('friends.friend')}
+                  </span>
                   <MessageSquare className="w-4 h-4 text-[var(--color-text-muted)] flex-shrink-0" />
                 </button>
               ))
@@ -254,14 +273,15 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
           {selected.size > 0 && (
             <div className="px-4 pb-3 flex gap-1.5 flex-wrap flex-shrink-0">
               {Array.from(selected).map((id) => {
-                const entity = entities.find((e) => e.id === id)
+                const entity = directCandidates.find((e) => e.id === id)
+                if (!entity) return null
                 return (
                   <span
                     key={id}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[var(--color-accent)]/10 text-xs font-medium text-[var(--color-accent)]"
                   >
                     {entityDisplayName(entity)}
-                    <button onClick={() => toggleSelect(id)} className="cursor-pointer hover:text-[var(--color-error)]">
+                    <button type="button" onClick={() => toggleSelect(id)} className="cursor-pointer hover:text-[var(--color-error)]">
                       <X className="w-3 h-3" />
                     </button>
                   </span>
@@ -290,10 +310,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
                 <Loader2 className="w-5 h-5 text-[var(--color-text-muted)] animate-spin" />
               </div>
             ) : allFiltered.length === 0 ? (
-              <EmptyState
-                icon={<Users className="w-7 h-7" />}
-                title={t('common.noEntities')}
-              />
+              <EmptyState icon={<Users className="w-7 h-7" />} title={t('friends.noGroupCandidates')} />
             ) : (
               allFiltered.map((entity) => (
                 <button
@@ -307,7 +324,9 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
                   <EntityAvatar entity={entity} size="sm" showStatus />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</p>
-                    <p className="text-[10px] text-[var(--color-text-muted)]">{entity.entity_type}</p>
+                    <p className="text-[10px] text-[var(--color-text-muted)]">
+                      {isBotOrService(entity) ? t('friends.yourBot') : t('friends.friend')}
+                    </p>
                   </div>
                   <div className={cn(
                     'w-5 h-5 rounded-md border flex items-center justify-center transition-all flex-shrink-0',

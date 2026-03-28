@@ -1,19 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
+import { useConversationsStore } from '@/store/conversations'
 import { useNotificationsStore } from '@/store/notifications'
 import * as api from '@/lib/api'
 import type { Entity, FriendRequest } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
+import { EntityPopoverCard } from '@/components/entity/EntityPopoverCard'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Loader2, Search, UserPlus, UserCheck, X, Users, SendHorizonal } from 'lucide-react'
+import { openOrCreateDirectConversation, conversationRouteFor } from '@/lib/direct-conversation'
+import { Loader2, Search, UserPlus, UserCheck, X, Users, SendHorizonal, MessageSquare } from 'lucide-react'
 
 type Tab = 'friends' | 'requests'
 
 export function FriendsPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const token = useAuthStore((s) => s.token)!
   const me = useAuthStore((s) => s.entity)!
+  const conversations = useConversationsStore((s) => s.conversations)
+  const addConversation = useConversationsStore((s) => s.addConversation)
   const [tab, setTab] = useState<Tab>('friends')
   const [actingEntityId, setActingEntityId] = useState<number>(me.id)
   const [ownedBots, setOwnedBots] = useState<Entity[]>([])
@@ -26,6 +33,8 @@ export function FriendsPage() {
   const [loading, setLoading] = useState(false)
   const [searching, setSearching] = useState(false)
   const [submittingId, setSubmittingId] = useState<number | null>(null)
+  const [popoverEntity, setPopoverEntity] = useState<Entity | null>(null)
+  const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null)
   const inboxDirtyVersion = useNotificationsStore((s) => s.dirtyVersion)
 
   const actingOptions = useMemo(() => [me, ...ownedBots], [me, ownedBots])
@@ -133,6 +142,21 @@ export function FriendsPage() {
     setSubmittingId(null)
     await loadSocial()
   }, [actingEntityId, loadSocial, me.id, token])
+
+  const handleOpenDirect = useCallback(async (target: Entity) => {
+    setSubmittingId(target.id)
+    const conversation = await openOrCreateDirectConversation({
+      token,
+      t,
+      myEntity: me,
+      target,
+      conversations,
+      addConversation,
+    })
+    setSubmittingId(null)
+    if (!conversation) return
+    navigate(conversationRouteFor(conversation))
+  }, [addConversation, conversations, me, navigate, t, token])
 
   return (
     <div className="h-full min-h-0 flex flex-col bg-[var(--color-bg-primary)]">
@@ -257,15 +281,30 @@ export function FriendsPage() {
               {friends.map((entity) => (
                 <div key={entity.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
                   <EntityAvatar entity={entity} size="sm" showStatus />
-                  <div className="flex-1 min-w-0">
+                  <button
+                    onClick={(e) => {
+                      setPopoverEntity(entity)
+                      setPopoverAnchor((e.currentTarget as HTMLElement).getBoundingClientRect())
+                    }}
+                    className="flex-1 min-w-0 text-left cursor-pointer"
+                  >
                     <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</div>
                     <div className="text-xs text-[var(--color-text-muted)] truncate">{entity.bot_id || entity.public_id || `@${entity.name}`}</div>
-                  </div>
+                  </button>
+                  <button
+                    onClick={() => void handleOpenDirect(entity)}
+                    disabled={submittingId === entity.id}
+                    className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {submittingId === entity.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <MessageSquare className="w-3.5 h-3.5" />}
+                    {t('friends.message')}
+                  </button>
                   <button
                     onClick={() => void removeFriend(entity.id)}
                     disabled={submittingId === entity.id}
-                    className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer"
+                    className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] cursor-pointer inline-flex items-center gap-1.5 disabled:opacity-50"
                   >
+                    <X className="w-3.5 h-3.5" />
                     {t('friends.remove')}
                   </button>
                 </div>
@@ -316,6 +355,16 @@ export function FriendsPage() {
           </div>
         )}
       </div>
+
+      {popoverEntity && popoverAnchor && (
+        <EntityPopoverCard
+          entity={popoverEntity}
+          anchorRect={popoverAnchor}
+          onClose={() => { setPopoverEntity(null); setPopoverAnchor(null) }}
+          onSendMessage={(entity) => { void handleOpenDirect(entity) }}
+          onViewDetails={(entity) => navigate(entity.bot_id || entity.public_id ? `/bots/public/${encodeURIComponent(entity.bot_id || entity.public_id!)}` : `/bots/${entity.id}`)}
+        />
+      )}
     </div>
   )
 }

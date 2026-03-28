@@ -14,6 +14,7 @@ import { ErrorBoundary } from '@/components/ui/ErrorBoundary'
 import { OnboardingCard } from '@/components/ui/OnboardingCard'
 import { cn } from '@/lib/utils'
 import { needsFirstBot } from '@/lib/first-login'
+import { conversationRouteFor } from '@/lib/direct-conversation'
 import * as api from '@/lib/api'
 import { MessageSquare, Bot, Settings2 } from 'lucide-react'
 import type { Entity } from '@/lib/types'
@@ -25,12 +26,6 @@ function conversationPublicIdOf(conversation: { public_id?: string; metadata?: R
   const meta = conversation.metadata as Record<string, unknown> | undefined
   if (typeof meta?.public_id === 'string' && meta.public_id) return meta.public_id
   return ''
-}
-
-function conversationRouteFor(conversation: { id: number; public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
-  const publicId = conversationPublicIdOf(conversation)
-  if (publicId) return `/chat/public/${encodeURIComponent(publicId)}`
-  return conversation ? `/chat/${conversation.id}` : '/chat'
 }
 
 function botRouteFor(entity: { id: number; bot_id?: string; public_id?: string } | null | undefined): string {
