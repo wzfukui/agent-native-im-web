@@ -102,6 +102,12 @@ export function FriendsPage() {
   const outgoingTargets = new Set(outgoing.map((req) => req.target_entity_id))
   const friendIds = new Set(friends.map((entity) => entity.id))
 
+  const secondaryLabelOf = useCallback((entity: Entity) => {
+    if (entity.bot_id) return entity.bot_id
+    if (entity.name) return `@${entity.name}`
+    return entity.public_id || ''
+  }, [])
+
   const sendRequest = useCallback(async (targetId: number) => {
     setSubmittingId(targetId)
     await api.createFriendRequest(token, {
@@ -216,10 +222,19 @@ export function FriendsPage() {
                 const isFriend = friendIds.has(entity.id)
                 return (
                   <div key={entity.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
-                    <EntityAvatar entity={entity} size="sm" showStatus />
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        setPopoverEntity(entity)
+                        setPopoverAnchor((e.currentTarget as HTMLElement).getBoundingClientRect())
+                      }}
+                      className="flex-shrink-0 cursor-pointer"
+                    >
+                      <EntityAvatar entity={entity} size="sm" showStatus />
+                    </button>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</div>
-                      <div className="text-xs text-[var(--color-text-muted)] truncate">{entity.bot_id || entity.public_id || `@${entity.name}`}</div>
+                      <div className="text-xs text-[var(--color-text-muted)] truncate">{secondaryLabelOf(entity)}</div>
                     </div>
                     {isFriend ? (
                       <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-success)]">
@@ -280,7 +295,16 @@ export function FriendsPage() {
             <div className="grid gap-3">
               {friends.map((entity) => (
                 <div key={entity.id} className="flex items-center gap-3 px-4 py-3 rounded-2xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                  <EntityAvatar entity={entity} size="sm" showStatus />
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      setPopoverEntity(entity)
+                      setPopoverAnchor((e.currentTarget as HTMLElement).getBoundingClientRect())
+                    }}
+                    className="flex-shrink-0 cursor-pointer"
+                  >
+                    <EntityAvatar entity={entity} size="sm" showStatus />
+                  </button>
                   <button
                     onClick={(e) => {
                       setPopoverEntity(entity)
@@ -289,7 +313,7 @@ export function FriendsPage() {
                     className="flex-1 min-w-0 text-left cursor-pointer"
                   >
                     <div className="text-sm font-medium text-[var(--color-text-primary)] truncate">{entityDisplayName(entity)}</div>
-                    <div className="text-xs text-[var(--color-text-muted)] truncate">{entity.bot_id || entity.public_id || `@${entity.name}`}</div>
+                    <div className="text-xs text-[var(--color-text-muted)] truncate">{secondaryLabelOf(entity)}</div>
                   </button>
                   <button
                     onClick={() => void handleOpenDirect(entity)}
