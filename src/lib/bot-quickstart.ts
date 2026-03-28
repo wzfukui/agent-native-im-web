@@ -1,12 +1,15 @@
 interface BotQuickstartParams {
   botName: string
+  botID?: string
+  publicID?: string
+  roleHint?: string
   botToken: string
   apiUrl: string
   webUrl: string
 }
 
 export function generateBotQuickstart(params: BotQuickstartParams): string {
-  const { botName, botToken, apiUrl, webUrl } = params
+  const { botName, botID, publicID, roleHint, botToken, apiUrl, webUrl } = params
   const serverUrl = apiUrl.replace(/\/api\/v1$/, '')
 
   return `# ${botName} OpenClaw Quick Start
@@ -58,6 +61,12 @@ openclaw gateway status
 \`\`\`
 
 If ANI does not appear online after updating the config, reconnect or restart the OpenClaw gateway.
+
+## Identity Setup
+
+- You are the ANI bot \`${botName}\`.
+${botID ? `- Your bot handle is \`${botID}\`.\n` : ''}${publicID ? `- Your public UUID is \`${publicID}\`.\n` : ''}${roleHint ? `- Your role: ${roleHint}\n` : ''}- If your local \`IDENTITY.md\` is still the default blank template, write this identity into it now.
+- Do not ask the user what your name is if ANI already provides it.
 
 ## Verify
 

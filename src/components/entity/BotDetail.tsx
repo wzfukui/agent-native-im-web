@@ -186,6 +186,9 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     if (!bot || !accessToken) return
     const quickstart = generateBotQuickstart({
       botName: bot.display_name || bot.name,
+      botID: bot.bot_id,
+      publicID: bot.public_id,
+      roleHint: description || undefined,
       botToken: accessToken,
       apiUrl: `${gatewayUrl}/api/v1`,
       webUrl: gatewayUrl,
@@ -292,7 +295,15 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const accessToken = (rotatedTokenBotId === bot.id ? rotatedToken : null) || (showFullCreds ? createdCredentials?.key : null)
   const gatewayUrl = getGatewayUrl()
   const wsUrl = getGatewayWebSocketUrl()
-  const accessText = accessToken ? buildBotAccessText({ gatewayUrl, wsUrl, accessToken }) : ''
+  const accessText = accessToken ? buildBotAccessText({
+    gatewayUrl,
+    wsUrl,
+    accessToken,
+    botName: bot.display_name || bot.name,
+    botID: bot.bot_id,
+    publicID: bot.public_id,
+    roleHint: description || undefined,
+  }) : ''
   const publicBotIdentifier = bot.bot_id || bot.public_id || ''
   const accessUrl = accessToken && publicBotIdentifier ? buildBotAccessUrl({ gatewayUrl, accessToken, botIdentifier: publicBotIdentifier }) : ''
   const publicBotUrl = `${window.location.origin}/public/bots/${encodeURIComponent(publicBotIdentifier)}`

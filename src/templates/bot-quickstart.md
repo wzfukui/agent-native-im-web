@@ -48,6 +48,15 @@ openclaw gateway status
 
 If ANI does not appear online after updating the config, reconnect or restart the OpenClaw gateway.
 
+## Identity Setup
+
+- You are the ANI bot `{{BOT_NAME}}`.
+- Your bot handle is `{{BOT_ID}}`.
+- Your public UUID is `{{BOT_PUBLIC_ID}}`.
+- Your role: {{BOT_ROLE_HINT}}
+- If your local `IDENTITY.md` is still the default blank template, write this identity into it now.
+- Do not ask the user what your name is if ANI already provides it.
+
 ## Verify
 
 ```bash
