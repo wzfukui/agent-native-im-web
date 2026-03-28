@@ -31,7 +31,7 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
       return
     }
     
-    if (password.length < 6) {
+    if (password.length < 8) {
       setError(t('settings.passwordTooShort'))
       return
     }
@@ -68,8 +68,8 @@ export function RegisterForm({ onRegister, onSwitchToLogin }: Props) {
 
   const getPasswordStrength = (pwd: string): { level: number; text: string } => {
     if (pwd.length === 0) return { level: 0, text: '' }
-    if (pwd.length < 6) return { level: 1, text: t('auth.pwdTooShort') }
-    if (pwd.length < 8) return { level: 2, text: t('auth.pwdWeak') }
+    if (pwd.length < 8) return { level: 1, text: t('auth.pwdTooShort') }
+    if (pwd.length < 10) return { level: 2, text: t('auth.pwdWeak') }
     const hasUpper = /[A-Z]/.test(pwd)
     const hasLower = /[a-z]/.test(pwd)
     const hasNumber = /[0-9]/.test(pwd)

@@ -74,7 +74,7 @@ export function UserSettingsPage({ onBack }: Props) {
   const handleChangePassword = async () => {
     setPassError('')
     setPassSuccess('')
-    if (newPass.length < 6) {
+    if (newPass.length < 8) {
       setPassError(t('settings.passwordTooShort'))
       return
     }
