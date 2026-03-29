@@ -125,6 +125,7 @@ For uploads larger than 1 MB, ensure nginx `client_max_body_size` is configured 
 
 ## Supporting Docs
 
+- [../agent-native-im/docs/PRODUCT_BASELINE.md](../agent-native-im/docs/PRODUCT_BASELINE.md)
 - [docs/user-stories.md](docs/user-stories.md)
 - [test-cases.md](test-cases.md)
 - [docs/FRONTEND_COPY_PITFALLS.md](docs/FRONTEND_COPY_PITFALLS.md)
