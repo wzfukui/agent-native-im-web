@@ -31,7 +31,20 @@ describe('direct-conversation helpers', () => {
     ] satisfies Conversation[]
 
     expect(findExistingDirectConversation(conversations, 1, 9)?.id).toBe(2)
-    expect(conversationRouteFor(conversations[1])).toBe('/chat/public/conv-public')
+    expect(conversationRouteFor(conversations[1])).toBe('/chat/direct/conv-public')
+  })
+
+  it('routes group conversations into the groups workspace', () => {
+    expect(conversationRouteFor({
+      id: 7,
+      conv_type: 'group',
+      title: 'Launch',
+      description: '',
+      prompt: '',
+      metadata: {},
+      created_at: '',
+      updated_at: '',
+    })).toBe('/chat/groups/7')
   })
 
   it('ignores direct conversations with extra participants', () => {

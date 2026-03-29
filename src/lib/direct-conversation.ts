@@ -11,10 +11,16 @@ function conversationPublicIdOf(conversation: { public_id?: string; metadata?: R
   return ''
 }
 
-export function conversationRouteFor(conversation: { id: number; public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
+function conversationScopePath(conversation: { conv_type?: string } | null | undefined): 'direct' | 'groups' {
+  return conversation?.conv_type === 'group' || conversation?.conv_type === 'channel' ? 'groups' : 'direct'
+}
+
+export function conversationRouteFor(conversation: { id: number; conv_type?: string; public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
+  const scopePath = conversationScopePath(conversation)
+  if (!conversation) return `/chat/${scopePath}`
   const publicId = conversationPublicIdOf(conversation)
-  if (publicId) return `/chat/public/${encodeURIComponent(publicId)}`
-  return conversation ? `/chat/${conversation.id}` : '/chat'
+  if (publicId) return `/chat/${scopePath}/${encodeURIComponent(publicId)}`
+  return `/chat/${scopePath}/${conversation.id}`
 }
 
 export function shouldReuseDirectConversation(target: Entity): boolean {

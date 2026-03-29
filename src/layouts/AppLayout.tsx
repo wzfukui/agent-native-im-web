@@ -92,6 +92,21 @@ export function AppLayout() {
     }, 0)
   }, [conversations, mutedIds])
 
+  const directUnread = useMemo(() => {
+    return conversations.reduce((sum, c) => {
+      if (mutedIds.has(c.id) || c.conv_type !== 'direct') return sum
+      return sum + (c.unread_count || 0)
+    }, 0)
+  }, [conversations, mutedIds])
+
+  const groupUnread = useMemo(() => {
+    return conversations.reduce((sum, c) => {
+      if (mutedIds.has(c.id)) return sum
+      if (c.conv_type !== 'group' && c.conv_type !== 'channel') return sum
+      return sum + (c.unread_count || 0)
+    }, 0)
+  }, [conversations, mutedIds])
+
   useEffect(() => {
     document.title = totalUnread > 0 ? `(${totalUnread}) Agent-Native IM` : 'Agent-Native IM'
   }, [totalUnread])
@@ -156,11 +171,13 @@ export function AppLayout() {
   }, [entity, hydrateNotifications, inboxDirtyVersion, resetNotifications, token])
 
   // ─── Derive active view from URL ───
-  const viewMode: 'chat' | 'friends' | 'inbox' | 'bots' | 'settings' = (() => {
+  const viewMode: 'chat' | 'direct' | 'groups' | 'friends' | 'inbox' | 'bots' | 'settings' = (() => {
     if (location.pathname.startsWith('/friends')) return 'friends'
     if (location.pathname.startsWith('/inbox')) return 'inbox'
     if (location.pathname.startsWith('/bots')) return 'bots'
     if (location.pathname.startsWith('/settings')) return 'settings'
+    if (location.pathname.startsWith('/chat/groups')) return 'groups'
+    if (location.pathname.startsWith('/chat/direct')) return 'direct'
     return 'chat'
   })()
 
@@ -200,15 +217,20 @@ export function AppLayout() {
         {!isMobile && (
           <Sidebar
             botMode={viewMode === 'bots'}
+            directMode={viewMode === 'direct' || viewMode === 'chat'}
+            groupMode={viewMode === 'groups'}
             friendsMode={viewMode === 'friends'}
             inboxMode={viewMode === 'inbox'}
             settingsMode={viewMode === 'settings'}
+            directUnreadCount={directUnread}
+            groupUnreadCount={groupUnread}
             friendRequestCount={friendRequestCount}
             notificationCount={unreadNotificationCount}
+            onToggleDirect={() => navigate('/chat/direct')}
+            onToggleGroups={() => navigate('/chat/groups')}
             onToggleBots={() => navigate(viewMode === 'bots' ? '/chat' : '/bots')}
             onToggleFriends={() => navigate(viewMode === 'friends' ? '/chat' : '/friends')}
             onToggleInbox={() => navigate(viewMode === 'inbox' ? '/chat' : '/inbox')}
-            onToggleChat={() => navigate('/chat')}
             onToggleSettings={() => navigate(viewMode === 'settings' ? '/chat' : '/settings')}
           />
         )}

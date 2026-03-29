@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
-import { useParams, useNavigate, useOutletContext } from 'react-router-dom'
+import { useParams, useNavigate, useOutletContext, useLocation } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
@@ -36,46 +36,68 @@ function botRouteFor(entity: { id: number; bot_id?: string; public_id?: string }
 
 export function ChatPage() {
   const { t } = useTranslation()
-  const { conversationId, conversationPublicId } = useParams()
+  const { conversationRef } = useParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const { ws, convManager, botManager, isMobile } = useOutletContext<AppOutletContext>()
   const { loadBotEntities, botEntities } = botManager
   const entity = useAuthStore((s) => s.entity)
   const token = useAuthStore((s) => s.token)!
   const { conversations, activeId, removeConversation, updateConversation } = useConversationsStore()
   const setActive = useConversationsStore((s) => s.setActive)
+  const { activeConv, isArchivedView } = convManager
 
   const [showNewChat, setShowNewChat] = useState(false)
   const [newChatEntityId, setNewChatEntityId] = useState<number | undefined>()
   const [showSettings, setShowSettings] = useState(false)
   const [showTasks, setShowTasks] = useState(false)
   const [showGlobalSearch, setShowGlobalSearch] = useState(false)
+  const desktopScope: 'direct' | 'groups' = location.pathname.startsWith('/chat/groups') ? 'groups' : 'direct'
+  const listScope: 'all' | 'direct' | 'groups' = isMobile ? 'all' : desktopScope
+  const listTitle = isMobile ? t('sidebar.messages') : t(`conversation.${desktopScope}`)
+  const desktopBaseRoute = desktopScope === 'groups' ? '/chat/groups' : '/chat/direct'
+
+  const isPublicConversationRef = Boolean(conversationRef && !/^\d+$/.test(conversationRef))
+  const numericConversationId = conversationRef && /^\d+$/.test(conversationRef) ? Number(conversationRef) : null
+
+  useEffect(() => {
+    if (isMobile) return
+    if (location.pathname === '/chat') {
+      navigate('/chat/direct', { replace: true })
+    }
+  }, [isMobile, location.pathname, navigate])
 
   // Sync URL param to store
   useEffect(() => {
-    if (conversationPublicId) return
-    const urlId = conversationId ? Number(conversationId) : null
-    if (urlId !== activeId) {
-      setActive(urlId)
+    if (isPublicConversationRef) return
+    if (numericConversationId !== activeId) {
+      setActive(numericConversationId)
     }
-  }, [conversationId, conversationPublicId, activeId, setActive])
+  }, [activeId, isPublicConversationRef, numericConversationId, setActive])
 
   useEffect(() => {
-    if (!conversationPublicId) return
-    const cached = conversations.find((conversation) => conversationPublicIdOf(conversation) === conversationPublicId)
+    if (!isPublicConversationRef || !conversationRef) return
+    const cached = conversations.find((conversation) => conversationPublicIdOf(conversation) === conversationRef)
     if (cached) {
       if (cached.id !== activeId) setActive(cached.id)
       return
     }
     let cancelled = false
-    void api.getConversationByPublicId(token, conversationPublicId).then((res) => {
+    void api.getConversationByPublicId(token, conversationRef).then((res) => {
       if (cancelled || !res.ok || !res.data) return
       setActive(res.data.id)
     })
     return () => {
       cancelled = true
     }
-  }, [activeId, conversationPublicId, conversations, setActive, token])
+  }, [activeId, conversationRef, conversations, isPublicConversationRef, setActive, token])
+
+  useEffect(() => {
+    if (isMobile) return
+    const isScopedRoute = location.pathname.startsWith('/chat/direct') || location.pathname.startsWith('/chat/groups')
+    if (isScopedRoute || location.pathname === '/chat' || !conversationRef || !activeConv) return
+    navigate(conversationRouteFor(activeConv), { replace: true })
+  }, [activeConv, conversationRef, isMobile, location.pathname, navigate])
 
   useEffect(() => {
     if (conversations.length === 0 && botEntities.length === 0) {
@@ -88,9 +110,9 @@ export function ChatPage() {
       const conversation = conversations.find((item) => item.id === id)
       navigate(conversationRouteFor(conversation))
     } else {
-      navigate('/chat')
+      navigate(isMobile ? '/chat' : desktopBaseRoute)
     }
-  }, [conversations, navigate])
+  }, [conversations, desktopBaseRoute, isMobile, navigate])
 
   const handleBackFromChat = useCallback(() => {
     navigate('/chat')
@@ -106,8 +128,8 @@ export function ChatPage() {
   const handleGlobalSearchResult = useCallback((conversationId: number, _messageId: number) => {
     setShowGlobalSearch(false)
     const conversation = conversations.find((item) => item.id === conversationId)
-    navigate(conversationRouteFor(conversation || { id: conversationId }))
-  }, [conversations, navigate])
+    navigate(conversationRouteFor(conversation || { id: conversationId, conv_type: desktopScope === 'groups' ? 'group' : 'direct' }))
+  }, [conversations, desktopScope, navigate])
 
   const handleEntityViewDetails = useCallback((target: Entity) => {
     if (target.entity_type === 'bot' || target.entity_type === 'service') {
@@ -116,7 +138,6 @@ export function ChatPage() {
     }
   }, [navigate, loadBotEntities])
 
-  const { activeConv, isArchivedView } = convManager
   const hasConversation = !!activeConv
   const hasBots = botEntities.some((entity) => entity.entity_type !== 'user' && entity.status !== 'disabled')
   const shouldCreateFirstBot = needsFirstBot(hasBots)
@@ -128,13 +149,15 @@ export function ChatPage() {
         'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
         isMobile ? 'w-full h-full' : 'w-72',
         isMobile
-          ? ((conversationId || conversationPublicId) ? 'hidden' : 'flex flex-col')
+          ? (conversationRef ? 'hidden' : 'flex flex-col')
           : (activeId ? 'hidden md:flex md:flex-col' : 'flex flex-col'),
       )}>
         <ConversationList
           conversations={conversations}
           activeId={activeId}
           myEntityId={entity?.id || 0}
+          scope={listScope}
+          title={listTitle}
           onSelect={handleSelectConversation}
           onNewChat={() => { setNewChatEntityId(undefined); setShowNewChat(true) }}
           emptyActionLabel={shouldCreateFirstBot ? t('onboarding.createBotAction') : t('onboarding.primaryAction')}
@@ -158,7 +181,7 @@ export function ChatPage() {
       {/* Right panel: ChatThread */}
       <div className={cn(
         'flex-1 min-w-0 flex',
-        isMobile && conversationId && 'mobile-chat-panel',
+        isMobile && conversationRef && 'mobile-chat-panel',
       )}>
         {hasConversation ? (
           <>

@@ -1,39 +1,33 @@
-import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
-import { useConversationsStore } from '@/store/conversations'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Bot, Bell, Zap, Wifi, WifiOff, MessageSquare, Users } from 'lucide-react'
+import { Bot, Bell, Zap, Wifi, WifiOff, MessageSquare, Users, UserPlus } from 'lucide-react'
 
 interface Props {
   botMode: boolean
+  directMode?: boolean
+  groupMode?: boolean
   friendsMode?: boolean
   inboxMode?: boolean
   settingsMode?: boolean
+  directUnreadCount?: number
+  groupUnreadCount?: number
   friendRequestCount?: number
   notificationCount?: number
   onToggleBots: () => void
+  onToggleDirect?: () => void
+  onToggleGroups?: () => void
   onToggleFriends?: () => void
   onToggleInbox?: () => void
-  onToggleChat?: () => void
   onToggleSettings?: () => void
 }
 
-export function Sidebar({ botMode, friendsMode, inboxMode, settingsMode, friendRequestCount = 0, notificationCount = 0, onToggleBots, onToggleFriends, onToggleInbox, onToggleChat, onToggleSettings }: Props) {
+export function Sidebar({ botMode, directMode, groupMode, friendsMode, inboxMode, settingsMode, directUnreadCount = 0, groupUnreadCount = 0, friendRequestCount = 0, notificationCount = 0, onToggleBots, onToggleDirect, onToggleGroups, onToggleFriends, onToggleInbox, onToggleSettings }: Props) {
   const { t } = useTranslation()
   const entity = useAuthStore((s) => s.entity)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
-  const conversations = useConversationsStore((s) => s.conversations)
-  const mutedIds = useConversationsStore((s) => s.mutedIds)
-
-  const totalUnread = useMemo(() => {
-    return conversations.reduce((sum, c) => {
-      if (mutedIds.has(c.id)) return sum
-      return sum + (c.unread_count || 0)
-    }, 0)
-  }, [conversations, mutedIds])
 
   return (
     <nav role="navigation" aria-label={t('a11y.navigation')} className="relative w-[72px] flex flex-col items-center py-5 gap-3 bg-[var(--color-bg-secondary)]/92 backdrop-blur-xl border-r border-[var(--color-border)]">
@@ -46,28 +40,45 @@ export function Sidebar({ botMode, friendsMode, inboxMode, settingsMode, friendR
         </div>
       </div>
 
-      {/* Chat with unread badge */}
+      {/* Direct chats */}
       <button
-        onClick={onToggleChat}
+        onClick={onToggleDirect}
         className={cn(
           'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
-          !botMode && !friendsMode && !inboxMode && !settingsMode
+          directMode
             ? 'bg-[var(--color-accent)]/16 text-[var(--color-accent)] shadow-sm before:absolute before:-left-3 before:top-2 before:bottom-2 before:w-0.5 before:rounded-full before:bg-[var(--color-accent)]'
             : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
         )}
-        title={t('sidebar.messages')}
-        aria-label={t('sidebar.messages')}
+        title={t('conversation.direct')}
+        aria-label={t('conversation.direct')}
       >
         <MessageSquare className="w-5 h-5" />
-        {totalUnread > 0 && (
+        {directUnreadCount > 0 && (
           <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
-            {totalUnread > 99 ? '99+' : totalUnread}
+            {directUnreadCount > 99 ? '99+' : directUnreadCount}
           </span>
         )}
       </button>
 
-      {/* Spacer */}
-      <div className="flex-1" />
+      {/* Group chats */}
+      <button
+        onClick={onToggleGroups}
+        className={cn(
+          'w-10 h-10 rounded-xl flex items-center justify-center cursor-pointer transition-colors relative',
+          groupMode
+            ? 'bg-[var(--color-accent)]/16 text-[var(--color-accent)] shadow-sm'
+            : 'hover:bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-accent)]'
+        )}
+        title={t('conversation.groups')}
+        aria-label={t('conversation.groups')}
+      >
+        <Users className="w-5 h-5" />
+        {groupUnreadCount > 0 && (
+          <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
+            {groupUnreadCount > 99 ? '99+' : groupUnreadCount}
+          </span>
+        )}
+      </button>
 
       <button
         onClick={onToggleFriends}
@@ -80,13 +91,16 @@ export function Sidebar({ botMode, friendsMode, inboxMode, settingsMode, friendR
         title={t('friends.title')}
         aria-label={t('friends.title')}
       >
-        <Users className="w-5 h-5" />
+        <UserPlus className="w-5 h-5" />
         {friendRequestCount > 0 && (
           <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
             {friendRequestCount > 99 ? '99+' : friendRequestCount}
           </span>
         )}
       </button>
+
+      {/* Spacer */}
+      <div className="flex-1" />
 
       <button
         onClick={onToggleInbox}

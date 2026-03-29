@@ -12,6 +12,8 @@ interface Props {
   conversations: Conversation[]
   activeId: number | null
   myEntityId: number
+  scope?: 'all' | 'direct' | 'groups'
+  title?: string
   onSelect: (id: number) => void
   onNewChat: () => void
   onGlobalSearch?: () => void
@@ -29,11 +31,10 @@ interface Props {
   onEmptyAction?: () => void
 }
 
-export function ConversationList({ conversations, activeId, myEntityId, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading, showCachedSnapshot = false, emptyActionLabel, onEmptyAction }: Props) {
+export function ConversationList({ conversations, activeId, myEntityId, scope = 'all', title, onSelect, onNewChat, onGlobalSearch, onUpdateConversation, onLeave, onArchive, onUnarchive, onPin, onUnpin, onRefresh, archiveRefresh, loading: externalLoading, showCachedSnapshot = false, emptyActionLabel, onEmptyAction }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const [search, setSearch] = useState('')
-  const [scope, setScope] = useState<'direct' | 'groups'>('direct')
   const [archivedOpen, setArchivedOpen] = useState(false)
   const [archived, setArchived] = useState<Conversation[]>([])
 
@@ -73,6 +74,13 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
   }, [conversations, myEntityId])
 
   const scoped = sorted.filter((c) => {
+    if (scope === 'all') return true
+    if (scope === 'direct') return c.conv_type === 'direct'
+    return c.conv_type === 'group' || c.conv_type === 'channel'
+  })
+
+  const archivedScoped = archived.filter((c) => {
+    if (scope === 'all') return true
     if (scope === 'direct') return c.conv_type === 'direct'
     return c.conv_type === 'group' || c.conv_type === 'channel'
   })
@@ -125,7 +133,7 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
       <div className="px-4 pt-5 pb-3 flex items-center justify-between flex-shrink-0 border-b border-[var(--color-border)]">
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--color-text-muted)] mb-1">{t('conversation.messages')}</p>
-          <h2 className="text-[22px] leading-none font-semibold text-[var(--color-text-primary)]">{t('conversation.messages')}</h2>
+          <h2 className="text-[22px] leading-none font-semibold text-[var(--color-text-primary)]">{title || t('conversation.messages')}</h2>
         </div>
         <button
           onClick={onNewChat}
@@ -167,17 +175,6 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
             {t('conversation.cachedSnapshot')}
           </div>
         )}
-        <div className="mt-3 grid grid-cols-2 gap-1 rounded-2xl bg-[var(--color-bg-secondary)] p-1">
-          {(['direct', 'groups'] as const).map((nextScope) => (
-            <button
-              key={nextScope}
-              onClick={() => setScope(nextScope)}
-              className={`h-8 rounded-xl text-xs font-medium transition-colors cursor-pointer ${scope === nextScope ? 'bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] border border-[var(--color-border)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'}`}
-            >
-              {t(`conversation.${nextScope}`)}
-            </button>
-          ))}
-        </div>
       </div>
 
       {/* Pull-to-refresh indicator */}
@@ -260,10 +257,10 @@ export function ConversationList({ conversations, activeId, myEntityId, onSelect
           </button>
           {archivedOpen && (
             <div className="space-y-0.5 opacity-60 max-h-48 overflow-y-auto">
-              {archived.length === 0 ? (
+              {archivedScoped.length === 0 ? (
                 <p className="text-[10px] text-[var(--color-text-muted)] text-center py-3">{t('conversation.noArchivedConversations')}</p>
               ) : (
-                archived.map((conv) => (
+                archivedScoped.map((conv) => (
                   <ConversationItem
                     key={conv.id}
                     conv={conv}

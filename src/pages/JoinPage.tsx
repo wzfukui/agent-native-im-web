@@ -4,11 +4,12 @@ import { JoinInvitePage } from '@/components/invite/JoinInvitePage'
 import * as api from '@/lib/api'
 import { useConversationsStore } from '@/store/conversations'
 
-function conversationRouteFor(conversation: { id: number; public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
-  if (!conversation) return '/chat'
+function conversationRouteFor(conversation: { id: number; conv_type?: string; public_id?: string; metadata?: Record<string, unknown> } | null | undefined): string {
+  const scopePath = conversation?.conv_type === 'group' || conversation?.conv_type === 'channel' ? 'groups' : 'direct'
+  if (!conversation) return `/chat/${scopePath}`
   const meta = conversation.metadata as Record<string, unknown> | undefined
   const publicId = conversation.public_id || (typeof meta?.public_id === 'string' ? meta.public_id : '')
-  return publicId ? `/chat/public/${encodeURIComponent(publicId)}` : `/chat/${conversation.id}`
+  return publicId ? `/chat/${scopePath}/${encodeURIComponent(publicId)}` : `/chat/${scopePath}/${conversation.id}`
 }
 
 export function JoinPage() {

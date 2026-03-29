@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from 'react-router-dom'
 import { useAuthStore } from '@/store/auth'
 import { AppLayout } from '@/layouts/AppLayout'
 import { LoginPage } from '@/pages/LoginPage'
@@ -70,6 +70,12 @@ function SessionRestore() {
   return null
 }
 
+function LegacyConversationRedirect() {
+  const { conversationPublicId } = useParams()
+  if (!conversationPublicId) return <Navigate to="/chat" replace />
+  return <Navigate to={`/chat/${encodeURIComponent(conversationPublicId)}`} replace />
+}
+
 /** Guard: redirect unauthenticated users to login */
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const token = useAuthStore((s) => s.token)
@@ -108,8 +114,12 @@ export default function App() {
           <RequireAuth><AppLayout /></RequireAuth>
         }>
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/chat/:conversationId" element={<ChatPage />} />
-          <Route path="/chat/public/:conversationPublicId" element={<ChatPage />} />
+          <Route path="/chat/direct" element={<ChatPage />} />
+          <Route path="/chat/direct/:conversationRef" element={<ChatPage />} />
+          <Route path="/chat/groups" element={<ChatPage />} />
+          <Route path="/chat/groups/:conversationRef" element={<ChatPage />} />
+          <Route path="/chat/public/:conversationPublicId" element={<LegacyConversationRedirect />} />
+          <Route path="/chat/:conversationRef" element={<ChatPage />} />
           <Route path="/friends" element={<FriendsPage />} />
           <Route path="/inbox" element={<InboxPage />} />
           <Route path="/bots" element={<BotsPage />} />
