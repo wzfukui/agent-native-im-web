@@ -52,6 +52,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const removeOptimisticMessage = useMessagesStore((s) => s.removeOptimisticMessage)
   const setOptimisticState = useMessagesStore((s) => s.setOptimisticState)
   const [loading, setLoading] = useState(false)
+  const [refreshing, setRefreshing] = useState(false)
   const [searching, setSearching] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<Message[] | null>(null)
@@ -212,32 +213,45 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     prevConvIdRef.current = conversation.id
   }, [conversation.id])
 
-  // Load messages
-  useEffect(() => {
-    let cancelled = false
-    queueMicrotask(() => setInitialLastRead(undefined))
-    const load = async () => {
+  const refreshMessages = useCallback(async (options?: { hydrateCache?: boolean; showSpinner?: boolean }) => {
+    const hydrateCache = options?.hydrateCache ?? false
+    const showSpinner = options?.showSpinner ?? false
+
+    if (showSpinner) {
+      setRefreshing(true)
+    } else {
       setLoading(true)
-      const cached = await getCachedMessages(conversation.id)
-      if (!cancelled && cached.length > 0) {
-        setMessages(conversation.id, cached, true)
+    }
+
+    queueMicrotask(() => setInitialLastRead(undefined))
+
+    try {
+      if (hydrateCache) {
+        const cached = await getCachedMessages(conversation.id)
+        if (cached.length > 0) {
+          setMessages(conversation.id, cached, true)
+        }
       }
       const res = await api.listMessages(token, conversation.id)
-      if (!cancelled && res.ok && res.data) {
+      if (res.ok && res.data) {
         const msgs = (res.data.messages || []).reverse()
         setMessages(conversation.id, msgs, res.data.has_more)
         void cacheMessages(conversation.id, msgs)
-        // Capture last-read position for new message divider
         const unread = conversation.unread_count ?? 0
         if (unread > 0 && msgs.length > unread) {
           setInitialLastRead(msgs[msgs.length - 1 - unread].id)
         }
       }
+    } finally {
       setLoading(false)
+      setRefreshing(false)
     }
-    load()
-    return () => { cancelled = true }
-  }, [conversation.id, token, setMessages, conversation.unread_count])
+  }, [conversation.id, conversation.unread_count, setMessages, token])
+
+  // Load messages
+  useEffect(() => {
+    void refreshMessages({ hydrateCache: true })
+  }, [refreshMessages])
 
   // Persist in-memory messages for offline read (debounced to batch IndexedDB writes)
   const cacheTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -718,12 +732,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           messages={searchResults ?? messages}
           myEntityId={myEntity.id}
           loading={searchResults !== null ? searchLoading : loading}
+          refreshing={searchResults !== null ? false : refreshing}
           hasMore={searchResults !== null ? false : hasMore}
           lastReadMessageId={searchResults ? undefined : initialLastRead}
           streams={searchResults ? undefined : convStreams}
           participants={conversation.participants}
           readReceipts={searchResults ? undefined : readReceipts}
           onLoadMore={searchResults !== null ? undefined : handleLoadMore}
+          onRefresh={searchResults !== null ? undefined : () => refreshMessages({ showSpinner: true })}
           onInteractionReply={handleInteractionReply}
           onRevoke={isArchived ? undefined : handleRevoke}
           onReply={isArchived ? undefined : (msg) => setReplyTo(msg)}

@@ -15,12 +15,14 @@ interface Props {
   messages: Message[]
   myEntityId: number
   loading?: boolean
+  refreshing?: boolean
   hasMore?: boolean
   lastReadMessageId?: number
   streams?: ActiveStream[]
   participants?: { entity_id: number; entity?: Entity }[]
   readReceipts?: Record<number, ReadReceipt>
   onLoadMore?: () => void
+  onRefresh?: () => Promise<void>
   onInteractionReply?: (msgId: number, choice: string, label: string) => void
   onRevoke?: (msgId: number) => void
   onReply?: (msg: Message) => void
@@ -33,13 +35,17 @@ interface Props {
   progress?: ProgressEntry
 }
 
-export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMessageId, streams, participants, readReceipts, onLoadMore, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, onEntitySendMessage, onEntityViewDetails, thinkingEntity, progress }: Props) {
+export function MessageList({ messages, myEntityId, loading, refreshing = false, hasMore, lastReadMessageId, streams, participants, readReceipts, onLoadMore, onRefresh, onInteractionReply, onRevoke, onReply, onReact, onRetryOutbox, onCancelStream, onEntitySendMessage, onEntityViewDetails, thinkingEntity, progress }: Props) {
   const { t } = useTranslation()
   const endRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const prevLengthRef = useRef(0)
   const isNearBottomRef = useRef(true)
   const [highlightedMsgId, setHighlightedMsgId] = useState<number | null>(null)
+  const [pullDistance, setPullDistance] = useState(0)
+  const touchStartYRef = useRef(0)
+  const isPullingRef = useRef(false)
+  const PULL_THRESHOLD = 70
 
   // Scroll to a specific message and briefly highlight it
   const handleScrollToMessage = useCallback((msgId: number) => {
@@ -62,6 +68,36 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
       onLoadMore?.()
     }
   }
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    if (containerRef.current && containerRef.current.scrollTop === 0) {
+      touchStartYRef.current = e.touches[0].clientY
+      isPullingRef.current = true
+    }
+  }, [])
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    if (!isPullingRef.current || refreshing) return
+    const delta = e.touches[0].clientY - touchStartYRef.current
+    if (delta > 0 && containerRef.current && containerRef.current.scrollTop === 0) {
+      setPullDistance(Math.min(delta * 0.5, 100))
+    } else {
+      setPullDistance(0)
+    }
+  }, [refreshing])
+
+  const handleTouchEnd = useCallback(async () => {
+    isPullingRef.current = false
+    if (pullDistance >= PULL_THRESHOLD && onRefresh && !refreshing) {
+      try {
+        await onRefresh()
+      } finally {
+        setPullDistance(0)
+      }
+      return
+    }
+    setPullDistance(0)
+  }, [onRefresh, pullDistance, refreshing])
 
   // Auto-scroll on new messages
   useEffect(() => {
@@ -164,9 +200,27 @@ export function MessageList({ messages, myEntityId, loading, hasMore, lastReadMe
     <div
       ref={containerRef}
       onScroll={handleScroll}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => { void handleTouchEnd() }}
       id="chat-message-list"
       className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-3"
     >
+      {(pullDistance > 0 || refreshing) && (
+        <div
+          className="flex items-center justify-center overflow-hidden transition-[height] duration-200"
+          style={{ height: refreshing ? 40 : pullDistance > 0 ? Math.min(pullDistance, 50) : 0 }}
+        >
+          {refreshing ? (
+            <Loader2 className="w-4 h-4 text-[var(--color-accent)] animate-spin" />
+          ) : pullDistance >= PULL_THRESHOLD ? (
+            <span className="text-[10px] text-[var(--color-accent)] font-medium">{t('conversation.refreshing')}</span>
+          ) : (
+            <span className="text-[10px] text-[var(--color-text-muted)]">{t('conversation.pullToRefresh')}</span>
+          )}
+        </div>
+      )}
+
       {/* Load more */}
       {hasMore && (
         <div className="flex justify-center py-3">
