@@ -39,7 +39,7 @@ export function BotsPage() {
     if (!conversation) return '/chat'
     const meta = conversation.metadata as Record<string, unknown> | undefined
     const publicId = conversation.public_id || (typeof meta?.public_id === 'string' ? meta.public_id : '')
-    return publicId ? `/chat/public/${encodeURIComponent(publicId)}` : `/chat/${conversation.id}`
+    return publicId ? `/chat/${encodeURIComponent(publicId)}` : `/chat/${conversation.id}`
   }, [])
 
   // Load bot entities when entering bots view

@@ -174,7 +174,7 @@ export const getConversation = (token: string, id: number) =>
   request<Conversation>('GET', `/api/v1/conversations/${id}`, token)
 
 export const getConversationByPublicId = (token: string, publicId: string) =>
-  request<Conversation>('GET', `/api/v1/conversations/public/${encodeURIComponent(publicId)}`, token)
+  request<Conversation>('GET', `/api/v1/conversations/by-public-id/${encodeURIComponent(publicId)}`, token)
 
 export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
   request<Conversation>('POST', '/api/v1/conversations', token, data)

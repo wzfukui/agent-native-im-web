@@ -61,6 +61,9 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const [replyTo, setReplyTo] = useState<Message | null>(null)
   const [dragging, setDragging] = useState(false)
   const [debugCopied, setDebugCopied] = useState(false)
+  const [debugLogged, setDebugLogged] = useState(false)
+  const [debugMenuOpen, setDebugMenuOpen] = useState(false)
+  const [debugStatusKey, setDebugStatusKey] = useState<string | null>(null)
   const [initialLastRead, setInitialLastRead] = useState<number | undefined>(undefined)
   const [botThinkingEntity, setBotThinkingEntity] = useState<import('@/lib/types').Entity | null>(null)
   const botThinkingTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -68,6 +71,16 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const updateConversation = useConversationsStore((s) => s.updateConversation)
   const readReceipts = useConversationsStore((s) => s.readReceipts[conversation.id])
   const online = usePresenceStore((s) => s.online)
+  const wsConnected = usePresenceStore((s) => s.wsConnected)
+
+  const outboxCount = useMemo(
+    () => messages.filter((msg) => msg.temp_id && (msg.client_state === 'queued' || msg.client_state === 'failed')).length,
+    [messages],
+  )
+  const outboxFailedCount = useMemo(
+    () => messages.filter((msg) => msg.temp_id && msg.client_state === 'failed').length,
+    [messages],
+  )
 
   // Determine other participant for direct chats
   const otherParticipant = conversation.participants?.find((p) => p.entity_id !== myEntity.id)?.entity
@@ -119,6 +132,54 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
     () => Object.values(streams).filter((s) => s?.conversation_id === conversation.id),
     [streams, conversation.id],
   )
+
+  const buildLayoutReport = useCallback(() => inspectChatBubbles('chat-message-list'), [])
+  const buildNetworkReport = useCallback(() => {
+    const lines = [
+      '# ANI Web Network Debug Report',
+      `generated_at=${new Date().toISOString()}`,
+      `conversation_id=${conversation.id}`,
+      `conversation_type=${conversation.conv_type}`,
+      `message_count=${messages.length}`,
+      `outbox_count=${outboxCount}`,
+      `outbox_failed_count=${outboxFailedCount}`,
+      `navigator_online=${String(navigator.onLine)}`,
+      `ws_connected=${String(wsConnected)}`,
+      `peer_online=${String(isOtherOnline)}`,
+      `stream_count=${convStreams.length}`,
+      `url=${window.location.href}`,
+    ]
+
+    return lines.join('\n')
+  }, [conversation.conv_type, conversation.id, convStreams.length, isOtherOnline, messages.length, outboxCount, outboxFailedCount, wsConnected])
+
+  const buildFullDebugReport = useCallback(() => {
+    return [
+      buildNetworkReport(),
+      '',
+      buildLayoutReport(),
+    ].join('\n')
+  }, [buildLayoutReport, buildNetworkReport])
+
+  const handleCopyDebug = useCallback(async (_kind: 'full' | 'network' | 'layout', report: string, successKey: string) => {
+    const ok = await copyToClipboard(report)
+    if (!ok) return
+    setDebugMenuOpen(false)
+    setDebugCopied(true)
+    setDebugStatusKey(successKey)
+    setTimeout(() => setDebugCopied(false), 2000)
+  }, [])
+
+  const handleLogDebug = useCallback(() => {
+    const report = buildLayoutReport()
+    console.group('[ANI] Chat Layout Debug')
+    console.log(report)
+    console.groupEnd()
+    setDebugMenuOpen(false)
+    setDebugLogged(true)
+    setDebugStatusKey('settings.debugLogged')
+    setTimeout(() => setDebugLogged(false), 2000)
+  }, [buildLayoutReport])
 
   // Consolidated: clear botThinking when a bot message arrives, typing starts, streaming starts, or conversation switches
   useEffect(() => {
@@ -601,7 +662,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       )}
 
       {/* Header */}
-      <div className="flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/90 backdrop-blur-xl">
+      <div className="relative z-20 overflow-visible flex items-center gap-3 px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/90 backdrop-blur-xl">
         {onBack && (
           <button onClick={onBack} aria-label={t('a11y.back')} className="md:hidden w-8 h-8 rounded-lg hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer min-w-[32px]">
             <ArrowLeft className="w-4 h-4 text-[var(--color-text-secondary)]" />
@@ -664,25 +725,48 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
             <ListTodo className="w-4 h-4" />
           </button>
         )}
-        {/* Debug button — copies layout report to clipboard (dev mode only) */}
+        {/* Debug button — opens layout debug tools (dev mode only) */}
         {devMode && (
-          <button
-            onClick={async () => {
-              const report = inspectChatBubbles('chat-message-list')
-              const ok = await copyToClipboard(report)
-              if (ok) {
-                setDebugCopied(true)
-                setTimeout(() => setDebugCopied(false), 2000)
-              }
-            }}
-            className={cn(
-              'w-8 h-8 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
-              debugCopied ? 'text-[var(--color-success)]' : 'text-[var(--color-warning)]',
+          <div className="relative z-30">
+            <button
+              onClick={() => setDebugMenuOpen((open) => !open)}
+              className={cn(
+                'w-8 h-8 rounded-xl hover:bg-[var(--color-bg-hover)] flex items-center justify-center cursor-pointer transition-colors min-w-[32px]',
+                debugCopied || debugLogged ? 'text-[var(--color-success)]' : 'text-[var(--color-warning)]',
+              )}
+              title={t('settings.devMode')}
+            >
+              {debugCopied || debugLogged ? <Check className="w-4 h-4" /> : <Bug className="w-4 h-4" />}
+            </button>
+            {debugMenuOpen && (
+              <div className="absolute right-0 top-10 z-[120] w-72 max-w-[calc(100vw-24px)] rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-panel)] shadow-2xl overflow-hidden">
+                <button
+                  onClick={() => void handleCopyDebug('full', buildFullDebugReport(), 'settings.debugCopied')}
+                  className="block w-full whitespace-nowrap px-4 py-3 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors"
+                >
+                  {t('settings.debugCopyFull')}
+                </button>
+                <button
+                  onClick={() => void handleCopyDebug('network', buildNetworkReport(), 'settings.debugNetworkCopied')}
+                  className="block w-full whitespace-nowrap px-4 py-3 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors border-t border-[var(--color-border)]"
+                >
+                  {t('settings.debugCopyNetwork')}
+                </button>
+                <button
+                  onClick={() => void handleCopyDebug('layout', buildLayoutReport(), 'settings.debugLayoutCopied')}
+                  className="block w-full whitespace-nowrap px-4 py-3 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors border-t border-[var(--color-border)]"
+                >
+                  {t('settings.debugCopyLayout')}
+                </button>
+                <button
+                  onClick={handleLogDebug}
+                  className="block w-full whitespace-nowrap px-4 py-3 text-left text-sm text-[var(--color-text-primary)] hover:bg-[var(--color-bg-hover)] transition-colors border-t border-[var(--color-border)]"
+                >
+                  {t('settings.debugLogLayout')}
+                </button>
+              </div>
             )}
-            title={t('settings.devMode')}
-          >
-            {debugCopied ? <Check className="w-4 h-4" /> : <Bug className="w-4 h-4" />}
-          </button>
+          </div>
         )}
         {onToggleSettings && (
           <button
@@ -694,6 +778,14 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
           </button>
         )}
       </div>
+
+      {(debugCopied || debugLogged) && (
+        <div className="px-4 py-1.5 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]/90 backdrop-blur-xl">
+          <p className="text-[11px] text-[var(--color-success)]">
+            {debugCopied ? t(debugStatusKey || 'settings.debugCopied') : t(debugStatusKey || 'settings.debugLogged')}
+          </p>
+        </div>
+      )}
 
       {/* Search bar */}
       {searching && (

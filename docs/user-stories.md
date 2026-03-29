@@ -72,7 +72,7 @@ This document captures the current web and PWA product behavior that has already
 **So that** links remain stable and do not expose internal numeric IDs
 
 **Acceptance Criteria**
-- Chat routes prefer `/chat/public/:publicId`
+- Chat routes prefer `/chat/:publicId`
 - Bot routes prefer `/bots/public/:botIdentifier`
 - UI and deep links use `public_id` / `bot_id` when available
 - Numeric-ID routes remain compatibility fallbacks only

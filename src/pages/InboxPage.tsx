@@ -37,7 +37,7 @@ function notificationConversationPublicId(notification: NotificationRecord): str
 
 function notificationConversationPath(notification: NotificationRecord): string | null {
   const publicId = notificationConversationPublicId(notification)
-  if (publicId) return `/chat/public/${encodeURIComponent(publicId)}`
+  if (publicId) return `/chat/${encodeURIComponent(publicId)}`
   const numericId = notificationConversationId(notification)
   if (numericId != null) return `/chat/${numericId}`
   return null

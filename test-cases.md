@@ -113,7 +113,7 @@ This suite focuses on the current released behavior of the ANI web and PWA clien
 2. Open a bot workspace from a bot card
 
 **Expected Result**
-- Chat route prefers `/chat/public/:publicId`
+- Chat route prefers `/chat/:publicId`
 - Bot route prefers `/bots/public/:botIdentifier`
 - Numeric IDs are used only as compatibility fallback
 
