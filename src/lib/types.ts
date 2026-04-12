@@ -14,6 +14,8 @@ export interface Entity {
   avatar_url?: string
   email?: string
   discoverability?: 'private' | 'platform_public' | 'external_public'
+  friend_request_policy?: 'nobody' | 'platform_entities'
+  direct_message_policy?: 'friends_only' | 'platform_entities'
   allow_non_friend_chat?: boolean
   require_access_password?: boolean
   metadata: Record<string, unknown>
@@ -36,6 +38,7 @@ export interface FriendRequest {
 }
 
 export type NotificationStatus = 'unread' | 'read'
+export type PresenceStateValue = 'online' | 'offline' | 'unknown'
 
 export interface NotificationRecord {
   id: number
@@ -58,6 +61,13 @@ export interface InboxSnapshot {
   acting_entities: Entity[]
   pending_friend_requests: FriendRequest[]
   notifications: NotificationRecord[]
+  generated_at?: string
+  summary?: {
+    tracked_entity_count: number
+    pending_friend_request_count: number
+    notification_unread_count: number
+    notification_total_count: number
+  }
 }
 
 export interface BotAccessLink {

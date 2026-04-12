@@ -231,76 +231,79 @@ export function InboxPage() {
                 <div
                   key={notification.id}
                   className={cn(
-                    'rounded-3xl border px-4 py-4 bg-[var(--color-bg-secondary)] transition-colors',
-                    isUnread ? 'border-[var(--color-accent)]/35' : 'border-[var(--color-border)]',
+                    'flex items-start gap-3 px-3 rounded-3xl transition-colors',
+                    isUnread ? 'bg-[var(--color-accent)]/4 hover:bg-[var(--color-accent)]/8' : 'hover:bg-[var(--color-bg-hover)]',
                   )}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="mt-3 flex-shrink-0">
                     <EntityAvatar entity={actor || recipient} size="sm" showStatus />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-[var(--color-text-primary)]">{notificationLabel(t, notification)}</span>
-                        {isUnread && <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />}
-                        {recipient && scope === 'all' && (
-                          <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-[var(--color-bg-primary)] text-[var(--color-text-muted)] border border-[var(--color-border)]">
-                            {t('inbox.forEntity', { name: entityDisplayName(recipient) })}
-                          </span>
-                        )}
-                      </div>
-                      <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{notification.body || notificationLabel(t, notification)}</p>
-                      <p className="mt-2 text-xs text-[var(--color-text-muted)]">{new Date(notification.created_at).toLocaleString()}</p>
-                    </div>
                   </div>
+                  <div className={cn(
+                    'min-w-0 flex-1 py-3 border-b border-[var(--color-border)]/70',
+                    isUnread && 'border-[var(--color-accent)]/20',
+                  )}>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-medium text-[var(--color-text-primary)]">{notificationLabel(t, notification)}</span>
+                      {isUnread && <span className="h-2 w-2 rounded-full bg-[var(--color-accent)]" />}
+                      {recipient && scope === 'all' && (
+                        <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-[var(--color-bg-primary)] text-[var(--color-text-muted)] border border-[var(--color-border)]">
+                          {t('inbox.forEntity', { name: entityDisplayName(recipient) })}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-sm text-[var(--color-text-secondary)]">{notification.body || notificationLabel(t, notification)}</p>
+                    <p className="mt-2 text-xs text-[var(--color-text-muted)]">{new Date(notification.created_at).toLocaleString()}</p>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-2">
-                    {isPendingRequest && (
-                      <>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {isPendingRequest && (
+                        <>
+                          <button
+                            onClick={() => void handleFriendAction(notification, 'accept')}
+                            disabled={actingId === notification.id}
+                            className="h-9 px-3 rounded-xl bg-[var(--color-success)] text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                          >
+                            {actingId === notification.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                            {t('friends.accept')}
+                          </button>
+                          <button
+                            onClick={() => void handleFriendAction(notification, 'reject')}
+                            disabled={actingId === notification.id}
+                            className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
+                          >
+                            <X className="w-3.5 h-3.5" />
+                            {t('friends.reject')}
+                          </button>
+                        </>
+                      )}
+
+                      {!isPendingRequest && isUnread && (
                         <button
-                          onClick={() => void handleFriendAction(notification, 'accept')}
-                          disabled={actingId === notification.id}
-                          className="h-9 px-3 rounded-xl bg-[var(--color-success)] text-white text-xs font-medium cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
-                        >
-                          {actingId === notification.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                          {t('friends.accept')}
-                        </button>
-                        <button
-                          onClick={() => void handleFriendAction(notification, 'reject')}
+                          onClick={() => void markRead(notification)}
                           disabled={actingId === notification.id}
                           className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
                         >
-                          <X className="w-3.5 h-3.5" />
-                          {t('friends.reject')}
+                          {actingId === notification.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                          {t('inbox.markRead')}
                         </button>
-                      </>
-                    )}
+                      )}
 
-                    {!isPendingRequest && isUnread && (
-                      <button
-                        onClick={() => void markRead(notification)}
-                        disabled={actingId === notification.id}
-                        className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer disabled:opacity-50 inline-flex items-center gap-1.5"
-                      >
-                        {actingId === notification.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
-                        {t('inbox.markRead')}
-                      </button>
-                    )}
+                      {notification.kind === 'friend.request.accepted' && (
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-success)]">
+                          <MessageCircleMore className="w-3.5 h-3.5" />
+                          {t('inbox.friendsNowVisible')}
+                        </span>
+                      )}
 
-                    {notification.kind === 'friend.request.accepted' && (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-success)]">
-                        <MessageCircleMore className="w-3.5 h-3.5" />
-                        {t('inbox.friendsNowVisible')}
-                      </span>
-                    )}
-
-                    {conversationPath && (
-                      <button
-                        onClick={() => navigate(conversationPath)}
-                        className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer inline-flex items-center gap-1.5"
-                      >
-                        <MessageCircleMore className="w-3.5 h-3.5" />
-                        {t('inbox.openConversation')}
-                      </button>
-                    )}
+                      {conversationPath && (
+                        <button
+                          onClick={() => navigate(conversationPath)}
+                          className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs font-medium text-[var(--color-text-primary)] cursor-pointer inline-flex items-center gap-1.5"
+                        >
+                          <MessageCircleMore className="w-3.5 h-3.5" />
+                          {t('inbox.openConversation')}
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               )

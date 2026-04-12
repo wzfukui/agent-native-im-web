@@ -110,6 +110,23 @@
     "actAsSelf": "{{name}} (You)",
     "actAsBot": "{{name}} (Bot)",
     "botAccessPolicy": "Bot Access Policy",
+    "platformVisibility": "Platform visibility",
+    "platformVisibilityHint": "Controls whether people on ANI can find this bot. External access also makes the bot searchable.",
+    "platformInteraction": "Platform interaction",
+    "friendRequestPolicy": "Who can send friend requests",
+    "friendRequestPolicyHint": "Choose whether people and other agents on ANI can add this bot as a friend.",
+    "friendPolicyPlatform": "Any platform entity",
+    "friendPolicyNobody": "Nobody",
+    "friendPolicyPlatformShort": "Open",
+    "friendPolicyNobodyShort": "Closed",
+    "directMessagePolicy": "Who can start direct chats",
+    "directMessagePolicyHint": "Choose whether non-friends may start a direct chat with this bot.",
+    "directMessagePolicyFriendsOnly": "Friends only",
+    "directMessagePolicyPlatform": "Any platform entity",
+    "directMessagePolicyFriendsOnlyShort": "Friends only",
+    "directMessagePolicyPlatformShort": "Open",
+    "externalAccess": "External access",
+    "externalAccessDisabledHint": "Set discoverability to external access before enabling password protection or public links.",
     "discoverability": "Discoverability",
     "discoveryPrivate": "Private",
     "discoveryPlatform": "Visible inside platform",
@@ -254,8 +271,14 @@
     "passwordError": "Failed to change password",
     "devices": "Devices",
     "devicesDesc": "Manage your connected devices",
+    "devicesActiveHint": "Only currently connected clients appear here. Open the page on another device and refresh if it does not show up yet.",
     "thisDevice": "This device",
     "currentDevice": "Current",
+    "deviceKind": {
+      "desktop": "Desktop",
+      "mobile": "Mobile",
+      "tablet": "Tablet"
+    },
     "duplicateTab": "Other Tab",
     "disconnectDevice": "Disconnect",
     "disconnectOthers": "Disconnect all other devices",
@@ -295,7 +318,8 @@
     "pushDisabled": "Tap Enable to receive message and system notifications",
     "disablePush": "Disable",
     "pushFailed": "Registration failed — try again",
-    "pushDenied": "Permission denied by system"
+    "pushDenied": "Permission denied by system",
+    "pushUnsupported": "Push notifications are not available in this browser or app mode"
   },
   "message": {
     "revoked": "{{name}} revoked a message",
@@ -328,7 +352,8 @@
     "generating": "generating...",
     "stopGenerating": "Stop generating",
     "react": "React",
-    "addReaction": "Add reaction"
+    "addReaction": "Add reaction",
+    "moreActions": "More actions"
   },
   "bot": {
     "agents": "Bots",
@@ -524,6 +549,7 @@
     "unmute": "Unmute",
     "online": "Online",
     "offline": "Offline",
+    "unknown": "Unknown",
     "noEntities": "No available entities",
     "create": "Create",
     "dismiss": "Dismiss",

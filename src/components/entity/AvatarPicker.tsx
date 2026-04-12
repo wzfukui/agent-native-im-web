@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Camera, Upload, Loader2, X } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
-import { cn, publicAvatarUrl } from '@/lib/utils'
+import { cn, previewAvatarUrl } from '@/lib/utils'
 import { reportError } from '@/lib/errors'
 
 // Preset bot avatar colors/emojis for quick selection
@@ -29,7 +29,7 @@ function generatePresetSvg(emoji: string): string {
 export function AvatarPicker({ currentUrl, onSelect, size = 'md' }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
-  const displayUrl = publicAvatarUrl(currentUrl)
+  const displayUrl = previewAvatarUrl(currentUrl)
   const [uploading, setUploading] = useState(false)
   const [showPicker, setShowPicker] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)

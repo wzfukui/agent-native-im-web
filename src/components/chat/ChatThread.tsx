@@ -9,7 +9,7 @@ import { useMessagesStore } from '@/store/messages'
 import { usePresenceStore } from '@/store/presence'
 import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
-import type { Conversation, ActiveStream, Message } from '@/lib/types'
+import type { Conversation, ActiveStream, Message, PresenceStateValue } from '@/lib/types'
 import { entityDisplayName, isBotOrService, cn } from '@/lib/utils'
 import { cacheMessages, getCachedMessages, enqueueOutboxMessage, getOutboxMessageByTempId, deleteOutboxMessage, updateOutboxMessage } from '@/lib/cache'
 import { DotsAnimation } from '@/components/ui/DotsAnimation'
@@ -70,7 +70,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   const dragCountRef = useRef(0)
   const updateConversation = useConversationsStore((s) => s.updateConversation)
   const readReceipts = useConversationsStore((s) => s.readReceipts[conversation.id])
-  const online = usePresenceStore((s) => s.online)
+  const getPresenceState = usePresenceStore((s) => s.getPresenceState)
   const wsConnected = usePresenceStore((s) => s.wsConnected)
 
   const outboxCount = useMemo(
@@ -85,7 +85,7 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
   // Determine other participant for direct chats
   const otherParticipant = conversation.participants?.find((p) => p.entity_id !== myEntity.id)?.entity
   const isGroup = conversation.conv_type === 'group' || conversation.conv_type === 'channel'
-  const isOtherOnline = otherParticipant ? online.has(otherParticipant.id) : false
+  const otherPresence: PresenceStateValue = otherParticipant ? getPresenceState(otherParticipant.id) : 'unknown'
 
   // Check if current user is observer
   const myParticipant = conversation.participants?.find((p) => p.entity_id === myEntity.id)
@@ -145,13 +145,13 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
       `outbox_failed_count=${outboxFailedCount}`,
       `navigator_online=${String(navigator.onLine)}`,
       `ws_connected=${String(wsConnected)}`,
-      `peer_online=${String(isOtherOnline)}`,
+      `peer_presence=${otherPresence}`,
       `stream_count=${convStreams.length}`,
       `url=${window.location.href}`,
     ]
 
     return lines.join('\n')
-  }, [conversation.conv_type, conversation.id, convStreams.length, isOtherOnline, messages.length, outboxCount, outboxFailedCount, wsConnected])
+  }, [conversation.conv_type, conversation.id, convStreams.length, messages.length, otherPresence, outboxCount, outboxFailedCount, wsConnected])
 
   const buildFullDebugReport = useCallback(() => {
     return [
@@ -689,9 +689,11 @@ export function ChatThread({ conversation, onBack, onCancelStream, onTyping, typ
             <p className="text-[11px] text-[var(--color-text-muted)]">
               {isGroup
                 ? t('conversation.participants', { count: conversation.participants?.length || 0 })
-                : isOtherOnline ? (
+                : otherPresence === 'online' ? (
                     <span className="text-[var(--color-success)]">{t('common.online')}</span>
-                  ) : t('common.offline')
+                  ) : otherPresence === 'offline'
+                    ? t('common.offline')
+                    : t('common.unknown')
               }
             </p>
           </div>

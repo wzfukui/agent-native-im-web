@@ -61,16 +61,15 @@ export function MessageActionMenu({ message, isSelf, anchorRect, onClose, onRepl
     const viewportW = window.innerWidth
     const viewportH = window.innerHeight
 
-    // Vertical: prefer above the message
-    let top = anchorRect.top - rect.height - 8
-    if (top < 8) top = anchorRect.bottom + 8
+    // Vertical: prefer below the trigger, then flip above if needed.
+    let top = anchorRect.bottom + 8
+    if (top + rect.height > viewportH - 8) top = anchorRect.top - rect.height - 8
+    if (top < 8) top = 8
 
-    // Horizontal: center on the message, but clamp to viewport
-    let left = anchorRect.left + anchorRect.width / 2 - rect.width / 2
+    // Horizontal: anchor to the explicit trigger instead of centering on the page.
+    let left = isSelf ? anchorRect.right - rect.width : anchorRect.left
     if (left < 8) left = 8
     if (left + rect.width > viewportW - 8) left = viewportW - rect.width - 8
-
-    if (top + rect.height > viewportH - 8) top = viewportH - rect.height - 8
 
     menu.style.top = `${top}px`
     menu.style.left = `${left}px`

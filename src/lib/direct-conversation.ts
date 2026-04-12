@@ -40,14 +40,14 @@ export function findExistingDirectConversation(conversations: Conversation[], my
 export async function openOrCreateDirectConversation(options: {
   token: string
   t: TFunction
-  myEntity: Entity
+  actingEntity: Entity
   target: Entity
   conversations: Conversation[]
   addConversation: (conversation: Conversation) => void
   mode?: 'smart' | 'existing' | 'new'
 }): Promise<Conversation | null> {
-  const { token, t, myEntity, target, conversations, addConversation, mode = 'smart' } = options
-  const existing = findExistingDirectConversation(conversations, myEntity.id, target.id)
+  const { token, t, actingEntity, target, conversations, addConversation, mode = 'smart' } = options
+  const existing = findExistingDirectConversation(conversations, actingEntity.id, target.id)
   const shouldReuse =
     mode === 'existing' || (mode === 'smart' && shouldReuseDirectConversation(target))
 
@@ -57,6 +57,7 @@ export async function openOrCreateDirectConversation(options: {
     title: buildDirectConversationTitle(t, target),
     conv_type: 'direct',
     participant_ids: [target.id],
+    source_entity_id: actingEntity.id === target.id ? undefined : actingEntity.id,
   })
   if (!res.ok || !res.data) return null
   addConversation(res.data)

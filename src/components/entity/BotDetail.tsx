@@ -38,7 +38,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
   const myEntity = useAuthStore((s) => s.entity)!
-  const online = usePresenceStore((s) => s.online)
+  const getPresenceState = usePresenceStore((s) => s.getPresenceState)
   const [conversations, setConversations] = useState<Conversation[]>([])
   const [friends, setFriends] = useState<Entity[]>([])
   const [loadingConvs, setLoadingConvs] = useState(false)
@@ -59,9 +59,10 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   const [opError, setOpError] = useState<string | null>(null)
   const [opInfo, setOpInfo] = useState<string | null>(null)
   const [confirmRegenerate, setConfirmRegenerate] = useState(false)
-  const [policyDraft, setPolicyDraft] = useState<{ discoverability: 'private' | 'platform_public' | 'external_public'; allow_non_friend_chat: boolean; require_access_password: boolean; access_password: string }>({
+  const [policyDraft, setPolicyDraft] = useState<{ discoverability: 'private' | 'platform_public' | 'external_public'; friend_request_policy: 'nobody' | 'platform_entities'; direct_message_policy: 'friends_only' | 'platform_entities'; require_access_password: boolean; access_password: string }>({
     discoverability: 'private',
-    allow_non_friend_chat: false,
+    friend_request_policy: 'platform_entities',
+    direct_message_policy: 'friends_only',
     require_access_password: false,
     access_password: '',
   })
@@ -95,7 +96,8 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setLastSeen(null)
     setPolicyDraft({
       discoverability: (bot.discoverability as 'private' | 'platform_public' | 'external_public') || 'private',
-      allow_non_friend_chat: !!bot.allow_non_friend_chat,
+      friend_request_policy: (bot.friend_request_policy as 'nobody' | 'platform_entities') || 'platform_entities',
+      direct_message_policy: (bot.direct_message_policy as 'friends_only' | 'platform_entities') || (bot.allow_non_friend_chat ? 'platform_entities' : 'friends_only'),
       require_access_password: !!bot.require_access_password,
       access_password: '',
     })
@@ -228,7 +230,9 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     setOpError(null)
     const res = await api.updateEntity(token, bot.id, {
       discoverability: policyDraft.discoverability,
-      allow_non_friend_chat: policyDraft.allow_non_friend_chat,
+      friend_request_policy: policyDraft.friend_request_policy,
+      direct_message_policy: policyDraft.direct_message_policy,
+      allow_non_friend_chat: policyDraft.direct_message_policy === 'platform_entities',
       require_access_password: policyDraft.require_access_password,
       access_password: policyDraft.access_password,
     })
@@ -277,10 +281,10 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
     )
   }
 
-  const isOnline = online.has(bot.id)
+  const botPresence = getPresenceState(bot.id)
   const isDisabled = bot.status === 'disabled'
-  const statusSemantic = getEntityPresenceSemantic(bot, isOnline)
-  const statusLabel = getEntityStatusLabel(t, bot, isOnline)
+  const statusSemantic = getEntityPresenceSemantic(bot, botPresence)
+  const statusLabel = getEntityStatusLabel(t, bot, botPresence)
   const meta = bot.metadata as Record<string, unknown> | undefined
   const description = (meta?.description as string) || ''
   const caps = (meta?.capabilities as string[]) || []
@@ -740,7 +744,8 @@ ${createdCredentials.doc}`
               <p className="text-sm font-medium text-[var(--color-text-primary)]">{t('friends.botAccessPolicy')}</p>
             </div>
             <div className="grid gap-3">
-              <div>
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3">
+                <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)] mb-2">{t('friends.platformVisibility')}</p>
                 <label className="block text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)] mb-1.5">
                   {t('friends.discoverability')}
                 </label>
@@ -754,33 +759,56 @@ ${createdCredentials.doc}`
                   <option value="platform_public">{t('friends.discoveryPlatform')}</option>
                   <option value="external_public">{t('friends.discoveryExternal')}</option>
                 </select>
+                <p className="text-xs text-[var(--color-text-muted)] mt-2">{t('friends.platformVisibilityHint')}</p>
               </div>
-              <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
-                <span>
-                  <span className="block text-sm font-medium text-[var(--color-text-primary)]">{t('friends.allowNonFriendChat')}</span>
-                  <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">{t('friends.allowNonFriendChatHint')}</span>
-                </span>
-                <input
-                  type="checkbox"
-                  disabled={!isOwner || isDisabled}
-                  checked={policyDraft.allow_non_friend_chat}
-                  onChange={(e) => setPolicyDraft((draft) => ({ ...draft, allow_non_friend_chat: e.target.checked }))}
-                  className="w-4 h-4 accent-[var(--color-accent)]"
-                />
-              </label>
-              <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
-                <span>
-                  <span className="block text-sm font-medium text-[var(--color-text-primary)]">{t('friends.requireAccessPassword')}</span>
-                  <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">{t('friends.requireAccessPasswordHint')}</span>
-                </span>
-                <input
-                  type="checkbox"
-                  disabled={!isOwner || isDisabled || policyDraft.discoverability !== 'external_public'}
-                  checked={policyDraft.require_access_password}
-                  onChange={(e) => setPolicyDraft((draft) => ({ ...draft, require_access_password: e.target.checked }))}
-                  className="w-4 h-4 accent-[var(--color-accent)]"
-                />
-              </label>
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3 grid gap-3">
+                <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{t('friends.platformInteraction')}</p>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">{t('friends.friendRequestPolicy')}</label>
+                  <select
+                    disabled={!isOwner || isDisabled}
+                    value={policyDraft.friend_request_policy}
+                    onChange={(e) => setPolicyDraft((draft) => ({ ...draft, friend_request_policy: e.target.value as 'nobody' | 'platform_entities' }))}
+                    className="w-full h-10 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none"
+                  >
+                    <option value="platform_entities">{t('friends.friendPolicyPlatform')}</option>
+                    <option value="nobody">{t('friends.friendPolicyNobody')}</option>
+                  </select>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1.5">{t('friends.friendRequestPolicyHint')}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1.5">{t('friends.directMessagePolicy')}</label>
+                  <select
+                    disabled={!isOwner || isDisabled}
+                    value={policyDraft.direct_message_policy}
+                    onChange={(e) => setPolicyDraft((draft) => ({ ...draft, direct_message_policy: e.target.value as 'friends_only' | 'platform_entities' }))}
+                    className="w-full h-10 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] px-3 text-sm text-[var(--color-text-primary)] focus:outline-none"
+                  >
+                    <option value="friends_only">{t('friends.directMessagePolicyFriendsOnly')}</option>
+                    <option value="platform_entities">{t('friends.directMessagePolicyPlatform')}</option>
+                  </select>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1.5">{t('friends.directMessagePolicyHint')}</p>
+                </div>
+              </div>
+              <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-bg-primary)] p-3 grid gap-3">
+                <p className="text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)]">{t('friends.externalAccess')}</p>
+                <label className="flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
+                  <span>
+                    <span className="block text-sm font-medium text-[var(--color-text-primary)]">{t('friends.requireAccessPassword')}</span>
+                    <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">{t('friends.requireAccessPasswordHint')}</span>
+                  </span>
+                  <input
+                    type="checkbox"
+                    disabled={!isOwner || isDisabled || policyDraft.discoverability !== 'external_public'}
+                    checked={policyDraft.require_access_password}
+                    onChange={(e) => setPolicyDraft((draft) => ({ ...draft, require_access_password: e.target.checked }))}
+                    className="w-4 h-4 accent-[var(--color-accent)]"
+                  />
+                </label>
+                {policyDraft.discoverability !== 'external_public' && (
+                  <p className="text-xs text-[var(--color-text-muted)]">{t('friends.externalAccessDisabledHint')}</p>
+                )}
+              </div>
               {policyDraft.discoverability === 'external_public' && policyDraft.require_access_password && (
                 <div>
                   <label className="block text-[11px] font-medium uppercase tracking-[0.14em] text-[var(--color-text-muted)] mb-1.5">

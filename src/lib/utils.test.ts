@@ -1,6 +1,10 @@
-import { describe, it, expect } from 'vitest'
-import { getInitials, entityDisplayName, entityColor, formatFileSize, truncate, authenticatedFileUrl } from './utils'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import { getInitials, entityDisplayName, entityColor, formatFileSize, truncate, authenticatedFileUrl, previewAvatarUrl, publicAvatarUrl, formatRelativeTime } from './utils'
 import type { Entity } from './types'
+
+afterEach(() => {
+  vi.useRealTimers()
+})
 
 describe('getInitials', () => {
   it('returns first char uppercased for English name', () => {
@@ -86,5 +90,30 @@ describe('truncate', () => {
 describe('authenticatedFileUrl', () => {
   it('does not append bearer tokens to browser file URLs', () => {
     expect(authenticatedFileUrl('/files/demo.png', 'secret-token')).toBe('/files/demo.png')
+  })
+})
+
+describe('publicAvatarUrl', () => {
+  it('maps stored avatar files to the public avatar endpoint', () => {
+    expect(publicAvatarUrl('/files/demo.png')).toBe('/avatar-files/demo.png?v=1')
+  })
+})
+
+describe('previewAvatarUrl', () => {
+  it('keeps freshly uploaded files on /files for immediate preview', () => {
+    expect(previewAvatarUrl('/files/demo.png')).toBe('/files/demo.png')
+  })
+
+  it('leaves preset or external urls unchanged via public avatar resolver', () => {
+    expect(previewAvatarUrl('data:image/svg+xml,abc')).toBe('data:image/svg+xml,abc')
+    expect(previewAvatarUrl('/avatar-files/demo.png?v=1')).toBe('/avatar-files/demo.png?v=1')
+  })
+})
+
+describe('formatRelativeTime', () => {
+  it('shows concrete time for messages from today', () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-04-08T12:00:00Z'))
+    expect(formatRelativeTime('2026-04-08T08:30:00Z', 'en')).toMatch(/AM|PM/)
   })
 })

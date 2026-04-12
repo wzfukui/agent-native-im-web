@@ -5,11 +5,13 @@ import { useSettingsStore, type Theme, type Locale } from '@/store/settings'
 import { AvatarPicker } from '@/components/entity/AvatarPicker'
 import { cn } from '@/lib/utils'
 import { buildInfo } from '@/lib/build-info'
+import { parseConnectedDeviceInfo } from '@/lib/device-info'
 import { usePwaInstall } from '@/hooks/usePwaInstall'
 import * as api from '@/lib/api'
+import { getPushSubscription, isPushSupported, registerPushNotifications } from '@/lib/push'
 import {
   User, Lock, Palette, Globe, ChevronLeft, ChevronRight, Bell,
-  Check, Loader2, Eye, EyeOff, Smartphone, LogOut, Info, Copy, Download, ArrowLeft,
+  Check, Loader2, Eye, EyeOff, Smartphone, LogOut, Info, Copy, Download, ArrowLeft, RefreshCw,
 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 
@@ -45,8 +47,39 @@ export function UserSettingsPage({ onBack }: Props) {
   const [passSuccess, setPassSuccess] = useState('')
   const [aboutCopied, setAboutCopied] = useState(false)
   const [copiedProfileField, setCopiedProfileField] = useState<'public' | null>(null)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [pushLoading, setPushLoading] = useState(false)
+  const [pushStatus, setPushStatus] = useState('')
   const { canInstall, isInstalled, promptInstall } = usePwaInstall()
   const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent)
+
+  useEffect(() => {
+    let cancelled = false
+    async function syncPushState() {
+      if (!isPushSupported()) {
+        if (!cancelled) {
+          setPushEnabled(false)
+          setPushStatus(t('settings.pushUnsupported'))
+        }
+        return
+      }
+      try {
+        const existing = await getPushSubscription()
+        if (cancelled) return
+        setPushEnabled(!!existing)
+        setPushStatus(existing ? t('settings.pushEnabled') : t('settings.pushDisabled'))
+      } catch {
+        if (!cancelled) {
+          setPushEnabled(false)
+          setPushStatus(t('settings.pushFailed'))
+        }
+      }
+    }
+    void syncPushState()
+    return () => {
+      cancelled = true
+    }
+  }, [t])
 
 
   const handleSaveProfile = async () => {
@@ -134,6 +167,23 @@ export function UserSettingsPage({ onBack }: Props) {
     }
   }, [section, loadDevices])
 
+  useEffect(() => {
+    if (section !== 'devices') return
+    const interval = window.setInterval(() => {
+      void loadDevices()
+    }, 5000)
+    const onFocus = () => {
+      if (document.visibilityState !== 'hidden') void loadDevices()
+    }
+    window.addEventListener('focus', onFocus)
+    document.addEventListener('visibilitychange', onFocus)
+    return () => {
+      window.clearInterval(interval)
+      window.removeEventListener('focus', onFocus)
+      document.removeEventListener('visibilitychange', onFocus)
+    }
+  }, [section, loadDevices])
+
   const handleKickDevice = async (deviceId: string) => {
     const res = await api.kickDevice(token, deviceId)
     if (res.ok) {
@@ -167,34 +217,6 @@ export function UserSettingsPage({ onBack }: Props) {
 
     // Reload the device list after kicking
     await loadDevices()
-  }
-
-  const parseDeviceInfo = (info: string) => {
-    if (!info) return t('settings.unknownDevice')
-
-    // Extract browser name and version
-    const browserMatch = info.match(/(Chrome|Firefox|Safari|Edge|Opera|Brave)\/(\d+)\.[\d.]+/)
-    const browser = browserMatch ? `${browserMatch[1]}/${browserMatch[2]}` : null
-
-    // Extract OS with better patterns
-    let os = null
-    if (info.includes('Mac OS')) os = 'Mac OS'
-    else if (info.includes('Windows NT')) os = 'Windows'
-    else if (info.includes('Linux')) os = 'Linux'
-    else if (info.includes('Android')) os = 'Android'
-    else if (info.includes('iPhone') || info.includes('iPad')) os = 'iOS'
-
-    // Extract mobile device info if present
-    const mobileMatch = info.match(/(iPhone|iPad|Android)/)
-    const mobile = mobileMatch ? mobileMatch[1] : null
-
-    // Build display string
-    const parts = []
-    if (browser) parts.push(browser)
-    if (os) parts.push(os)
-    if (mobile && !os?.includes(mobile)) parts.push(mobile)
-
-    return parts.length > 0 ? parts.join(' / ') : info.slice(0, 50)
   }
 
   const navItems: { id: Section; icon: typeof User; label: string }[] = [
@@ -371,8 +393,20 @@ export function UserSettingsPage({ onBack }: Props) {
       case 'devices':
         return (
           <div className="space-y-6">
-            {!isMobile && <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.devices')}</h3>}
-            <p className="text-xs text-[var(--color-text-muted)]">{t('settings.devicesDesc')}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                {!isMobile && <h3 className="text-base font-semibold text-[var(--color-text-primary)]">{t('settings.devices')}</h3>}
+                <p className="text-xs text-[var(--color-text-muted)]">{t('settings.devicesDesc')}</p>
+                <p className="text-[11px] text-[var(--color-text-muted)]">{t('settings.devicesActiveHint')}</p>
+              </div>
+              <button
+                onClick={() => void loadDevices()}
+                className="h-9 px-3 rounded-xl border border-[var(--color-border)] text-xs text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-hover)] inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <RefreshCw className={cn('w-3.5 h-3.5', devicesLoading && 'animate-spin')} />
+                {t('common.refresh')}
+              </button>
+            </div>
 
             {devicesLoading ? (
               <div className="flex items-center gap-2 text-xs text-[var(--color-text-muted)]">
@@ -385,6 +419,7 @@ export function UserSettingsPage({ onBack }: Props) {
               <div className="space-y-2">
                 {devices.map((device, index) => {
                   const isCurrentDevice = device.device_id === currentDeviceId
+                  const deviceMeta = parseConnectedDeviceInfo(device.device_info, t('settings.unknownDevice'))
 
                   return (
                     <div
@@ -398,10 +433,15 @@ export function UserSettingsPage({ onBack }: Props) {
                     >
                       <Smartphone className={cn('w-5 h-5 flex-shrink-0', isCurrentDevice ? 'text-[var(--color-accent)]' : 'text-[var(--color-text-muted)]')} />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-xs font-medium text-[var(--color-text-primary)]">
-                            {parseDeviceInfo(device.device_info)}
+                            {deviceMeta.label}
                           </p>
+                          {deviceMeta.kind !== 'unknown' && (
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-bg-hover)] text-[var(--color-text-muted)] font-medium whitespace-nowrap">
+                              {t(`settings.deviceKind.${deviceMeta.kind}`)}
+                            </span>
+                          )}
                           {isCurrentDevice && (
                             <span className="text-[10px] px-1.5 py-0.5 rounded bg-[var(--color-accent)]/10 text-[var(--color-accent)] font-medium whitespace-nowrap">
                               {t('settings.currentDevice')}
@@ -779,70 +819,68 @@ export function UserSettingsPage({ onBack }: Props) {
               <Bell className="w-4 h-4 text-[var(--color-accent)]" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-[var(--color-text-primary)]">{t('settings.pushNotifications')}</p>
-                <p className="text-[10px] text-[var(--color-text-muted)]" id="push-status">
-                  {t('settings.pushDisabled')}
+                <p className="text-[10px] text-[var(--color-text-muted)]">
+                  {pushStatus || t('settings.pushDisabled')}
                 </p>
               </div>
               <button
-                id="push-toggle-btn"
                 onClick={async () => {
-                  const btn = document.getElementById('push-toggle-btn') as HTMLButtonElement
-                  const status = document.getElementById('push-status')
-                  if (!btn || !status) return
-                  btn.disabled = true
-                  btn.textContent = '...'
-
+                  if (pushLoading) return
+                  setPushLoading(true)
                   try {
-                    // Check if already subscribed
-                    const reg = await navigator.serviceWorker?.ready
-                    const existing = reg ? await reg.pushManager?.getSubscription() : null
+                    if (!isPushSupported()) {
+                      setPushEnabled(false)
+                      setPushStatus(t('settings.pushUnsupported'))
+                      return
+                    }
+                    const existing = await getPushSubscription()
 
                     if (existing) {
-                      // Unsubscribe
                       await existing.unsubscribe()
                       await api.unregisterPush(token, existing.endpoint)
-                      status.textContent = t('settings.pushDisabled')
-                      btn.textContent = t('settings.enablePush')
-                      btn.className = btn.className.replace('bg-[var(--color-error)]', 'bg-[var(--color-accent)]').replace('hover:bg-red-600', 'hover:opacity-90')
+                      setPushEnabled(false)
+                      setPushStatus(t('settings.pushDisabled'))
                     } else {
-                      // Request permission if needed (Notification may not exist on iOS PWA)
                       if (typeof Notification !== 'undefined') {
                         if (Notification.permission === 'default') {
                           const perm = await Notification.requestPermission()
                           if (perm !== 'granted') {
-                            status.textContent = t('settings.pushDenied') || 'Permission denied'
-                            btn.textContent = t('settings.enablePush')
-                            btn.disabled = false
+                            setPushEnabled(false)
+                            setPushStatus(t('settings.pushDenied'))
                             return
                           }
                         }
                         if (Notification.permission === 'denied') {
-                          status.textContent = t('settings.pushDenied') || 'Permission denied by system'
-                          btn.textContent = t('settings.enablePush')
-                          btn.disabled = false
+                          setPushEnabled(false)
+                          setPushStatus(t('settings.pushDenied'))
                           return
                         }
                       }
-                      // Subscribe
-                      const { registerPushNotifications } = await import('@/lib/push')
                       const ok = await registerPushNotifications(token)
                       if (ok) {
-                        status.textContent = t('settings.pushEnabled')
-                        btn.textContent = t('settings.disablePush')
+                        setPushEnabled(true)
+                        setPushStatus(t('settings.pushEnabled'))
                       } else {
-                        status.textContent = t('settings.pushFailed') || 'Registration failed'
-                        btn.textContent = t('settings.enablePush')
+                        setPushEnabled(false)
+                        setPushStatus(t('settings.pushFailed'))
                       }
                     }
                   } catch (err) {
-                    status.textContent = `Error: ${err}`
-                    btn.textContent = t('settings.enablePush')
+                    void err
+                    setPushEnabled(false)
+                    setPushStatus(t('settings.pushFailed'))
+                  } finally {
+                    setPushLoading(false)
                   }
-                  btn.disabled = false
                 }}
-                className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[var(--color-accent)] text-white cursor-pointer hover:opacity-90 transition-opacity"
+                disabled={pushLoading}
+                className={cn(
+                  'px-3 py-1.5 text-xs font-medium rounded-lg text-white transition-opacity',
+                  pushEnabled ? 'bg-[var(--color-error)] hover:opacity-90' : 'bg-[var(--color-accent)] hover:opacity-90',
+                  pushLoading ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer',
+                )}
               >
-                {t('settings.enablePush')}
+                {pushLoading ? '...' : pushEnabled ? t('settings.disablePush') : t('settings.enablePush')}
               </button>
             </div>
           </div>

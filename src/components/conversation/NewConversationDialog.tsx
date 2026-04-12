@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import { getCachedEntities } from '@/lib/cache'
-import type { Entity } from '@/lib/types'
+import type { Conversation, Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn, isBotOrService } from '@/lib/utils'
 import { openOrCreateDirectConversation, shouldReuseDirectConversation } from '@/lib/direct-conversation'
@@ -13,7 +13,7 @@ import { useFocusTrap } from '@/lib/accessibility'
 
 interface Props {
   onClose: () => void
-  onCreated: (convId: number) => void
+  onCreated: (conversation: Conversation) => void
   preselectedEntityId?: number
 }
 
@@ -78,12 +78,12 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
       const conversation = await openOrCreateDirectConversation({
         token,
         t,
-        myEntity,
+        actingEntity: myEntity,
         target: selectedEntity,
         conversations,
         addConversation,
       })
-      if (conversation) onCreated(conversation.id)
+      if (conversation) onCreated(conversation)
       setCreating(false)
       return
     }
@@ -97,7 +97,7 @@ export function NewConversationDialog({ onClose, onCreated, preselectedEntityId 
     })
 
     if (res.ok && res.data) {
-      onCreated(res.data.id)
+      onCreated(res.data)
     }
     setCreating(false)
   }

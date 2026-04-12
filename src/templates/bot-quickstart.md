@@ -13,11 +13,15 @@ This bot is intended to connect through the ANI OpenClaw channel plugin.
 
 Use the ANI OpenClaw channel plugin.
 
-## Install OpenClaw
+## Install ANI Plugin
 
 ```bash
-openclaw plugins install @wzfukui/ani
+npx -y openclaw-ani-installer install
+npx -y openclaw-ani-installer update
+npx -y openclaw-ani-installer doctor
 ```
+
+This is the recommended path for end users. Older OpenClaw releases can have compatibility issues when installing third-party scoped npm plugins directly.
 
 ## Enable ANI Plugin
 
@@ -68,4 +72,5 @@ curl {{API_URL}}/me -H "Authorization: Bearer {{BOT_TOKEN}}"
 - ANI Web: {{WEB_URL}}
 - ANI Onboarding Guide: {{WEB_URL}}/api/v1/onboarding-guide
 - ANI Skill Template: {{WEB_URL}}/api/v1/skill-template?format=text
-- OpenClaw ANI Plugin README: https://github.com/wzfukui/openclaw/tree/main/extensions/ani
+- ANI Installer: https://www.npmjs.com/package/openclaw-ani-installer
+- OpenClaw ANI Plugin README: https://www.npmjs.com/package/@wzfukui/ani

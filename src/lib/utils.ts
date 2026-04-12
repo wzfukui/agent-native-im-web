@@ -78,7 +78,6 @@ export function formatRelativeTime(iso: string, locale = 'en'): string {
   const diffMs = now.getTime() - d.getTime()
   const diffSec = Math.floor(diffMs / 1000)
   const diffMin = Math.floor(diffSec / 60)
-  const diffHour = Math.floor(diffMin / 60)
 
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const msgDay = new Date(d.getFullYear(), d.getMonth(), d.getDate())
@@ -88,7 +87,13 @@ export function formatRelativeTime(iso: string, locale = 'en'): string {
 
   if (diffSec < 60) return isZh ? '\u521A\u521A' : 'now'
   if (diffMin < 60) return isZh ? `${diffMin}\u5206\u524D` : `${diffMin}m`
-  if (diffDays === 0) return isZh ? `${diffHour}\u5C0F\u65F6\u524D` : `${diffHour}h`
+  if (diffDays === 0) {
+    return d.toLocaleTimeString(isZh ? 'zh-CN' : 'en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: !isZh,
+    })
+  }
   if (diffDays === 1) return isZh ? '\u6628\u5929' : 'Yesterday'
   if (d.getFullYear() === now.getFullYear()) {
     return `${d.getMonth() + 1}/${d.getDate()}`
@@ -119,4 +124,14 @@ export function publicAvatarUrl(url: string | undefined | null): string {
   if (!url) return ''
   if (!url.startsWith('/files/')) return url
   return `/avatar-files/${url.slice('/files/'.length)}?v=1`
+}
+
+/**
+ * Preserve freshly uploaded avatar files under /files/* until the entity save
+ * succeeds and the avatar becomes publicly addressable via /avatar-files/*.
+ */
+export function previewAvatarUrl(url: string | undefined | null): string {
+  if (!url) return ''
+  if (url.startsWith('/files/')) return url
+  return publicAvatarUrl(url)
 }

@@ -13,6 +13,7 @@ describe('bot access helpers', () => {
       roleHint: '全栈开发工程师，尤其擅长APP开发',
     })
 
+    expect(text).toContain('npx -y openclaw-ani-installer install')
     expect(text).toContain('openclaw config set channels.ani.apiKey "aim_test_token"')
     expect(text).toContain('You are the ANI bot "刘布斯".')
     expect(text).toContain('IDENTITY.md')

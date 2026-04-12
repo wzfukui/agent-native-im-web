@@ -16,7 +16,7 @@ import type { Message } from '@/lib/types'
 import { ReactionBar } from './ReactionBar'
 import {
   FileText, Download, Play, Pause,
-  Brain, Check, ChevronDown, ChevronUp, CornerUpLeft, Ban, Trash2, Reply, SmilePlus, CloudOff, Clock, RotateCcw,
+  Brain, Check, ChevronDown, ChevronUp, CornerUpLeft, Ban, CloudOff, Clock, RotateCcw, MoreHorizontal,
 } from 'lucide-react'
 
 /** Max collapsed height in px (~10 lines of text) */
@@ -115,12 +115,10 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
   const authUrl = (url: string | undefined) => authenticatedFileUrl(url, token)
   const [showThinking, setShowThinking] = useState(false)
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null)
-  const [showQuickReact, setShowQuickReact] = useState(false)
   const [collapsed, setCollapsed] = useState(true)
   const [isOverflow, setIsOverflow] = useState(false)
   const [popoverAnchor, setPopoverAnchor] = useState<DOMRect | null>(null)
   const [actionMenuRect, setActionMenuRect] = useState<DOMRect | null>(null)
-  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const bubbleRef = useRef<HTMLDivElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
   const layers = message.layers || {}
@@ -150,36 +148,6 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
   const canReply = !isRevoked && onReply
   const canReact = !isRevoked && onReact
   const canRetryOutbox = isSelf && !!message.temp_id && message.client_state !== 'sending' && !!onRetryOutbox
-
-  // Long-press handler for mobile action menu
-  const handleBubbleTouchStart = useCallback((e: React.TouchEvent) => {
-    if (isRevoked) return
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    longPressTimerRef.current = setTimeout(() => {
-      setActionMenuRect(rect)
-    }, 500)
-  }, [isRevoked])
-
-  const handleBubbleTouchEnd = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }, [])
-
-  const handleBubbleTouchMove = useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current)
-      longPressTimerRef.current = null
-    }
-  }, [])
-
-  const handleBubbleContextMenu = useCallback((e: React.MouseEvent) => {
-    if (isRevoked) return
-    e.preventDefault()
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
-    setActionMenuRect(rect)
-  }, [isRevoked])
 
   const handleContentCopy = useCallback((e: React.ClipboardEvent<HTMLDivElement>) => {
     const contentEl = contentRef.current
@@ -406,17 +374,13 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
     <div
       ref={bubbleRef}
       className={cn(
-        'flex gap-2 md:gap-2.5 group transition-opacity duration-300 select-none',
+        'flex gap-2 md:gap-2.5 group transition-opacity duration-300',
         isSelf
           ? 'ml-auto flex-row-reverse w-full md:max-w-[85%]'
           : 'w-full md:max-w-[85%]',
         message.client_state === 'sending' ? 'opacity-60' : '',
       )}
       style={{ animation: 'slide-up 0.2s cubic-bezier(0.16,1,0.3,1)' }}
-      onContextMenu={handleBubbleContextMenu}
-      onTouchStart={handleBubbleTouchStart}
-      onTouchEnd={handleBubbleTouchEnd}
-      onTouchMove={handleBubbleTouchMove}
     >
       {/* Avatar (or spacer for alignment) */}
       {!isSelf && (
@@ -450,9 +414,9 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
             </span>
           </div>
         ) : (
-          /* Timestamp on hover only for grouped messages */
-          <div className={cn('flex items-center px-1 h-0 overflow-visible', isSelf ? 'justify-end' : '')}>
-            <span className="text-[10px] text-[var(--color-text-muted)] opacity-0 group-hover:opacity-60 transition-opacity">
+          /* Reserve space so hover timestamps do not get visually trapped between stacked bubbles. */
+          <div className={cn('flex items-center px-1 min-h-[14px]', isSelf ? 'justify-end' : '')}>
+            <span className="text-[10px] text-[var(--color-text-muted)] opacity-0 group-hover:opacity-60 transition-opacity pointer-events-none">
               {formatTime(message.created_at)}
             </span>
           </div>
@@ -549,73 +513,21 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
             )}
             </div>
 
-            {/* Action buttons */}
-            <div className={cn('opacity-0 group-hover:opacity-100 flex items-center gap-0.5 transition-all absolute top-1', isSelf ? 'flex-row-reverse right-full mr-1.5' : 'left-full ml-1.5')}>
-              {canReply && (
+            {/* Explicit more-actions entry so text selection and browser context-copy stay intact. */}
+            <div className={cn('opacity-0 group-hover:opacity-100 transition-all absolute top-1', isSelf ? 'right-full mr-1.5' : 'left-full ml-1.5')}>
+              {Boolean(canReply || canReact || canRevoke || layers.summary || layers.data?.body) && (
                 <button
-                  onClick={() => onReply!(message)}
-                  className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
-                  title={t('chat.reply')}
-                  aria-label={t('chat.reply')}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setActionMenuRect((e.currentTarget as HTMLElement).getBoundingClientRect())
+                  }}
+                  className="w-7 h-7 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
+                  title={t('chat.moreActions')}
+                  aria-label={t('chat.moreActions')}
                 >
-                  <Reply className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
+                  <MoreHorizontal className="w-3.5 h-3.5 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
                 </button>
               )}
-              {canReact && (
-                <button
-                  onClick={() => setShowQuickReact(!showQuickReact)}
-                  className="w-6 h-6 rounded-md hover:bg-[var(--color-accent)]/15 flex items-center justify-center cursor-pointer"
-                  title={t('chat.addReaction')}
-                  aria-label={t('chat.addReaction')}
-                >
-                  <SmilePlus className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-accent)]" />
-                </button>
-              )}
-              {canRevoke && (
-                <button
-                  onClick={() => onRevoke!(message.id)}
-                  className="w-6 h-6 rounded-md hover:bg-[var(--color-error)]/15 flex items-center justify-center cursor-pointer"
-                  title={t('message.revoke')}
-                  aria-label={t('message.revoke')}
-                >
-                  <Trash2 className="w-3 h-3 text-[var(--color-text-muted)] hover:text-[var(--color-error)]" />
-                </button>
-              )}
-            {/* Quick emoji picker with extended grid */}
-            {showQuickReact && (
-              <>
-                <div className="fixed inset-0 z-10" onClick={() => setShowQuickReact(false)} />
-                <div className={cn(
-                  'absolute z-20 bottom-full mb-1 rounded-xl bg-[var(--color-bg-secondary)] border border-[var(--color-border)] shadow-lg overflow-hidden',
-                  isSelf ? 'right-0' : 'left-0',
-                )}>
-                  <div className="flex items-center gap-0.5 px-2 py-1.5">
-                    {['\uD83D\uDC4D', '\u2764\uFE0F', '\uD83D\uDE02', '\uD83C\uDF89', '\uD83E\uDD14', '\uD83D\uDC40'].map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => { onReact!(message.id, emoji); setShowQuickReact(false) }}
-                        className="w-7 h-7 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-base cursor-pointer"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-8 gap-0.5 px-2 pb-2 max-h-[100px] overflow-y-auto border-t border-[var(--color-border)] pt-1">
-                    {['\uD83D\uDE0A', '\uD83D\uDE0D', '\uD83E\uDD70', '\uD83D\uDE18', '\uD83D\uDE09', '\uD83D\uDE1C', '\uD83E\uDD29', '\uD83D\uDE07',
-                      '\uD83D\uDC4E', '\u270A', '\uD83D\uDC4A', '\uD83D\uDC4F', '\uD83D\uDE4F', '\uD83D\uDCAA', '\u2B50', '\uD83D\uDD25',
-                      '\uD83D\uDCAF', '\u2705', '\u274C', '\uD83D\uDE80', '\u2728', '\uD83C\uDF39', '\uD83C\uDF1E', '\uD83C\uDF08'].map((emoji) => (
-                      <button
-                        key={emoji}
-                        onClick={() => { onReact!(message.id, emoji); setShowQuickReact(false) }}
-                        className="w-6 h-6 flex items-center justify-center rounded hover:bg-[var(--color-bg-hover)] transition-colors text-sm cursor-pointer"
-                      >
-                        {emoji}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
             </div>
           </div>
         </div>

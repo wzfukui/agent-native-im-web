@@ -196,7 +196,7 @@ export function ConversationList({ conversations, activeId, myEntityId, scope = 
       {/* List */}
       <div
         ref={listRef}
-        className="flex-1 overflow-y-auto px-2 pb-3 space-y-1"
+        className="flex-1 overflow-y-auto px-2 pt-1 pb-3 space-y-0"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

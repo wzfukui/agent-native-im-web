@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
 import * as api from '@/lib/api'
 import { getCachedEntities, cacheEntities } from '@/lib/cache'
-import type { Entity } from '@/lib/types'
+import type { Entity, PresenceStateValue } from '@/lib/types'
 import { EntityAvatar } from './EntityAvatar'
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader'
 import { entityDisplayName, cn } from '@/lib/utils'
@@ -23,25 +23,29 @@ interface Props {
 export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Props) {
   const { t } = useTranslation()
   const token = useAuthStore((s) => s.token)!
-  const online = usePresenceStore((s) => s.online)
+  const getPresenceState = usePresenceStore((s) => s.getPresenceState)
   const [entities, setEntities] = useState<Entity[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
 
-  const { setOnline } = usePresenceStore()
+  const setPresenceBatch = usePresenceStore((s) => s.setPresenceBatch)
+  const setPresenceUnknown = usePresenceStore((s) => s.setPresenceUnknown)
 
   const fetchPresence = useCallback(async (list: Entity[]) => {
     const botIds = list.filter((e) => e.entity_type !== 'user').map((e) => e.id)
     if (botIds.length > 0) {
       const presRes = await api.batchPresence(token, botIds)
       if (presRes.ok && presRes.data?.presence) {
-        for (const [idStr, isOn] of Object.entries(presRes.data.presence)) {
-          setOnline(Number(idStr), isOn as boolean)
-        }
+        const onlineIds = Object.entries(presRes.data.presence)
+          .filter(([, isOn]) => !!isOn)
+          .map(([idStr]) => Number(idStr))
+        setPresenceBatch(botIds, onlineIds)
+      } else {
+        setPresenceUnknown(botIds)
       }
     }
-  }, [setOnline, token])
+  }, [setPresenceBatch, setPresenceUnknown, token])
 
   const loadEntities = useCallback(async () => {
     try {
@@ -50,10 +54,14 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
       setEntities(list)
       setLoading(false)
 
-      for (const entity of list) {
-        if (entity.entity_type !== 'user' && typeof entity.online === 'boolean') {
-          setOnline(entity.id, entity.online)
-        }
+      const preloaded = list
+        .filter((entity) => entity.entity_type !== 'user' && typeof entity.online === 'boolean')
+        .map((entity) => ({ id: entity.id, online: !!entity.online }))
+      if (preloaded.length > 0) {
+        setPresenceBatch(
+          preloaded.map((item) => item.id),
+          preloaded.filter((item) => item.online).map((item) => item.id),
+        )
       }
 
       // Cache entities for offline use
@@ -72,7 +80,14 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
     } finally {
       setLoading(false)
     }
-  }, [entities.length, fetchPresence, setOnline, token])
+  }, [entities.length, fetchPresence, setPresenceBatch, token])
+
+  const rankPresence = useCallback((entity: Entity) => {
+    const presence = getPresenceState(entity.id)
+    if (presence === 'online') return 0
+    if (presence === 'unknown') return 1
+    return 2
+  }, [getPresenceState])
 
   // Stale-while-revalidate: show cached entities instantly, then refresh from network
   useEffect(() => {
@@ -120,13 +135,13 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
   // Split into active and disabled groups, online bots sorted first
   const activeBots = filtered
     .filter((e) => e.status !== 'disabled')
-    .sort((a, b) => (online.has(a.id) ? 0 : 1) - (online.has(b.id) ? 0 : 1))
+    .sort((a, b) => rankPresence(a) - rankPresence(b))
   const disabledBots = filtered.filter((e) => e.status === 'disabled')
 
   const renderBotItem = (entity: Entity) => {
-    const isOnline = online.has(entity.id)
-    const statusSemantic = getEntityPresenceSemantic(entity, isOnline)
-    const statusLabel = getEntityStatusLabel(t, entity, isOnline)
+    const presence: PresenceStateValue = getPresenceState(entity.id)
+    const statusSemantic = getEntityPresenceSemantic(entity, presence)
+    const statusLabel = getEntityStatusLabel(t, entity, presence)
     const isActive = entity.id === selectedId
     const meta = entity.metadata as Record<string, unknown> | undefined
     const tags = Array.isArray(meta?.tags) ? (meta.tags as string[]) : []
@@ -137,14 +152,14 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
         onClick={() => onSelect(entity.id)}
         data-testid={`bot-list-item-${entity.id}`}
         className={cn(
-          'w-full flex items-start gap-3 p-3 rounded-xl border transition-all text-left cursor-pointer',
+          'w-full flex items-start gap-3 px-3 rounded-xl transition-all text-left cursor-pointer',
           isActive
-            ? 'border-[var(--color-accent)] bg-[var(--color-accent-dim)] shadow-sm'
-            : 'border-[var(--color-border)] hover:border-[var(--color-text-muted)]/30 hover:bg-[var(--color-bg-hover)]',
+            ? 'bg-[var(--color-accent-dim)] shadow-sm'
+            : 'hover:bg-[var(--color-bg-hover)]',
           statusSemantic === 'disabled' && 'opacity-50'
         )}
       >
-        <div className="relative flex-shrink-0">
+        <div className="relative flex-shrink-0 self-start mt-2">
           <EntityAvatar entity={entity} size="md" />
           {/* Online status dot */}
           <span className={cn(
@@ -156,7 +171,10 @@ export function BotList({ selectedId, onSelect, onCreated, refreshTrigger }: Pro
                 : 'bg-[var(--color-text-muted)]/50'
           )} />
         </div>
-        <div className="flex-1 min-w-0">
+        <div className={cn(
+          'flex-1 min-w-0 py-2 border-b border-[var(--color-border)]/70',
+          isActive && 'border-[var(--color-accent)]/20',
+        )}>
           <div className="flex items-center gap-2">
             <p className="text-sm font-medium text-[var(--color-text-primary)] truncate">
               {entityDisplayName(entity)}

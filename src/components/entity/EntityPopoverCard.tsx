@@ -3,10 +3,10 @@ import { createPortal } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import { EntityAvatar } from './EntityAvatar'
 import { cn, entityDisplayName, entityColor, isBotOrService, formatTime } from '@/lib/utils'
-import type { Entity } from '@/lib/types'
+import type { Entity, PresenceStateValue } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
 import { getEntityPresenceSemantic, getEntityStatusLabel } from '@/lib/entity-status'
-import { Bot, User, MessageSquare, ExternalLink, X } from 'lucide-react'
+import { Bot, User, MessageSquare, ExternalLink, Trash2, X } from 'lucide-react'
 
 interface Props {
   entity: Entity
@@ -14,15 +14,17 @@ interface Props {
   onClose: () => void
   onSendMessage?: (entity: Entity) => void
   onViewDetails?: (entity: Entity) => void
+  onRemoveRelationship?: (entity: Entity) => void
+  removeLabel?: string
 }
 
-export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, onViewDetails }: Props) {
+export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, onViewDetails, onRemoveRelationship, removeLabel }: Props) {
   const { t } = useTranslation()
   const cardRef = useRef<HTMLDivElement>(null)
   const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
   const isBot = isBotOrService(entity)
   const color = entityColor(entity)
-  const isOnline = usePresenceStore((s) => s.online.has(entity.id))
+  const presence = usePresenceStore((s): PresenceStateValue => s.getPresenceState(entity.id))
   const description = entity.metadata?.description as string | undefined
   const identityLabel = entity.bot_id || entity.public_id || ''
 
@@ -80,8 +82,8 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
       ? t('entityPopover.service')
       : t('entityPopover.user')
 
-  const statusSemantic = getEntityPresenceSemantic(entity, isOnline)
-  const statusText = getEntityStatusLabel(t, entity, isOnline)
+  const statusSemantic = getEntityPresenceSemantic(entity, presence)
+  const statusText = getEntityStatusLabel(t, entity, presence)
 
   return createPortal(
     <>
@@ -180,6 +182,15 @@ export function EntityPopoverCard({ entity, anchorRect, onClose, onSendMessage, 
             >
               <MessageSquare className="w-3 h-3" />
               {t('entityPopover.sendMessage')}
+            </button>
+          )}
+          {onRemoveRelationship && (
+            <button
+              onClick={() => { onRemoveRelationship(entity); onClose() }}
+              className="flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-[var(--color-error)]/10 text-[var(--color-error)] hover:bg-[var(--color-error)]/20 transition-colors cursor-pointer"
+            >
+              <Trash2 className="w-3 h-3" />
+              {removeLabel || t('friends.remove')}
             </button>
           )}
           {isBot && onViewDetails && (

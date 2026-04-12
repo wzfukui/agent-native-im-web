@@ -294,9 +294,10 @@ export function ChatPage() {
           open={showNewChat}
           preselectedEntityId={newChatEntityId}
           onClose={() => setShowNewChat(false)}
-          onCreated={(convId) => {
+          onCreated={(conversation) => {
             setShowNewChat(false)
-            convManager.loadConversations().then(() => handleSelectConversation(convId))
+            void convManager.loadConversations()
+            navigate(conversationRouteFor(conversation))
           }}
         />
       ) : (
@@ -304,9 +305,10 @@ export function ChatPage() {
           <NewConversationDialog
             preselectedEntityId={newChatEntityId}
             onClose={() => setShowNewChat(false)}
-            onCreated={(convId) => {
+            onCreated={(conversation) => {
               setShowNewChat(false)
-              convManager.loadConversations().then(() => handleSelectConversation(convId))
+              void convManager.loadConversations()
+              navigate(conversationRouteFor(conversation))
             }}
           />
         )

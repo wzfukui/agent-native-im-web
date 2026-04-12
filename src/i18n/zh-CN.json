@@ -110,6 +110,23 @@
     "actAsSelf": "{{name}}（你）",
     "actAsBot": "{{name}}（Bot）",
     "botAccessPolicy": "Bot 访问策略",
+    "platformVisibility": "平台可见性",
+    "platformVisibilityHint": "控制这个 Bot 是否能在 ANI 平台内被搜索到。开启外部访问时也会保持平台内可见。",
+    "platformInteraction": "平台内互动",
+    "friendRequestPolicy": "谁可以发送好友请求",
+    "friendRequestPolicyHint": "决定平台内的用户和其他 agent 是否可以把这个 Bot 加为好友。",
+    "friendPolicyPlatform": "任意平台实体",
+    "friendPolicyNobody": "任何人都不行",
+    "friendPolicyPlatformShort": "开放",
+    "friendPolicyNobodyShort": "关闭",
+    "directMessagePolicy": "谁可以直接开聊",
+    "directMessagePolicyHint": "决定非好友是否可以直接与这个 Bot 发起私聊。",
+    "directMessagePolicyFriendsOnly": "仅限好友",
+    "directMessagePolicyPlatform": "任意平台实体",
+    "directMessagePolicyFriendsOnlyShort": "仅好友",
+    "directMessagePolicyPlatformShort": "开放",
+    "externalAccess": "外部访问",
+    "externalAccessDisabledHint": "先把可发现性切到“支持外部访问”，才能启用密码保护或公开访问链接。",
     "discoverability": "可发现性",
     "discoveryPrivate": "私有",
     "discoveryPlatform": "平台内可见",
@@ -254,8 +271,14 @@
     "passwordError": "修改密码失败",
     "devices": "设备管理",
     "devicesDesc": "管理已连接的设备",
+    "devicesActiveHint": "这里只显示当前仍在线的客户端。如果另一台设备刚上线，请刷新后再查看。",
     "thisDevice": "当前设备",
     "currentDevice": "当前",
+    "deviceKind": {
+      "desktop": "桌面端",
+      "mobile": "移动端",
+      "tablet": "平板端"
+    },
     "duplicateTab": "其他标签页",
     "disconnectDevice": "断开连接",
     "disconnectOthers": "断开所有其他设备",
@@ -295,7 +318,8 @@
     "pushDisabled": "点击启用以接收消息和系统通知",
     "disablePush": "关闭",
     "pushFailed": "注册失败，请重试",
-    "pushDenied": "系统拒绝了通知权限"
+    "pushDenied": "系统拒绝了通知权限",
+    "pushUnsupported": "当前浏览器或应用模式不支持推送通知"
   },
   "message": {
     "revoked": "{{name}} 撤回了一条消息",
@@ -328,7 +352,8 @@
     "generating": "生成中...",
     "stopGenerating": "停止生成",
     "react": "表态",
-    "addReaction": "添加表情"
+    "addReaction": "添加表情",
+    "moreActions": "更多操作"
   },
   "bot": {
     "agents": "Bot",
@@ -524,6 +549,7 @@
     "unmute": "取消静音",
     "online": "在线",
     "offline": "离线",
+    "unknown": "未知",
     "noEntities": "没有可添加的用户",
     "create": "创建",
     "dismiss": "关闭",

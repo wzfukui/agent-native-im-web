@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/auth'
 import { useConversationsStore } from '@/store/conversations'
 import * as api from '@/lib/api'
 import { getCachedEntities } from '@/lib/cache'
-import type { Entity } from '@/lib/types'
+import type { Conversation, Entity } from '@/lib/types'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -17,7 +17,7 @@ type SheetStep = 'choose' | 'direct-chat' | 'create-group'
 interface Props {
   open: boolean
   onClose: () => void
-  onCreated: (convId: number) => void
+  onCreated: (conversation: Conversation) => void
   preselectedEntityId?: number
 }
 
@@ -102,12 +102,12 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
     const conversation = await openOrCreateDirectConversation({
       token,
       t,
-      myEntity,
+      actingEntity: myEntity,
       target,
       conversations,
       addConversation,
     })
-    if (conversation) onCreated(conversation.id)
+    if (conversation) onCreated(conversation)
     setCreating(false)
   }
 
@@ -121,7 +121,7 @@ export function NewConversationSheet({ open, onClose, onCreated, preselectedEnti
       participant_ids: Array.from(selected),
     })
     if (res.ok && res.data) {
-      onCreated(res.data.id)
+      onCreated(res.data)
     }
     setCreating(false)
   }

@@ -28,8 +28,12 @@ export async function registerPushNotifications(token: string): Promise<boolean>
       return false
     }
 
-    // Wait for service worker (registered by vite-plugin-pwa)
-    const registration = await navigator.serviceWorker.ready
+    // Ensure a registration exists before awaiting readiness.
+    let registration = await navigator.serviceWorker.getRegistration()
+    if (!registration) {
+      registration = await navigator.serviceWorker.register('/sw.js')
+    }
+    await navigator.serviceWorker.ready
 
     // Unsubscribe any existing push subscription first
     // (handles VAPID key rotation gracefully)
@@ -59,6 +63,8 @@ export async function registerPushNotifications(token: string): Promise<boolean>
 
     // Send subscription to server
     const res = await api.registerPush(token, {
+      provider: 'webpush',
+      platform: 'web',
       endpoint: sub.endpoint,
       key_p256dh: sub.keys.p256dh!,
       key_auth: sub.keys.auth!,
@@ -69,4 +75,17 @@ export async function registerPushNotifications(token: string): Promise<boolean>
     console.warn('Push registration failed:', err)
     return false
   }
+}
+
+export async function getPushSubscription(): Promise<PushSubscription | null> {
+  if (!window.isSecureContext || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return null
+  }
+  const registration = await navigator.serviceWorker.getRegistration()
+  if (!registration) return null
+  return registration.pushManager.getSubscription()
+}
+
+export function isPushSupported(): boolean {
+  return window.isSecureContext && 'serviceWorker' in navigator && 'PushManager' in window
 }

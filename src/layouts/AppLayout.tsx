@@ -14,7 +14,6 @@ import { ConnectionStatusBar } from '@/components/ui/ConnectionStatusBar'
 import { InstallBanner } from '@/components/ui/InstallBanner'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { ErrorToast, type ErrorToastData } from '@/components/ui/ErrorToast'
-import { registerPushNotifications } from '@/lib/push'
 import { setSessionHooks } from '@/lib/auth-session'
 import { setGlobalErrorHandler, type ParsedError } from '@/lib/errors'
 import { useState, useCallback } from 'react'
@@ -78,11 +77,6 @@ export function AppLayout() {
   useEffect(() => {
     setGlobalErrorHandler(pushError)
   }, [pushError])
-
-  // ─── Push notifications ───
-  useEffect(() => {
-    if (token) registerPushNotifications(token)
-  }, [token])
 
   // ─── Title badge for unread count ───
   const totalUnread = useMemo(() => {

@@ -138,12 +138,10 @@ export function BotsPage() {
           open={showNewChat}
           preselectedEntityId={newChatEntityId}
           onClose={() => setShowNewChat(false)}
-          onCreated={(convId) => {
+          onCreated={(conversation) => {
             setShowNewChat(false)
-            convManager.loadConversations().then(() => {
-              const conversation = useConversationsStore.getState().conversations.find((item) => item.id === convId) || getConversations.find((item) => item.id === convId)
-              navigate(conversationRouteFor(conversation || { id: convId }))
-            })
+            void convManager.loadConversations()
+            navigate(conversationRouteFor(conversation))
           }}
         />
       ) : (
@@ -151,12 +149,10 @@ export function BotsPage() {
           <NewConversationDialog
             preselectedEntityId={newChatEntityId}
             onClose={() => setShowNewChat(false)}
-            onCreated={(convId) => {
+            onCreated={(conversation) => {
               setShowNewChat(false)
-              convManager.loadConversations().then(() => {
-                const conversation = useConversationsStore.getState().conversations.find((item) => item.id === convId) || getConversations.find((item) => item.id === convId)
-                navigate(conversationRouteFor(conversation || { id: convId }))
-              })
+              void convManager.loadConversations()
+              navigate(conversationRouteFor(conversation))
             }}
           />
         )

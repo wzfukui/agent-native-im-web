@@ -3,7 +3,7 @@ import { useAuthStore } from '@/store/auth'
 import { usePresenceStore } from '@/store/presence'
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { entityDisplayName, cn } from '@/lib/utils'
-import { Bot, Bell, Zap, Wifi, WifiOff, MessageSquare, Users, UserPlus } from 'lucide-react'
+import { Bot, Bell, Zap, Wifi, WifiOff, MessageSquare, MessagesSquare, UserPlus } from 'lucide-react'
 
 interface Props {
   botMode: boolean
@@ -72,7 +72,7 @@ export function Sidebar({ botMode, directMode, groupMode, friendsMode, inboxMode
         title={t('conversation.groups')}
         aria-label={t('conversation.groups')}
       >
-        <Users className="w-5 h-5" />
+        <MessagesSquare className="w-5 h-5" />
         {groupUnreadCount > 0 && (
           <span aria-live="polite" className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--color-error)] text-white text-[9px] font-bold flex items-center justify-center">
             {groupUnreadCount > 99 ? '99+' : groupUnreadCount}

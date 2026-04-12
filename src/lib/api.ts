@@ -176,7 +176,7 @@ export const getConversation = (token: string, id: number) =>
 export const getConversationByPublicId = (token: string, publicId: string) =>
   request<Conversation>('GET', `/api/v1/conversations/by-public-id/${encodeURIComponent(publicId)}`, token)
 
-export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[] }) =>
+export const createConversation = (token: string, data: { title: string; conv_type?: string; participant_ids?: number[]; source_entity_id?: number }) =>
   request<Conversation>('POST', '/api/v1/conversations', token, data)
 
 export const updateConversation = (token: string, id: number, data: { title?: string; description?: string; prompt?: string }) =>
@@ -263,6 +263,8 @@ export const updateEntity = (token: string, id: number, data: {
   avatar_url?: string
   metadata?: Record<string, unknown>
   discoverability?: 'private' | 'platform_public' | 'external_public'
+  friend_request_policy?: 'nobody' | 'platform_entities'
+  direct_message_policy?: 'friends_only' | 'platform_entities'
   allow_non_friend_chat?: boolean
   require_access_password?: boolean
   access_password?: string
@@ -387,11 +389,11 @@ export async function uploadFile(token: string, file: File, conversationId?: num
 export const getVapidKey = () =>
   requestQuiet<{ public_key: string }>('GET', '/api/v1/push/vapid-key')
 
-export const registerPush = (token: string, data: { endpoint: string; key_p256dh: string; key_auth: string }) =>
+export const registerPush = (token: string, data: { provider?: string; platform?: string; device_id?: string; endpoint: string; key_p256dh?: string; key_auth?: string }) =>
   request('POST', '/api/v1/push/subscribe', token, data)
 
-export const unregisterPush = (token: string, endpoint: string) =>
-  request('POST', '/api/v1/push/unsubscribe', token, { endpoint })
+export const unregisterPush = (token: string, endpoint: string, provider?: string) =>
+  request('POST', '/api/v1/push/unsubscribe', token, provider ? { endpoint, provider } : { endpoint })
 
 // Conversation lifecycle
 export const leaveConversation = (token: string, convId: number) =>

@@ -11,7 +11,10 @@ import type { Participant, Message, Attachment } from '@/lib/types'
 
 /** A file that has been selected and is being (or has been) uploaded. */
 export interface PendingFile {
-  file: File
+  file?: File
+  name: string
+  type: string
+  size: number
   status: 'uploading' | 'uploaded' | 'failed'
   url?: string
 }
@@ -36,6 +39,82 @@ interface Props {
   targetBot?: Entity | null
 }
 
+interface DraftReplyPreview {
+  id: number
+  sender?: Message['sender']
+  layers?: Message['layers']
+}
+
+interface ComposerDraftPayload {
+  text: string
+  replyTo: DraftReplyPreview | null
+  mentionIds: number[]
+  attachments: PendingFile[]
+}
+
+function toDraftAttachment(file: PendingFile): PendingFile | null {
+  if (file.status !== 'uploaded' || !file.url) return null
+  return {
+    name: file.name,
+    type: file.type,
+    size: file.size,
+    status: 'uploaded',
+    url: file.url,
+  }
+}
+
+export function serializeComposerDraft(params: {
+  text: string
+  replyTo?: Message | null
+  mentionIds: number[]
+  pendingFiles: PendingFile[]
+}): string | null {
+  const text = params.text.trim()
+  const attachments = params.pendingFiles
+    .map(toDraftAttachment)
+    .filter((item): item is PendingFile => !!item)
+  if (!text && !params.replyTo && params.mentionIds.length === 0 && attachments.length === 0) return null
+  const payload: ComposerDraftPayload = {
+    text,
+    replyTo: params.replyTo ? { id: params.replyTo.id, sender: params.replyTo.sender, layers: params.replyTo.layers } : null,
+    mentionIds: [...params.mentionIds],
+    attachments,
+  }
+  return JSON.stringify(payload)
+}
+
+export function parseComposerDraft(raw: string | null): ComposerDraftPayload | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as Partial<ComposerDraftPayload>
+    return {
+      text: typeof parsed.text === 'string' ? parsed.text : '',
+      replyTo: parsed.replyTo ?? null,
+      mentionIds: Array.isArray(parsed.mentionIds)
+        ? parsed.mentionIds.filter((id): id is number => typeof id === 'number')
+        : [],
+      attachments: Array.isArray(parsed.attachments)
+        ? parsed.attachments
+          .filter((item): item is PendingFile => !!item && typeof item.name === 'string')
+          .map((item) => ({
+            name: item.name,
+            type: item.type || '',
+            size: typeof item.size === 'number' ? item.size : 0,
+            status: item.status === 'failed' ? 'failed' : 'uploaded',
+            url: item.url,
+          }))
+        : [],
+    }
+  } catch {
+    return {
+      text: raw,
+      replyTo: null,
+      mentionIds: [],
+      attachments: [],
+    }
+  }
+}
+
 export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpload, onTyping, disabled, placeholder, participants, isObserver, enableMentions = true, replyTo, onCancelReply, attachmentsEnabled = true, targetBot = null }: Props) {
   const { t } = useTranslation()
   const [text, setText] = useState('')
@@ -49,30 +128,29 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     if (!conversationId) return
     // Save previous conversation's draft
     if (prevConvIdRef.current !== undefined && prevConvIdRef.current !== conversationId) {
-      const prevText = text.trim()
-      if (prevText) {
-        localStorage.setItem(`draft:${prevConvIdRef.current}`, JSON.stringify({
-          text: prevText,
-          replyTo: replyTo ? { id: replyTo.id, sender: replyTo.sender, layers: replyTo.layers } : null,
-        }))
+      const serialized = serializeComposerDraft({
+        text,
+        replyTo,
+        mentionIds,
+        pendingFiles,
+      })
+      if (serialized) {
+        localStorage.setItem(`draft:${prevConvIdRef.current}`, serialized)
       } else {
         localStorage.removeItem(`draft:${prevConvIdRef.current}`)
       }
     }
     // Restore new conversation's draft
-    try {
-      const raw = localStorage.getItem(`draft:${conversationId}`)
-      if (raw) {
-        const draft = JSON.parse(raw)
-        setText(draft.text || '')
-      } else {
-        setText('')
-      }
-    } catch {
+    const draft = parseComposerDraft(localStorage.getItem(`draft:${conversationId}`))
+    if (draft) {
+      setText(draft.text || '')
+      setMentionIds(draft.mentionIds || [])
+      setPendingFiles(draft.attachments || [])
+    } else {
       setText('')
+      setMentionIds([])
+      setPendingFiles([])
     }
-    setPendingFiles([])
-    setMentionIds([])
     prevConvIdRef.current = conversationId
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only trigger on conversation switch, not on text/replyTo changes
   }, [conversationId])
@@ -169,20 +247,20 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
     pendingFiles
       .filter((pf): pf is PendingFile & { url: string } => pf.status === 'uploaded' && !!pf.url)
       .map((pf) => ({
-        type: pf.file.type.startsWith('image/') ? 'image' : 'file',
+        type: pf.type.startsWith('image/') ? 'image' : 'file',
         url: pf.url,
-        filename: pf.file.name,
-        mime_type: pf.file.type,
-        size: pf.file.size,
+        filename: pf.name,
+        mime_type: pf.type,
+        size: pf.size,
       })),
   [pendingFiles])
 
   const hasUploading = pendingFiles.some((pf) => pf.status === 'uploading')
   const attachmentKinds = useMemo<AttachmentCapabilityKind[]>(() => {
     return pendingFiles.map((pf) => {
-      if (pf.file.type.startsWith('image/')) return 'image'
-      if (pf.file.type.startsWith('audio/')) return 'audio'
-      if (pf.file.type.startsWith('video/')) return 'video'
+      if (pf.type.startsWith('image/')) return 'image'
+      if (pf.type.startsWith('audio/')) return 'audio'
+      if (pf.type.startsWith('video/')) return 'video'
       return 'document'
     })
   }, [pendingFiles])
@@ -258,7 +336,13 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
 
   const addAndUploadFiles = useCallback((newFiles: File[]) => {
     if (!attachmentsEnabled || !onFileUpload || newFiles.length === 0) return
-    const entries: PendingFile[] = newFiles.map((f) => ({ file: f, status: 'uploading' as const }))
+    const entries: PendingFile[] = newFiles.map((f) => ({
+      file: f,
+      name: f.name,
+      type: f.type,
+      size: f.size,
+      status: 'uploading' as const,
+    }))
     setPendingFiles((prev) => [...prev, ...entries])
     // Upload each file immediately
     for (let i = 0; i < newFiles.length; i++) {
@@ -266,7 +350,7 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
       onFileUpload(file).then((url) => {
         setPendingFiles((prev) =>
           prev.map((pf) =>
-            pf.file === file
+            pf.file === file || (!pf.url && pf.name === file.name && pf.size === file.size && pf.type === file.type)
               ? { ...pf, status: url ? 'uploaded' : 'failed', url: url ?? undefined }
               : pf,
           ),
@@ -410,13 +494,13 @@ export function MessageComposer({ conversationId, onSend, onAudioSend, onFileUpl
             >
               {pf.status === 'uploading' ? (
                 <Loader2 className="w-3.5 h-3.5 text-[var(--color-accent)] animate-spin" />
-              ) : pf.file.type.startsWith('image/') ? (
+              ) : pf.type.startsWith('image/') ? (
                 <ImageIcon className="w-3.5 h-3.5 text-[var(--color-accent)]" />
               ) : (
                 <FileText className="w-3.5 h-3.5 text-[var(--color-accent)]" />
               )}
-              <span className="text-[var(--color-text-secondary)] max-w-[100px] truncate">{pf.file.name}</span>
-              <span className="text-[var(--color-text-muted)]">{formatFileSize(pf.file.size)}</span>
+              <span className="text-[var(--color-text-secondary)] max-w-[100px] truncate">{pf.name}</span>
+              <span className="text-[var(--color-text-muted)]">{formatFileSize(pf.size)}</span>
               {pf.status === 'failed' && (
                 <span className="text-[var(--color-error)] text-[10px]">{t('common.failed')}</span>
               )}

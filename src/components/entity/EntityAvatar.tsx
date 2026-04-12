@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { cn, getInitials, entityColor, isBotOrService, publicAvatarUrl } from '@/lib/utils'
-import type { Entity } from '@/lib/types'
+import type { Entity, PresenceStateValue } from '@/lib/types'
 import { usePresenceStore } from '@/store/presence'
 import { Bot } from 'lucide-react'
 
@@ -16,7 +16,7 @@ const sizeMap = { xs: 'w-6 h-6 text-[10px]', sm: 'w-8 h-8 text-xs', md: 'w-10 h-
 const dotSize = { xs: 'w-2 h-2', sm: 'w-2.5 h-2.5', md: 'w-3 h-3', lg: 'w-3.5 h-3.5' }
 
 export function EntityAvatar({ entity, size = 'md', showStatus = false, className, onClick }: Props) {
-  const online = usePresenceStore((s) => entity ? s.online.has(entity.id) : false)
+  const presence = usePresenceStore((s): PresenceStateValue => entity ? s.getPresenceState(entity.id) : 'unknown')
   const avatarUrl = publicAvatarUrl(entity?.avatar_url)
   const color = entityColor(entity)
   const isBot = isBotOrService(entity)
@@ -49,12 +49,12 @@ export function EntityAvatar({ entity, size = 'md', showStatus = false, classNam
           getInitials(entity?.display_name || entity?.name || '?')
         )}
       </div>
-      {showStatus && (
+      {showStatus && presence !== 'unknown' && (
         <span
           className={cn(
             'absolute -bottom-0.5 -right-0.5 rounded-full border-2 border-[var(--color-bg-secondary)]',
             dotSize[size],
-            online ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-muted)]',
+            presence === 'online' ? 'bg-[var(--color-success)]' : 'bg-[var(--color-text-muted)]',
           )}
         />
       )}

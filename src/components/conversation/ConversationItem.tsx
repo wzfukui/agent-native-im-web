@@ -4,7 +4,7 @@ import { cn, entityDisplayName, formatRelativeTime, truncate, isBotOrService } f
 import { EntityAvatar } from '@/components/entity/EntityAvatar'
 import { useConversationsStore } from '@/store/conversations'
 import type { Conversation } from '@/lib/types'
-import { Users, Pencil, Check, X, VolumeX, LogOut, Archive, Pin, PinOff } from 'lucide-react'
+import { MessagesSquare, Pencil, Check, X, VolumeX, LogOut, Archive, Pin, PinOff } from 'lucide-react'
 import { useAuthStore } from '@/store/auth'
 import * as api from '@/lib/api'
 
@@ -137,17 +137,17 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         className={cn(
-          'w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl border transition-all text-left cursor-pointer group',
+          'w-full flex items-stretch gap-3 px-3.5 py-1 rounded-2xl transition-all text-left cursor-pointer group',
           active
-            ? 'bg-[var(--color-bg-active)] border-[var(--color-accent)]/25 shadow-lg shadow-black/5'
-            : 'bg-[var(--color-bg-secondary)] border-transparent hover:border-[var(--color-border)] hover:bg-[var(--color-bg-hover)]',
+            ? 'bg-[var(--color-bg-active)] shadow-lg shadow-black/5'
+            : 'hover:bg-[var(--color-bg-hover)]',
         )}
       >
         {/* Avatar — 40px */}
         {isGroup ? (
-          <div className="relative w-10 h-10 flex-shrink-0">
+          <div className="relative w-10 h-10 flex-shrink-0 self-start">
             <div className="w-10 h-10 rounded-full bg-[var(--color-accent-dim)] border border-[var(--color-border)] flex items-center justify-center">
-              <Users className="w-4.5 h-4.5 text-[var(--color-accent)]" />
+              <MessagesSquare className="w-4.5 h-4.5 text-[var(--color-accent)]" />
             </div>
             {conv.participants?.some((p) => isBotOrService(p.entity)) && (
               <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-[var(--color-bot)] border-2 border-[var(--color-bg-secondary)] flex items-center justify-center">
@@ -158,11 +158,16 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
             )}
           </div>
         ) : (
-          <EntityAvatar entity={displayEntity} size="md" showStatus />
+          <div className="self-start">
+            <EntityAvatar entity={displayEntity} size="md" showStatus />
+          </div>
         )}
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between gap-2">
+        <div className={cn(
+          'flex-1 min-w-0 border-b border-[var(--color-border)]/70',
+          active && 'border-[var(--color-accent)]/20',
+        )}>
+          <div className="flex items-center gap-2 min-h-[22px]">
             {isEditing ? (
               <div className="flex items-center gap-1 flex-1">
                 <input
@@ -192,7 +197,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
               </div>
             ) : (
               <span className={cn(
-                'text-sm truncate flex items-center gap-1',
+                'min-w-0 flex-1 text-sm truncate flex items-center gap-1',
                 hasUnread ? 'font-semibold text-[var(--color-text-primary)]' : 'font-medium',
                 !hasUnread && (active ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-primary)]/90'),
               )}>
@@ -201,34 +206,37 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
                 {muted && <VolumeX className="w-3 h-3 text-[var(--color-text-muted)] flex-shrink-0" />}
               </span>
             )}
-            {/* Smart relative time */}
-            {lastMsg && (
-              <span className="text-[10px] text-[var(--color-text-muted)] whitespace-nowrap flex-shrink-0">
-                {formatRelativeTime(lastMsg.created_at, i18n.language)}
-              </span>
-            )}
-            {!isEditing && (
-              <button
-                onClick={(e) => { e.stopPropagation(); setEditTitle(title); setIsEditing(true) }}
-                className="opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-hover)] rounded transition-opacity cursor-pointer"
-              >
-                <Pencil className="w-3 h-3 text-[var(--color-text-muted)]" />
-              </button>
-            )}
+            {!isEditing ? (
+              <div className="relative ml-1 h-5 w-16 flex-shrink-0">
+                {lastMsg && (
+                  <span className="absolute inset-y-0 right-0 flex items-center justify-end text-right text-[10px] text-[var(--color-text-muted)] whitespace-nowrap transition-opacity group-hover:opacity-0">
+                    {formatRelativeTime(lastMsg.created_at, i18n.language)}
+                  </span>
+                )}
+                <button
+                  onClick={(e) => { e.stopPropagation(); setEditTitle(title); setIsEditing(true) }}
+                  className="absolute inset-y-0 right-0 opacity-0 group-hover:opacity-100 p-1 hover:bg-[var(--color-bg-hover)] rounded transition-opacity cursor-pointer"
+                >
+                  <Pencil className="w-3 h-3 text-[var(--color-text-muted)]" />
+                </button>
+              </div>
+            ) : null}
           </div>
           {/* Last message preview with sender name */}
-          {lastText ? (
-            <p className={cn('text-xs truncate mt-0.5 leading-relaxed', hasUnread ? 'text-[var(--color-text-secondary)] font-medium' : 'text-[var(--color-text-muted)]')}>
-              {lastMsgSenderName && (
-                <span className={cn(hasUnread ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]')}>
-                  {lastMsgSenderName}:&nbsp;
-                </span>
-              )}
-              {truncate(lastText, 45)}
-            </p>
-          ) : (
-            <p className="text-xs text-[var(--color-text-muted)]/50 mt-0.5">&nbsp;</p>
-          )}
+          <p className={cn('mt-0.5 min-h-[18px] text-xs leading-[18px] truncate', hasUnread ? 'text-[var(--color-text-secondary)] font-medium' : 'text-[var(--color-text-muted)]')}>
+            {lastText ? (
+              <>
+                {lastMsgSenderName && (
+                  <span className={cn(hasUnread ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)]')}>
+                    {lastMsgSenderName}:&nbsp;
+                  </span>
+                )}
+                {truncate(lastText, 45)}
+              </>
+            ) : (
+              <span className="invisible">.</span>
+            )}
+          </p>
         </div>
 
         {/* Unread badge — red for visibility */}

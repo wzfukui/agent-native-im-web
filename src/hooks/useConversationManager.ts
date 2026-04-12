@@ -13,7 +13,7 @@ export function useConversationManager() {
   const { t } = useTranslation()
   const { token, entity } = useAuthStore()
   const { conversations, activeId, setConversations, updateConversation, removeConversation } = useConversationsStore()
-  const { setOnline } = usePresenceStore()
+  const { setPresenceBatch, setPresenceUnknown } = usePresenceStore()
 
   const flushingOutboxRef = useRef(false)
   const [convsLoading, setConvsLoading] = useState(true)
@@ -58,13 +58,17 @@ export function useConversationManager() {
       if (entityIds.size > 0) {
         const presRes = await api.batchPresence(token, Array.from(entityIds))
         if (presRes.ok && presRes.data?.presence) {
-          for (const [idStr, isOnline] of Object.entries(presRes.data.presence)) {
-            setOnline(Number(idStr), isOnline as boolean)
-          }
+          const ids = Array.from(entityIds)
+          const onlineIds = Object.entries(presRes.data.presence)
+            .filter(([, isOnline]) => !!isOnline)
+            .map(([idStr]) => Number(idStr))
+          setPresenceBatch(ids, onlineIds)
+        } else {
+          setPresenceUnknown(Array.from(entityIds))
         }
       }
     }
-  }, [token, entity?.id, setConversations, setOnline])
+  }, [token, entity?.id, setConversations, setPresenceBatch, setPresenceUnknown])
 
   useEffect(() => {
     if (token) loadConversations()
