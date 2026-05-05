@@ -52,7 +52,7 @@ async function checkForVersionDrift() {
 
 // Apply saved theme on load (supports 'system' auto-switch)
 const savedTheme = (() => {
-  try { return JSON.parse(localStorage.getItem('aim_theme') || '"dark"') } catch { return 'dark' }
+  try { return JSON.parse(localStorage.getItem('aim_theme') || '"light"') } catch { return 'light' }
 })()
 if (savedTheme === 'system') {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches

@@ -137,9 +137,9 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         className={cn(
-          'w-full flex items-stretch gap-3 px-3.5 py-1 rounded-2xl transition-all text-left cursor-pointer group',
+          'w-full flex items-stretch gap-3 px-3.5 py-2 rounded-none transition-colors text-left cursor-pointer group',
           active
-            ? 'bg-[var(--color-bg-active)] shadow-lg shadow-black/5'
+            ? 'bg-[var(--color-bg-active)]'
             : 'hover:bg-[var(--color-bg-hover)]',
         )}
       >
@@ -164,7 +164,7 @@ export function ConversationItem({ conv, active, myEntityId, onClick, onUpdate, 
         )}
 
         <div className={cn(
-          'flex-1 min-w-0 border-b border-[var(--color-border)]/70',
+          'flex-1 min-w-0 py-0.5 border-b border-[var(--color-border)]/70',
           active && 'border-[var(--color-accent)]/20',
         )}>
           <div className="flex items-center gap-2 min-h-[22px]">

@@ -231,7 +231,7 @@ export function UserSettingsPage({ onBack }: Props) {
   type ThemeItem = { id: Theme; label: string; bg: string; sidebar: string; bubble: string; bubbleSelf: string; text: string; gradient?: string }
 
   const lightThemes: ThemeItem[] = [
-    { id: 'light', label: t('settings.themeLight'), bg: '#f8fafc', sidebar: '#f1f5f9', bubble: '#e2e8f0', bubbleSelf: '#6366f1', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(99,102,241,0.06) 0%, transparent 60%)' },
+    { id: 'light', label: t('settings.themeLight'), bg: '#ededed', sidebar: '#f7f7f7', bubble: '#ffffff', bubbleSelf: '#95ec69', text: '#191919' },
     { id: 'light-rose', label: t('settings.themeLightRose'), bg: '#fdf2f8', sidebar: '#fce7f3', bubble: '#f9a8d4', bubbleSelf: '#db2777', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(219,39,119,0.06) 0%, transparent 60%)' },
     { id: 'light-ocean', label: t('settings.themeLightOcean'), bg: '#f0f9ff', sidebar: '#e0f2fe', bubble: '#bae6fd', bubbleSelf: '#0284c7', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(2,132,199,0.06) 0%, transparent 60%)' },
     { id: 'light-green', label: t('settings.themeLightGreen'), bg: '#f0fdf4', sidebar: '#dcfce7', bubble: '#bbf7d0', bubbleSelf: '#16a34a', text: '#1e293b', gradient: 'radial-gradient(ellipse 80% 50% at 50% 0%, rgba(22,163,74,0.06) 0%, transparent 60%)' },

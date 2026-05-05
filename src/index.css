@@ -1,34 +1,33 @@
-@import "@fontsource-variable/plus-jakarta-sans";
 @import "tailwindcss";
 
 @theme {
-  /* Typography — Plus Jakarta Sans: distinctive geometric sans, not Inter/Roboto */
-  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  /* Typography — WeChat-like native UI stack. */
+  --font-sans: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
-  /* Default dark theme — indigo-tinted neutrals for cohesion */
-  --color-bg-primary: oklch(7.5% 0.015 270);
-  --color-bg-secondary: oklch(10.5% 0.012 270);
-  --color-bg-tertiary: oklch(14% 0.01 270);
-  --color-bg-hover: oklch(17% 0.012 270);
-  --color-bg-active: oklch(20% 0.018 270);
-  --color-bg-input: oklch(9.5% 0.012 270);
-  --color-border: oklch(22% 0.015 270);
-  --color-border-subtle: oklch(16% 0.01 270);
-  --color-text-primary: oklch(93% 0.008 270);
-  --color-text-secondary: oklch(76% 0.02 270);
-  --color-text-muted: oklch(61% 0.018 270);
-  --color-accent: oklch(62% 0.19 265);
-  --color-accent-hover: oklch(70% 0.16 265);
-  --color-accent-dim: oklch(62% 0.19 265 / 0.10);
-  --color-success: oklch(64% 0.17 150);
-  --color-warning: oklch(75% 0.15 75);
-  --color-error: oklch(58% 0.2 25);
-  --color-bot: oklch(68% 0.12 290);
-  --color-user: oklch(68% 0.12 240);
-  --color-bubble-self: oklch(15% 0.025 270);
-  --color-bubble-other: oklch(11.5% 0.01 270);
-  --color-bg-gradient: radial-gradient(ellipse 80% 60% at 50% 0%, oklch(12% 0.03 265 / 0.5) 0%, transparent 70%);
+  /* Default light theme — WeChat compact IM baseline. */
+  --color-bg-primary: #ededed;
+  --color-bg-secondary: #f7f7f7;
+  --color-bg-tertiary: #ffffff;
+  --color-bg-hover: #e5e5e5;
+  --color-bg-active: #dcdcdc;
+  --color-bg-input: #ffffff;
+  --color-border: #d9d9d9;
+  --color-border-subtle: #e7e7e7;
+  --color-text-primary: #191919;
+  --color-text-secondary: #576b95;
+  --color-text-muted: #9b9b9b;
+  --color-accent: #07c160;
+  --color-accent-hover: #06ad56;
+  --color-accent-dim: rgba(7, 193, 96, 0.10);
+  --color-success: #07c160;
+  --color-warning: #f59e0b;
+  --color-error: #fa5151;
+  --color-bot: #576b95;
+  --color-user: #07c160;
+  --color-bubble-self: #95ec69;
+  --color-bubble-other: #ffffff;
+  --color-bg-gradient: #ededed;
 }
 
 @layer base {
@@ -48,6 +47,31 @@
   ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
   input, textarea, button { font-family: inherit; }
+}
+
+[data-theme="dark"] {
+  --color-bg-primary: #111111;
+  --color-bg-secondary: #1b1b1b;
+  --color-bg-tertiary: #232323;
+  --color-bg-hover: #2b2b2b;
+  --color-bg-active: #333333;
+  --color-bg-input: #202020;
+  --color-border: #343434;
+  --color-border-subtle: #2d2d2d;
+  --color-text-primary: #f2f2f2;
+  --color-text-secondary: #b8c7e0;
+  --color-text-muted: #8f8f8f;
+  --color-accent: #07c160;
+  --color-accent-hover: #10d66e;
+  --color-accent-dim: rgba(7, 193, 96, 0.14);
+  --color-success: #07c160;
+  --color-warning: #f59e0b;
+  --color-error: #ff6b6b;
+  --color-bot: #9db3d8;
+  --color-user: #07c160;
+  --color-bubble-self: #3f7f37;
+  --color-bubble-other: #262626;
+  --color-bg-gradient: #111111;
 }
 
 /* Theme: midnight — deeper indigo atmosphere */
@@ -73,32 +97,32 @@
 
 /* Theme: light — warm, paper-like */
 [data-theme="light"] {
-  --color-bg-primary: oklch(97% 0.005 265);
-  --color-bg-secondary: oklch(99% 0.002 265);
-  --color-bg-tertiary: oklch(95% 0.005 265);
-  --color-bg-hover: oklch(93% 0.006 265);
-  --color-bg-active: oklch(90% 0.008 265);
-  --color-bg-input: oklch(99% 0.002 265);
-  --color-border: oklch(88% 0.008 265);
-  --color-border-subtle: oklch(92% 0.005 265);
-  --color-text-primary: oklch(15% 0.015 265);
-  --color-text-secondary: oklch(40% 0.02 265);
-  --color-text-muted: oklch(60% 0.015 265);
-  --color-accent: oklch(50% 0.2 265);
-  --color-accent-hover: oklch(58% 0.19 265);
-  --color-accent-dim: oklch(50% 0.2 265 / 0.08);
-  --color-success: oklch(50% 0.17 150);
-  --color-warning: oklch(60% 0.15 75);
-  --color-error: oklch(50% 0.2 25);
-  --color-bot: oklch(50% 0.15 290);
-  --color-user: oklch(50% 0.15 240);
-  --color-bubble-self: oklch(93% 0.015 265);
-  --color-bubble-other: oklch(99% 0.002 265);
-  --color-bg-gradient: radial-gradient(ellipse 80% 50% at 50% 0%, oklch(90% 0.03 265 / 0.4) 0%, transparent 60%);
+  --color-bg-primary: #ededed;
+  --color-bg-secondary: #f7f7f7;
+  --color-bg-tertiary: #ffffff;
+  --color-bg-hover: #e5e5e5;
+  --color-bg-active: #dcdcdc;
+  --color-bg-input: #ffffff;
+  --color-border: #d9d9d9;
+  --color-border-subtle: #e7e7e7;
+  --color-text-primary: #191919;
+  --color-text-secondary: #576b95;
+  --color-text-muted: #9b9b9b;
+  --color-accent: #07c160;
+  --color-accent-hover: #06ad56;
+  --color-accent-dim: rgba(7, 193, 96, 0.10);
+  --color-success: #07c160;
+  --color-warning: #f59e0b;
+  --color-error: #fa5151;
+  --color-bot: #576b95;
+  --color-user: #07c160;
+  --color-bubble-self: #95ec69;
+  --color-bubble-other: #ffffff;
+  --color-bg-gradient: #ededed;
 }
-[data-theme="light"] .md pre { background: oklch(95% 0.005 265); }
-[data-theme="light"] .md code { background: oklch(50% 0.2 265 / 0.08); }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: oklch(80% 0.01 265); }
+[data-theme="light"] .md pre { background: #f5f5f5; }
+[data-theme="light"] .md code { background: rgba(7, 193, 96, 0.08); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: #c6c6c6; }
 
 /* Theme: light-rose — warm rose light */
 [data-theme="light-rose"] {

@@ -450,11 +450,11 @@ export function MessageBubble({ message, isSelf, myEntityId, replyMessage, inter
           <div className={cn('relative min-w-0', usesCompactBubble ? 'w-fit max-w-full md:max-w-[min(42rem,100%)]' : 'max-w-full flex-1')}>
             <div
               className={cn(
-                'rounded-2xl min-w-0',
+                'rounded-lg min-w-0 shadow-[0_1px_1px_rgba(0,0,0,0.03)]',
                 (message.content_type === 'artifact' || message.content_type === 'task_handover') ? 'p-0 overflow-hidden' : 'px-3.5 py-2.5',
                 isSelf
-                  ? 'bg-[var(--color-bubble-self)] rounded-tr-md'
-                  : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-md',
+                  ? 'bg-[var(--color-bubble-self)] rounded-tr-sm'
+                  : 'bg-[var(--color-bubble-other)] border border-[var(--color-border-subtle)] rounded-tl-sm',
                 isMentioned && !isSelf && 'border-l-2 border-l-[var(--color-accent)] bg-[var(--color-accent)]/5',
               )}
             >
