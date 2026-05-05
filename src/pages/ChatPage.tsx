@@ -143,7 +143,7 @@ export function ChatPage() {
   const shouldCreateFirstBot = needsFirstBot(hasBots)
 
   return (
-    <div className="h-full flex min-h-0">
+    <div className="h-full flex min-h-0 bg-[var(--color-bg-primary)]">
       {/* Left panel: ConversationList */}
       <div className={cn(
         'border-r border-[var(--color-border)] bg-[var(--color-bg-secondary)] flex-shrink-0 min-h-0 overflow-hidden',
@@ -180,7 +180,7 @@ export function ChatPage() {
 
       {/* Right panel: ChatThread */}
       <div className={cn(
-        'flex-1 min-w-0 flex',
+        'flex-1 min-w-0 flex bg-[var(--color-bg-primary)]',
         isMobile && conversationRef && 'mobile-chat-panel',
       )}>
         {hasConversation ? (
@@ -225,7 +225,7 @@ export function ChatPage() {
         ) : (
           /* Empty state - only shown on desktop */
           !isMobile && (
-            <div className="flex-1 h-full flex flex-col items-center justify-center" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
+            <div className="flex-1 h-full flex flex-col items-center justify-center bg-[var(--color-bg-primary)]" style={{ animation: 'fade-in 0.2s cubic-bezier(0.16,1,0.3,1)' }}>
               <p className="text-lg font-semibold tracking-[-0.02em] text-[var(--color-text-primary)] mb-1.5">
                 {conversations.length === 0 ? t('app.welcomeTitle') : 'Agent-Native IM'}
               </p>

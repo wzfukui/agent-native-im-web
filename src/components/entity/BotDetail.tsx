@@ -274,7 +274,7 @@ export function BotDetail({ bot, createdCredentials, onDismissCredentials, onBac
   // Empty state — minimal, no gradient icon
   if (!bot) {
     return (
-      <div className="h-full flex flex-col items-center justify-center">
+      <div className="h-full flex flex-col items-center justify-center bg-[var(--color-bg-primary)]">
         <p className="text-sm font-medium text-[var(--color-text-secondary)] mb-1">{t('bot.agentDetails')}</p>
         <p className="text-xs text-[var(--color-text-muted)]">{t('bot.selectAgent')}</p>
       </div>
